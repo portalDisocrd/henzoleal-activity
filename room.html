@@ -1,0 +1,2660 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+>
+
+<title>LEAL ACTIVITY • Sala</title>
+
+<script src="/socket.io/socket.io.js"></script>
+
+<style>
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    height: 100vh;
+    overflow: hidden;
+    background: #09090c;
+    color: white;
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+
+/* =====================================================
+   TOPO
+===================================================== */
+
+header {
+    height: 62px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 20px;
+    background: #111116;
+    border-bottom: 1px solid #27272e;
+}
+
+.logo {
+    font-weight: 800;
+    font-size: 19px;
+}
+
+.logo span {
+    color: #747bff;
+}
+
+.room-code {
+    color: #71717a;
+    font-size: 13px;
+}
+
+.room-code strong {
+    color: white;
+}
+
+
+/* =====================================================
+   CONTEÚDO
+===================================================== */
+
+.app {
+    height: calc(100vh - 126px);
+    display: flex;
+    gap: 12px;
+    padding: 14px;
+}
+
+.main-area {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+
+/* =====================================================
+   PALCO PRINCIPAL
+===================================================== */
+
+.stage {
+    flex: 1;
+    min-height: 0;
+    position: relative;
+    overflow: hidden;
+    border-radius: 18px;
+    background:
+        radial-gradient(
+            circle at center,
+            #1d1d26,
+            #101014
+        );
+    border: 1px solid #292930;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#mainVideo {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    background: black;
+    display: none;
+}
+
+.stage-empty {
+    text-align: center;
+    color: #71717a;
+}
+
+.stage-empty .icon {
+    font-size: 55px;
+    margin-bottom: 13px;
+}
+
+.main-label {
+    position: absolute;
+    bottom: 14px;
+    left: 14px;
+    z-index: 5;
+    background: rgba(0, 0, 0, .72);
+    padding: 8px 12px;
+    border-radius: 9px;
+    font-size: 13px;
+    font-weight: bold;
+    display: none;
+}
+
+.live {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    z-index: 5;
+    background: #ed4245;
+    border-radius: 7px;
+    padding: 5px 8px;
+    font-size: 10px;
+    font-weight: 800;
+    display: none;
+}
+
+
+/* =====================================================
+   CONTROLES SOBRE O VÍDEO
+===================================================== */
+
+.video-controls {
+    position: absolute;
+    right: 14px;
+    bottom: 14px;
+    z-index: 10;
+    display: none;
+    gap: 7px;
+}
+
+.video-control {
+    background: rgba(0, 0, 0, .72);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255,255,255,.08);
+    color: white;
+    width: 42px;
+    height: 38px;
+    border-radius: 9px;
+    padding: 0;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+.video-control:hover {
+    background: rgba(40,40,48,.92);
+}
+
+.video-control:disabled {
+    opacity: .4;
+    cursor: default;
+}
+
+
+/* =====================================================
+   MINI TRANSMISSÕES
+===================================================== */
+
+.stream-strip {
+    display: none;
+    gap: 9px;
+    overflow-x: auto;
+    min-height: 104px;
+    padding-bottom: 2px;
+}
+
+.stream-thumb {
+    width: 180px;
+    min-width: 180px;
+    height: 100px;
+    border-radius: 11px;
+    overflow: hidden;
+    background: #16161b;
+    border: 2px solid transparent;
+    cursor: pointer;
+    position: relative;
+}
+
+.stream-thumb.active {
+    border-color: #5865f2;
+}
+
+.stream-thumb video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    background: black;
+}
+
+.thumb-name {
+    position: absolute;
+    left: 6px;
+    bottom: 6px;
+    background: rgba(0,0,0,.78);
+    padding: 4px 7px;
+    border-radius: 6px;
+    font-size: 10px;
+}
+
+
+/* =====================================================
+   PARTICIPANTES
+===================================================== */
+
+.people-panel {
+    width: 220px;
+    min-width: 220px;
+    background: #111116;
+    border: 1px solid #27272e;
+    border-radius: 15px;
+    padding: 11px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.people-title {
+    color: #a1a1aa;
+    font-size: 12px;
+    font-weight: bold;
+    padding: 4px 3px 10px;
+}
+
+.people {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    overflow-y: auto;
+}
+
+.person {
+    min-height: 72px;
+    background: #18181e;
+    border: 1px solid #292930;
+    border-radius: 11px;
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 9px;
+    cursor: default;
+    position: relative;
+}
+
+.person.streaming {
+    cursor: pointer;
+    border-color: rgba(88,101,242,.65);
+}
+
+.person.streaming:hover {
+    background: #1e1e27;
+}
+
+.avatar {
+    width: 42px;
+    min-width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background: #292932;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 21px;
+}
+
+.person-info {
+    min-width: 0;
+    flex: 1;
+}
+
+.person-name {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.person-status {
+    color: #71717a;
+    font-size: 9px;
+    margin-top: 4px;
+}
+
+.person.streaming .person-status {
+    color: #3ba55d;
+}
+
+
+/* =====================================================
+   RODAPÉ
+===================================================== */
+
+footer {
+    height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 9px;
+    background: #111116;
+    border-top: 1px solid #27272e;
+}
+
+footer button {
+    border: 0;
+    border-radius: 9px;
+    padding: 11px 15px;
+    color: white;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+#share {
+    background: #5865f2;
+}
+
+#stop {
+    background: #ed4245;
+    display: none;
+}
+
+#copy {
+    background: #29292f;
+}
+
+#leave {
+    background: #29292f;
+}
+
+#status {
+    position: fixed;
+    bottom: 75px;
+    left: 14px;
+    padding: 6px 9px;
+    border-radius: 7px;
+    background: rgba(0,0,0,.75);
+    color: #a1a1aa;
+    font-size: 11px;
+    z-index: 100;
+}
+
+
+/* =====================================================
+   PERFIL
+===================================================== */
+
+.profile-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    background: rgba(5,5,8,.96);
+    display: none;
+    align-items: center;
+    justify-content: center;
+}
+
+.profile-card {
+    width: min(390px, 90%);
+    background: #18181e;
+    border: 1px solid #303038;
+    border-radius: 18px;
+    padding: 25px;
+}
+
+.profile-card h2 {
+    margin-top: 0;
+}
+
+.profile-card p {
+    color: #a1a1aa;
+}
+
+.profile-card input {
+    width: 100%;
+    background: #0e0e12;
+    border: 1px solid #303038;
+    border-radius: 9px;
+    color: white;
+    padding: 13px;
+    outline: none;
+}
+
+.avatar-options {
+    display: grid;
+    grid-template-columns: repeat(6,1fr);
+    gap: 6px;
+    margin: 12px 0;
+}
+
+.profile-avatar {
+    aspect-ratio: 1;
+    padding: 0;
+    border: 0;
+    border-radius: 9px;
+    font-size: 20px;
+    background: #292930;
+    color: white;
+    cursor: pointer;
+}
+
+.profile-avatar.selected {
+    outline: 2px solid #5865f2;
+}
+
+#enterRoom {
+    width: 100%;
+    border: 0;
+    border-radius: 9px;
+    padding: 12px;
+    background: #5865f2;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+    margin-top: 10px;
+}
+
+
+/* =====================================================
+   RESPONSIVO
+===================================================== */
+
+@media (max-width: 1050px) {
+
+    .app {
+        flex-direction: column;
+    }
+
+    .people-panel {
+        width: 100%;
+        min-width: 0;
+        height: 105px;
+        flex-direction: row;
+        align-items: center;
+    }
+
+    .people-title {
+        display: none;
+    }
+
+    .people {
+        width: 100%;
+        flex-direction: row;
+        overflow-x: auto;
+        overflow-y: hidden;
+    }
+
+    .person {
+        width: 145px;
+        min-width: 145px;
+        height: 78px;
+    }
+
+}
+
+
+@media (max-width: 650px) {
+
+    header {
+        padding: 0 12px;
+    }
+
+    .logo {
+        font-size: 16px;
+    }
+
+    .app {
+        padding: 8px;
+    }
+
+    footer button {
+        padding: 10px 11px;
+        font-size: 11px;
+    }
+
+    .stream-thumb {
+        width: 145px;
+        min-width: 145px;
+        height: 82px;
+    }
+
+}
+
+</style>
+
+</head>
+
+
+<body>
+
+
+<header>
+
+<div class="logo">
+LEAL <span>ACTIVITY</span>
+</div>
+
+<div class="room-code">
+Sala:
+<strong id="roomCode"></strong>
+</div>
+
+</header>
+
+
+<div class="app">
+
+
+<div class="main-area">
+
+
+<div
+    id="stage"
+    class="stage"
+>
+
+    <video
+        id="mainVideo"
+        autoplay
+        playsinline
+    ></video>
+
+
+    <div
+        id="stageEmpty"
+        class="stage-empty"
+    >
+
+        <div class="icon">
+            🖥️
+        </div>
+
+        <div>
+            Nenhuma transmissão ativa
+        </div>
+
+    </div>
+
+
+    <div
+        id="mainLabel"
+        class="main-label"
+    ></div>
+
+
+    <div
+        id="liveBadge"
+        class="live"
+    >
+        AO VIVO
+    </div>
+
+
+    <div
+        id="videoControls"
+        class="video-controls"
+    >
+
+        <button
+            id="audioButton"
+            class="video-control"
+            title="Ativar/desativar áudio"
+        >
+            🔇
+        </button>
+
+
+        <button
+            id="fullscreenButton"
+            class="video-control"
+            title="Tela cheia"
+        >
+            ⛶
+        </button>
+
+    </div>
+
+</div>
+
+
+<div
+    id="streamStrip"
+    class="stream-strip"
+></div>
+
+
+</div>
+
+
+<aside class="people-panel">
+
+<div class="people-title">
+PARTICIPANTES
+</div>
+
+<div
+    id="people"
+    class="people"
+></div>
+
+</aside>
+
+
+</div>
+
+
+<div id="status">
+Conectando...
+</div>
+
+
+<footer>
+
+<button id="share">
+🖥️ Compartilhar
+</button>
+
+<button id="stop">
+⏹️ Parar transmissão
+</button>
+
+<button id="copy">
+🔗 Convite
+</button>
+
+<button id="leave">
+🚪 Sair
+</button>
+
+</footer>
+
+
+<div
+    id="profileOverlay"
+    class="profile-overlay"
+>
+
+<div class="profile-card">
+
+<h2>
+Entre na sala
+</h2>
+
+<p>
+Escolha seu próprio perfil.
+</p>
+
+<input
+    id="profileName"
+    maxlength="24"
+    placeholder="Seu nome"
+>
+
+<div class="avatar-options">
+
+<button class="profile-avatar selected">
+😎
+</button>
+
+<button class="profile-avatar">
+👾
+</button>
+
+<button class="profile-avatar">
+🐺
+</button>
+
+<button class="profile-avatar">
+🦊
+</button>
+
+<button class="profile-avatar">
+🐉
+</button>
+
+<button class="profile-avatar">
+🤖
+</button>
+
+</div>
+
+<button id="enterRoom">
+Entrar
+</button>
+
+</div>
+
+</div>
+
+
+<script>
+
+// =====================================================
+// ELEMENTOS
+// =====================================================
+
+const socket = io();
+
+
+const roomCode =
+    location.pathname
+        .split("/")
+        .pop()
+        .toUpperCase();
+
+
+document.getElementById(
+    "roomCode"
+).textContent =
+    roomCode;
+
+
+const stage =
+    document.getElementById(
+        "stage"
+    );
+
+
+const mainVideo =
+    document.getElementById(
+        "mainVideo"
+    );
+
+
+const stageEmpty =
+    document.getElementById(
+        "stageEmpty"
+    );
+
+
+const mainLabel =
+    document.getElementById(
+        "mainLabel"
+    );
+
+
+const liveBadge =
+    document.getElementById(
+        "liveBadge"
+    );
+
+
+const videoControls =
+    document.getElementById(
+        "videoControls"
+    );
+
+
+const audioButton =
+    document.getElementById(
+        "audioButton"
+    );
+
+
+const fullscreenButton =
+    document.getElementById(
+        "fullscreenButton"
+    );
+
+
+const peopleElement =
+    document.getElementById(
+        "people"
+    );
+
+
+const streamStrip =
+    document.getElementById(
+        "streamStrip"
+    );
+
+
+const shareButton =
+    document.getElementById(
+        "share"
+    );
+
+
+const stopButton =
+    document.getElementById(
+        "stop"
+    );
+
+
+const statusElement =
+    document.getElementById(
+        "status"
+    );
+
+
+const profileOverlay =
+    document.getElementById(
+        "profileOverlay"
+    );
+
+
+// =====================================================
+// DADOS
+// =====================================================
+
+let profile = null;
+
+let localStream = null;
+
+let currentMainOwner = null;
+
+let audioMuted = true;
+
+
+const participants =
+    new Map();
+
+
+const streams =
+    new Map();
+
+
+const outboundPeers =
+    new Map();
+
+
+const inboundPeers =
+    new Map();
+
+
+const outboundIce =
+    new Map();
+
+
+const inboundIce =
+    new Map();
+
+
+// =====================================================
+// WEBRTC
+// =====================================================
+
+const rtcConfig = {
+
+    iceServers: [
+
+        {
+            urls:
+                "stun:stun.l.google.com:19302"
+        },
+
+        {
+            urls:
+                "stun:stun1.l.google.com:19302"
+        }
+
+    ]
+
+};
+
+
+// =====================================================
+// PERFIL
+// =====================================================
+
+function loadProfile() {
+
+    try {
+
+        const saved =
+            sessionStorage.getItem(
+                "leal_profile"
+            );
+
+
+        if (!saved) {
+
+            profileOverlay.style.display =
+                "flex";
+
+            return;
+
+        }
+
+
+        profile =
+            JSON.parse(saved);
+
+
+        joinRoom();
+
+
+    } catch {
+
+        profileOverlay.style.display =
+            "flex";
+
+    }
+
+}
+
+
+let selectedAvatar =
+    "😎";
+
+
+document
+    .querySelectorAll(
+        ".profile-avatar"
+    )
+    .forEach(button => {
+
+        button.onclick =
+            () => {
+
+                document
+                    .querySelectorAll(
+                        ".profile-avatar"
+                    )
+                    .forEach(item => {
+
+                        item.classList.remove(
+                            "selected"
+                        );
+
+                    });
+
+
+                button.classList.add(
+                    "selected"
+                );
+
+
+                selectedAvatar =
+                    button.textContent
+                        .trim();
+
+            };
+
+    });
+
+
+document.getElementById(
+    "enterRoom"
+).onclick =
+    () => {
+
+        const name =
+            document
+                .getElementById(
+                    "profileName"
+                )
+                .value
+                .trim();
+
+
+        if (!name) {
+
+            alert(
+                "Digite seu nome."
+            );
+
+            return;
+
+        }
+
+
+        profile = {
+
+            name:
+                name.substring(
+                    0,
+                    24
+                ),
+
+            avatar:
+                selectedAvatar
+
+        };
+
+
+        sessionStorage.setItem(
+            "leal_profile",
+            JSON.stringify(
+                profile
+            )
+        );
+
+
+        profileOverlay.style.display =
+            "none";
+
+
+        joinRoom();
+
+    };
+
+
+// =====================================================
+// ENTRAR NA SALA
+// =====================================================
+
+let joined = false;
+
+
+function joinRoom() {
+
+    if (
+        joined ||
+        !profile ||
+        !socket.connected
+    ) {
+
+        return;
+
+    }
+
+
+    joined = true;
+
+
+    socket.emit(
+        "join-room",
+        {
+
+            roomCode,
+
+            profile
+
+        }
+    );
+
+}
+
+
+// =====================================================
+// SOCKET
+// =====================================================
+
+socket.on(
+    "connect",
+    () => {
+
+        statusElement.textContent =
+            "🟢 Conectado";
+
+
+        joinRoom();
+
+    }
+);
+
+
+// =====================================================
+// PARTICIPANTES
+// =====================================================
+
+socket.on(
+    "participants-update",
+    list => {
+
+        participants.clear();
+
+
+        list.forEach(
+            user => {
+
+                participants.set(
+                    user.id,
+                    user
+                );
+
+            }
+        );
+
+
+        renderParticipants();
+
+
+        if (
+            currentMainOwner
+        ) {
+
+            updateMainLabel();
+
+        }
+
+    }
+);
+
+
+function renderParticipants() {
+
+    peopleElement.innerHTML =
+        "";
+
+
+    participants.forEach(
+        user => {
+
+            const card =
+                document.createElement(
+                    "div"
+                );
+
+
+            card.className =
+                "person";
+
+
+            if (
+                user.streaming
+            ) {
+
+                card.classList.add(
+                    "streaming"
+                );
+
+            }
+
+
+            const avatar =
+                document.createElement(
+                    "div"
+                );
+
+
+            avatar.className =
+                "avatar";
+
+
+            avatar.textContent =
+                user.avatar;
+
+
+            const info =
+                document.createElement(
+                    "div"
+                );
+
+
+            info.className =
+                "person-info";
+
+
+            const name =
+                document.createElement(
+                    "div"
+                );
+
+
+            name.className =
+                "person-name";
+
+
+            name.textContent =
+                user.name +
+                (
+                    user.id ===
+                    socket.id
+                        ? " (você)"
+                        : ""
+                );
+
+
+            const personStatus =
+                document.createElement(
+                    "div"
+                );
+
+
+            personStatus.className =
+                "person-status";
+
+
+            personStatus.textContent =
+                user.streaming
+                    ? "● AO VIVO"
+                    : "● Online";
+
+
+            info.appendChild(
+                name
+            );
+
+
+            info.appendChild(
+                personStatus
+            );
+
+
+            card.appendChild(
+                avatar
+            );
+
+
+            card.appendChild(
+                info
+            );
+
+
+            if (
+                user.streaming
+            ) {
+
+                card.onclick =
+                    () => {
+
+                        if (
+                            streams.has(
+                                user.id
+                            )
+                        ) {
+
+                            selectMainStream(
+                                user.id
+                            );
+
+                        }
+
+                    };
+
+            }
+
+
+            peopleElement.appendChild(
+                card
+            );
+
+        }
+    );
+
+}
+
+
+// =====================================================
+// STREAM VISUAL
+// =====================================================
+
+function addStream(
+    ownerId,
+    stream
+) {
+
+    streams.set(
+        ownerId,
+        stream
+    );
+
+
+    renderStreamStrip();
+
+
+    if (
+        !currentMainOwner ||
+        !streams.has(
+            currentMainOwner
+        )
+    ) {
+
+        selectMainStream(
+            ownerId
+        );
+
+    }
+
+}
+
+
+function removeStream(
+    ownerId
+) {
+
+    streams.delete(
+        ownerId
+    );
+
+
+    renderStreamStrip();
+
+
+    if (
+        currentMainOwner ===
+        ownerId
+    ) {
+
+        const next =
+            streams.keys()
+                .next()
+                .value;
+
+
+        if (next) {
+
+            selectMainStream(
+                next
+            );
+
+        } else {
+
+            clearMainStage();
+
+        }
+
+    }
+
+}
+
+
+function clearMainStage() {
+
+    currentMainOwner =
+        null;
+
+
+    mainVideo.srcObject =
+        null;
+
+
+    mainVideo.style.display =
+        "none";
+
+
+    stageEmpty.style.display =
+        "block";
+
+
+    mainLabel.style.display =
+        "none";
+
+
+    liveBadge.style.display =
+        "none";
+
+
+    videoControls.style.display =
+        "none";
+
+}
+
+
+function updateMainLabel() {
+
+    if (
+        !currentMainOwner
+    ) {
+
+        return;
+
+    }
+
+
+    const user =
+        participants.get(
+            currentMainOwner
+        );
+
+
+    mainLabel.textContent =
+        `${user?.avatar || "🖥️"} ${user?.name || "Usuário"}`;
+
+}
+
+
+function updateAudioControls(
+    ownerId,
+    stream
+) {
+
+    const isOwn =
+        ownerId ===
+        socket.id;
+
+
+    const hasAudio =
+        stream
+            .getAudioTracks()
+            .length > 0;
+
+
+    if (
+        isOwn ||
+        !hasAudio
+    ) {
+
+        mainVideo.muted =
+            true;
+
+
+        audioMuted =
+            true;
+
+
+        audioButton.textContent =
+            "🔇";
+
+
+        audioButton.disabled =
+            true;
+
+
+        audioButton.title =
+            isOwn
+                ? "Sua própria transmissão fica muda"
+                : "Esta transmissão não possui áudio";
+
+
+        return;
+
+    }
+
+
+    audioButton.disabled =
+        false;
+
+
+    mainVideo.muted =
+        audioMuted;
+
+
+    audioButton.textContent =
+        audioMuted
+            ? "🔇"
+            : "🔊";
+
+
+    audioButton.title =
+        audioMuted
+            ? "Ativar áudio"
+            : "Mutar áudio";
+
+}
+
+
+function selectMainStream(
+    ownerId
+) {
+
+    const stream =
+        streams.get(
+            ownerId
+        );
+
+
+    if (!stream) {
+        return;
+    }
+
+
+    currentMainOwner =
+        ownerId;
+
+
+    mainVideo.srcObject =
+        stream;
+
+
+    mainVideo.style.display =
+        "block";
+
+
+    stageEmpty.style.display =
+        "none";
+
+
+    liveBadge.style.display =
+        "block";
+
+
+    mainLabel.style.display =
+        "block";
+
+
+    videoControls.style.display =
+        "flex";
+
+
+    updateMainLabel();
+
+
+    updateAudioControls(
+        ownerId,
+        stream
+    );
+
+
+    mainVideo.play()
+        .catch(() => {
+
+            statusElement.textContent =
+                "Clique no botão de áudio para reproduzir.";
+
+        });
+
+
+    renderStreamStrip();
+
+}
+
+
+// =====================================================
+// AUDIO
+// =====================================================
+
+audioButton.onclick =
+    async () => {
+
+        if (
+            audioButton.disabled ||
+            !currentMainOwner
+        ) {
+
+            return;
+
+        }
+
+
+        audioMuted =
+            !audioMuted;
+
+
+        mainVideo.muted =
+            audioMuted;
+
+
+        audioButton.textContent =
+            audioMuted
+                ? "🔇"
+                : "🔊";
+
+
+        audioButton.title =
+            audioMuted
+                ? "Ativar áudio"
+                : "Mutar áudio";
+
+
+        if (!audioMuted) {
+
+            try {
+
+                await mainVideo.play();
+
+                statusElement.textContent =
+                    "🔊 Áudio ativado";
+
+            } catch {
+
+                statusElement.textContent =
+                    "O navegador bloqueou o áudio.";
+
+            }
+
+        } else {
+
+            statusElement.textContent =
+                "🔇 Áudio mutado";
+
+        }
+
+    };
+
+
+// =====================================================
+// TELA CHEIA
+// =====================================================
+
+fullscreenButton.onclick =
+    async () => {
+
+        try {
+
+            if (
+                document.fullscreenElement
+            ) {
+
+                await document
+                    .exitFullscreen();
+
+                return;
+
+            }
+
+
+            await stage
+                .requestFullscreen();
+
+        } catch (error) {
+
+            console.error(
+                "Erro tela cheia:",
+                error
+            );
+
+        }
+
+    };
+
+
+document.addEventListener(
+    "fullscreenchange",
+    () => {
+
+        fullscreenButton.textContent =
+            document.fullscreenElement
+                ? "✕"
+                : "⛶";
+
+    }
+);
+
+
+// =====================================================
+// THUMBNAILS
+// =====================================================
+
+function renderStreamStrip() {
+
+    streamStrip.innerHTML =
+        "";
+
+
+    if (
+        streams.size <= 1
+    ) {
+
+        streamStrip.style.display =
+            "none";
+
+        return;
+
+    }
+
+
+    streamStrip.style.display =
+        "flex";
+
+
+    streams.forEach(
+        (stream, ownerId) => {
+
+            const thumb =
+                document.createElement(
+                    "div"
+                );
+
+
+            thumb.className =
+                "stream-thumb";
+
+
+            if (
+                ownerId ===
+                currentMainOwner
+            ) {
+
+                thumb.classList.add(
+                    "active"
+                );
+
+            }
+
+
+            const video =
+                document.createElement(
+                    "video"
+                );
+
+
+            video.autoplay =
+                true;
+
+
+            video.playsInline =
+                true;
+
+
+            video.muted =
+                true;
+
+
+            video.srcObject =
+                stream;
+
+
+            const user =
+                participants.get(
+                    ownerId
+                );
+
+
+            const name =
+                document.createElement(
+                    "div"
+                );
+
+
+            name.className =
+                "thumb-name";
+
+
+            name.textContent =
+                `${user?.avatar || "🖥️"} ${user?.name || "Usuário"}`;
+
+
+            thumb.appendChild(
+                video
+            );
+
+
+            thumb.appendChild(
+                name
+            );
+
+
+            thumb.onclick =
+                () => {
+
+                    selectMainStream(
+                        ownerId
+                    );
+
+                };
+
+
+            streamStrip.appendChild(
+                thumb
+            );
+
+
+            video.play()
+                .catch(
+                    () => {}
+                );
+
+        }
+    );
+
+}
+
+
+// =====================================================
+// ICE QUEUE
+// =====================================================
+
+function queueCandidate(
+    map,
+    key,
+    candidate
+) {
+
+    if (
+        !map.has(key)
+    ) {
+
+        map.set(
+            key,
+            []
+        );
+
+    }
+
+
+    map.get(key)
+        .push(candidate);
+
+}
+
+
+async function flushCandidates(
+    map,
+    key,
+    peer
+) {
+
+    const list =
+        map.get(key) ||
+        [];
+
+
+    for (
+        const candidate
+        of list
+    ) {
+
+        try {
+
+            await peer.addIceCandidate(
+                candidate
+            );
+
+        } catch {}
+
+    }
+
+
+    map.delete(
+        key
+    );
+
+}
+
+
+// =====================================================
+// OUTBOUND
+// =====================================================
+
+async function startOutbound(
+    targetId
+) {
+
+    if (
+        !localStream ||
+        targetId === socket.id
+    ) {
+
+        return;
+
+    }
+
+
+    if (
+        outboundPeers.has(
+            targetId
+        )
+    ) {
+
+        try {
+
+            outboundPeers
+                .get(targetId)
+                .close();
+
+        } catch {}
+
+
+        outboundPeers.delete(
+            targetId
+        );
+
+    }
+
+
+    const peer =
+        new RTCPeerConnection(
+            rtcConfig
+        );
+
+
+    outboundPeers.set(
+        targetId,
+        peer
+    );
+
+
+    localStream
+        .getTracks()
+        .forEach(
+            track => {
+
+                peer.addTrack(
+                    track,
+                    localStream
+                );
+
+            }
+        );
+
+
+    peer.onicecandidate =
+        event => {
+
+            if (
+                !event.candidate
+            ) {
+
+                return;
+
+            }
+
+
+            socket.emit(
+                "ice-candidate",
+                {
+
+                    target:
+                        targetId,
+
+                    flowId:
+                        socket.id,
+
+                    candidate:
+                        event.candidate
+
+                }
+            );
+
+        };
+
+
+    const offer =
+        await peer.createOffer();
+
+
+    await peer.setLocalDescription(
+        offer
+    );
+
+
+    socket.emit(
+        "offer",
+        {
+
+            target:
+                targetId,
+
+            flowId:
+                socket.id,
+
+            offer:
+                peer.localDescription
+
+        }
+    );
+
+}
+
+
+// =====================================================
+// OFERTA RECEBIDA
+// =====================================================
+
+socket.on(
+    "offer",
+    async data => {
+
+        const ownerId =
+            data.flowId ||
+            data.sender;
+
+
+        if (
+            inboundPeers.has(
+                ownerId
+            )
+        ) {
+
+            try {
+
+                inboundPeers
+                    .get(ownerId)
+                    .close();
+
+            } catch {}
+
+        }
+
+
+        const peer =
+            new RTCPeerConnection(
+                rtcConfig
+            );
+
+
+        inboundPeers.set(
+            ownerId,
+            peer
+        );
+
+
+        peer.ontrack =
+            event => {
+
+                let stream =
+                    event.streams?.[0];
+
+
+                if (!stream) {
+
+                    stream =
+                        streams.get(
+                            ownerId
+                        ) ||
+                        new MediaStream();
+
+
+                    stream.addTrack(
+                        event.track
+                    );
+
+                }
+
+
+                addStream(
+                    ownerId,
+                    stream
+                );
+
+            };
+
+
+        peer.onicecandidate =
+            event => {
+
+                if (
+                    !event.candidate
+                ) {
+
+                    return;
+
+                }
+
+
+                socket.emit(
+                    "ice-candidate",
+                    {
+
+                        target:
+                            data.sender,
+
+                        flowId:
+                            ownerId,
+
+                        candidate:
+                            event.candidate
+
+                    }
+                );
+
+            };
+
+
+        try {
+
+            await peer.setRemoteDescription(
+                new RTCSessionDescription(
+                    data.offer
+                )
+            );
+
+
+            await flushCandidates(
+                inboundIce,
+                ownerId,
+                peer
+            );
+
+
+            const answer =
+                await peer.createAnswer();
+
+
+            await peer.setLocalDescription(
+                answer
+            );
+
+
+            socket.emit(
+                "answer",
+                {
+
+                    target:
+                        data.sender,
+
+                    flowId:
+                        ownerId,
+
+                    answer:
+                        peer.localDescription
+
+                }
+            );
+
+
+        } catch (error) {
+
+            console.error(
+                "Erro na oferta:",
+                error
+            );
+
+        }
+
+    }
+);
+
+
+// =====================================================
+// ANSWER
+// =====================================================
+
+socket.on(
+    "answer",
+    async data => {
+
+        if (
+            data.flowId !==
+            socket.id
+        ) {
+
+            return;
+
+        }
+
+
+        const peer =
+            outboundPeers.get(
+                data.sender
+            );
+
+
+        if (!peer) {
+            return;
+        }
+
+
+        try {
+
+            await peer.setRemoteDescription(
+                new RTCSessionDescription(
+                    data.answer
+                )
+            );
+
+
+            await flushCandidates(
+                outboundIce,
+                data.sender,
+                peer
+            );
+
+
+        } catch (error) {
+
+            console.error(
+                "Erro na resposta:",
+                error
+            );
+
+        }
+
+    }
+);
+
+
+// =====================================================
+// ICE
+// =====================================================
+
+socket.on(
+    "ice-candidate",
+    async data => {
+
+        const candidate =
+            new RTCIceCandidate(
+                data.candidate
+            );
+
+
+        if (
+            data.flowId ===
+            socket.id
+        ) {
+
+            const peer =
+                outboundPeers.get(
+                    data.sender
+                );
+
+
+            if (
+                !peer ||
+                !peer.remoteDescription
+            ) {
+
+                queueCandidate(
+                    outboundIce,
+                    data.sender,
+                    candidate
+                );
+
+                return;
+
+            }
+
+
+            try {
+
+                await peer.addIceCandidate(
+                    candidate
+                );
+
+            } catch {}
+
+
+            return;
+
+        }
+
+
+        const ownerId =
+            data.flowId;
+
+
+        const peer =
+            inboundPeers.get(
+                ownerId
+            );
+
+
+        if (
+            !peer ||
+            !peer.remoteDescription
+        ) {
+
+            queueCandidate(
+                inboundIce,
+                ownerId,
+                candidate
+            );
+
+            return;
+
+        }
+
+
+        try {
+
+            await peer.addIceCandidate(
+                candidate
+            );
+
+        } catch {}
+
+    }
+);
+
+
+// =====================================================
+// NOVO USUÁRIO
+// =====================================================
+
+socket.on(
+    "user-joined",
+    user => {
+
+        if (
+            localStream
+        ) {
+
+            startOutbound(
+                user.id
+            );
+
+        }
+
+    }
+);
+
+
+// =====================================================
+// USUÁRIO SAIU
+// =====================================================
+
+socket.on(
+    "user-left",
+    userId => {
+
+        if (
+            outboundPeers.has(
+                userId
+            )
+        ) {
+
+            try {
+
+                outboundPeers
+                    .get(userId)
+                    .close();
+
+            } catch {}
+
+
+            outboundPeers.delete(
+                userId
+            );
+
+        }
+
+
+        if (
+            inboundPeers.has(
+                userId
+            )
+        ) {
+
+            try {
+
+                inboundPeers
+                    .get(userId)
+                    .close();
+
+            } catch {}
+
+
+            inboundPeers.delete(
+                userId
+            );
+
+        }
+
+
+        removeStream(
+            userId
+        );
+
+    }
+);
+
+
+// =====================================================
+// OUTRA PESSOA PAROU
+// =====================================================
+
+socket.on(
+    "stream-stopped",
+    ownerId => {
+
+        if (
+            inboundPeers.has(
+                ownerId
+            )
+        ) {
+
+            try {
+
+                inboundPeers
+                    .get(ownerId)
+                    .close();
+
+            } catch {}
+
+
+            inboundPeers.delete(
+                ownerId
+            );
+
+        }
+
+
+        removeStream(
+            ownerId
+        );
+
+    }
+);
+
+
+// =====================================================
+// COMPARTILHAR TELA + ÁUDIO
+// =====================================================
+
+shareButton.onclick =
+    async () => {
+
+        if (
+            localStream
+        ) {
+
+            return;
+
+        }
+
+
+        try {
+
+            localStream =
+                await navigator
+                    .mediaDevices
+                    .getDisplayMedia({
+
+                        video: {
+
+                            width: {
+                                ideal: 1280
+                            },
+
+                            height: {
+                                ideal: 720
+                            },
+
+                            frameRate: {
+                                ideal: 30
+                            }
+
+                        },
+
+                        audio:
+                            true
+
+                    });
+
+
+            addStream(
+                socket.id,
+                localStream
+            );
+
+
+            shareButton.style.display =
+                "none";
+
+
+            stopButton.style.display =
+                "inline-block";
+
+
+            statusElement.textContent =
+                "🟢 Você está transmitindo";
+
+
+            socket.emit(
+                "stream-started"
+            );
+
+
+            participants.forEach(
+                user => {
+
+                    if (
+                        user.id !==
+                        socket.id
+                    ) {
+
+                        startOutbound(
+                            user.id
+                        );
+
+                    }
+
+                }
+            );
+
+
+            const track =
+                localStream
+                    .getVideoTracks()[0];
+
+
+            if (track) {
+
+                track.onended =
+                    stopSharing;
+
+            }
+
+
+            if (
+                localStream
+                    .getAudioTracks()
+                    .length === 0
+            ) {
+
+                statusElement.textContent =
+                    "🟢 Transmitindo • sem áudio da tela";
+
+            }
+
+
+        } catch (error) {
+
+            console.error(
+                error
+            );
+
+
+            localStream =
+                null;
+
+        }
+
+    };
+
+
+// =====================================================
+// PARAR SOMENTE MINHA TRANSMISSÃO
+// =====================================================
+
+function stopSharing() {
+
+    if (!localStream) {
+        return;
+    }
+
+
+    const oldStream =
+        localStream;
+
+
+    localStream =
+        null;
+
+
+    oldStream
+        .getTracks()
+        .forEach(
+            track => {
+
+                track.onended =
+                    null;
+
+                track.stop();
+
+            }
+        );
+
+
+    outboundPeers.forEach(
+        peer => {
+
+            try {
+
+                peer.close();
+
+            } catch {}
+
+        }
+    );
+
+
+    outboundPeers.clear();
+
+
+    outboundIce.clear();
+
+
+    // NÃO mexer nas transmissões
+    // que você está recebendo.
+
+    removeStream(
+        socket.id
+    );
+
+
+    socket.emit(
+        "stream-stopped"
+    );
+
+
+    shareButton.style.display =
+        "inline-block";
+
+
+    stopButton.style.display =
+        "none";
+
+
+    statusElement.textContent =
+        "Você parou sua transmissão";
+
+}
+
+
+stopButton.onclick =
+    stopSharing;
+
+
+// =====================================================
+// CONVITE
+// =====================================================
+
+document.getElementById(
+    "copy"
+).onclick =
+    async () => {
+
+        const invite =
+            location.origin +
+            "/room/" +
+            roomCode;
+
+
+        try {
+
+            await navigator
+                .clipboard
+                .writeText(
+                    invite
+                );
+
+
+            statusElement.textContent =
+                "✅ Convite copiado";
+
+
+        } catch {
+
+            prompt(
+                "Copie o convite:",
+                invite
+            );
+
+        }
+
+    };
+
+
+// =====================================================
+// SAIR
+// =====================================================
+
+document.getElementById(
+    "leave"
+).onclick =
+    () => {
+
+        window.location.href =
+            "/";
+
+    };
+
+
+// =====================================================
+// CARREGAR PERFIL
+// =====================================================
+
+loadProfile();
+
+</script>
+
+</body>
+
+</html>

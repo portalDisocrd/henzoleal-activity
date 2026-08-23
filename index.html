@@ -1,0 +1,811 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+>
+
+<title>LEAL ACTIVITY</title>
+
+<style>
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+
+    margin: 0;
+
+    min-height: 100vh;
+
+    background:
+        radial-gradient(
+            circle at 15% 20%,
+            rgba(88, 101, 242, .32),
+            transparent 34%
+        ),
+        radial-gradient(
+            circle at 85% 80%,
+            rgba(65, 184, 131, .16),
+            transparent 34%
+        ),
+        #08080b;
+
+    color: white;
+
+    font-family:
+        Arial,
+        Helvetica,
+        sans-serif;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+}
+
+
+.app {
+
+    width: min(
+        1050px,
+        92%
+    );
+
+    display: grid;
+
+    grid-template-columns:
+        1.1fr
+        .9fr;
+
+    gap: 50px;
+
+    align-items: center;
+
+}
+
+
+@media(max-width:800px) {
+
+    .app {
+
+        grid-template-columns:
+            1fr;
+
+    }
+
+}
+
+
+.hero-badge {
+
+    display: inline-flex;
+
+    align-items: center;
+
+    gap: 7px;
+
+    padding: 8px 13px;
+
+    border-radius: 999px;
+
+    background:
+        rgba(
+            88,
+            101,
+            242,
+            .12
+        );
+
+    border:
+        1px solid
+        rgba(
+            88,
+            101,
+            242,
+            .35
+        );
+
+    color: #aeb5ff;
+
+    font-size: 13px;
+
+}
+
+
+.hero h1 {
+
+    font-size:
+        clamp(
+            48px,
+            7vw,
+            82px
+        );
+
+    margin:
+        18px 0;
+
+    line-height: .95;
+
+    letter-spacing: -5px;
+
+}
+
+
+.hero h1 span {
+
+    color: #7c83ff;
+
+}
+
+
+.hero p {
+
+    color: #a1a1aa;
+
+    font-size: 17px;
+
+    line-height: 1.6;
+
+    max-width: 530px;
+
+}
+
+
+.preview {
+
+    margin-top: 25px;
+
+    display: flex;
+
+    gap: 9px;
+
+}
+
+
+.preview-item {
+
+    background: #18181e;
+
+    border:
+        1px solid
+        #292930;
+
+    padding:
+        9px 12px;
+
+    border-radius: 9px;
+
+    color: #a1a1aa;
+
+    font-size: 12px;
+
+}
+
+
+.panel {
+
+    padding: 28px;
+
+    border-radius: 22px;
+
+    background:
+        rgba(
+            18,
+            18,
+            23,
+            .9
+        );
+
+    border:
+        1px solid
+        rgba(
+            255,
+            255,
+            255,
+            .08
+        );
+
+    box-shadow:
+        0 30px 80px
+        rgba(
+            0,
+            0,
+            0,
+            .45
+        );
+
+}
+
+
+.panel h2 {
+
+    margin-top: 0;
+
+}
+
+
+.label {
+
+    display: block;
+
+    color: #a1a1aa;
+
+    font-size: 12px;
+
+    margin:
+        17px 0 7px;
+
+}
+
+
+input {
+
+    width: 100%;
+
+    border:
+        1px solid
+        #303038;
+
+    background: #0d0d11;
+
+    color: white;
+
+    border-radius: 10px;
+
+    padding: 14px;
+
+    outline: none;
+
+    font-size: 15px;
+
+}
+
+
+input:focus {
+
+    border-color:
+        #5865f2;
+
+}
+
+
+.avatars {
+
+    display: grid;
+
+    grid-template-columns:
+        repeat(
+            6,
+            1fr
+        );
+
+    gap: 7px;
+
+}
+
+
+.avatar {
+
+    aspect-ratio: 1;
+
+    border-radius: 10px;
+
+    border:
+        2px solid
+        transparent;
+
+    background: #202027;
+
+    font-size: 22px;
+
+    cursor: pointer;
+
+}
+
+
+.avatar.selected {
+
+    border-color:
+        #5865f2;
+
+    background:
+        #292b50;
+
+}
+
+
+.primary,
+.secondary {
+
+    width: 100%;
+
+    border: 0;
+
+    border-radius: 11px;
+
+    padding: 14px;
+
+    margin-top: 12px;
+
+    color: white;
+
+    font-size: 15px;
+
+    font-weight: bold;
+
+    cursor: pointer;
+
+}
+
+
+.primary {
+
+    background:
+        linear-gradient(
+            135deg,
+            #5865f2,
+            #6d63ff
+        );
+
+}
+
+
+.secondary {
+
+    background: #27272e;
+
+}
+
+
+.divider {
+
+    display: flex;
+
+    align-items: center;
+
+    color: #52525b;
+
+    gap: 10px;
+
+    margin: 18px 0 5px;
+
+    font-size: 11px;
+
+}
+
+
+.divider::before,
+.divider::after {
+
+    content: "";
+
+    height: 1px;
+
+    background: #292930;
+
+    flex: 1;
+
+}
+
+</style>
+
+</head>
+
+
+<body>
+
+
+<div class="app">
+
+
+<section class="hero">
+
+    <div class="hero-badge">
+
+        🟢 LEAL ACTIVITY
+
+    </div>
+
+
+    <h1>
+
+        Compartilhe.<br>
+
+        <span>
+            Assista.
+        </span>
+
+        Converse.
+
+    </h1>
+
+
+    <p>
+
+        Crie uma sala privada,
+        convide seus amigos e
+        compartilhe telas em tempo real.
+
+    </p>
+
+
+    <div class="preview">
+
+        <div class="preview-item">
+            🖥️ 720p
+        </div>
+
+        <div class="preview-item">
+            👥 Multiusuário
+        </div>
+
+        <div class="preview-item">
+            ⚡ WebRTC
+        </div>
+
+    </div>
+
+</section>
+
+
+<section class="panel">
+
+    <h2>
+        Seu perfil
+    </h2>
+
+
+    <span class="label">
+        Nome
+    </span>
+
+
+    <input
+        id="name"
+        type="text"
+        maxlength="24"
+        placeholder="Como devemos chamar você?"
+    >
+
+
+    <span class="label">
+        Avatar
+    </span>
+
+
+    <div
+        id="avatars"
+        class="avatars"
+    >
+
+        <button class="avatar selected">
+            😎
+        </button>
+
+        <button class="avatar">
+            👾
+        </button>
+
+        <button class="avatar">
+            🐺
+        </button>
+
+        <button class="avatar">
+            🦊
+        </button>
+
+        <button class="avatar">
+            🐉
+        </button>
+
+        <button class="avatar">
+            🤖
+        </button>
+
+    </div>
+
+
+    <button
+        id="create"
+        class="primary"
+    >
+
+        🚀 Criar uma sala
+
+    </button>
+
+
+    <div class="divider">
+        OU ENTRE EM UMA SALA
+    </div>
+
+
+    <input
+        id="roomCode"
+        type="text"
+        maxlength="8"
+        placeholder="Código da sala"
+    >
+
+
+    <button
+        id="join"
+        class="secondary"
+    >
+
+        Entrar na sala
+
+    </button>
+
+</section>
+
+
+</div>
+
+
+<script>
+
+let selectedAvatar =
+    "😎";
+
+
+const nameInput =
+    document.getElementById(
+        "name"
+    );
+
+
+const roomInput =
+    document.getElementById(
+        "roomCode"
+    );
+
+
+// =====================================================
+// AVATAR
+// =====================================================
+
+document
+    .querySelectorAll(
+        ".avatar"
+    )
+    .forEach(button => {
+
+        button.onclick =
+            () => {
+
+                document
+                    .querySelectorAll(
+                        ".avatar"
+                    )
+                    .forEach(item => {
+
+                        item.classList.remove(
+                            "selected"
+                        );
+
+                    });
+
+
+                button.classList.add(
+                    "selected"
+                );
+
+
+                selectedAvatar =
+                    button.textContent
+                        .trim();
+
+            };
+
+    });
+
+
+// =====================================================
+// PERFIL
+// =====================================================
+
+function saveProfile() {
+
+    const name =
+        nameInput.value.trim();
+
+
+    if (!name) {
+
+        alert(
+            "Digite seu nome."
+        );
+
+        nameInput.focus();
+
+        return false;
+
+    }
+
+
+    sessionStorage.setItem(
+        "leal_profile",
+        JSON.stringify({
+
+            name:
+                name.substring(
+                    0,
+                    24
+                ),
+
+            avatar:
+                selectedAvatar
+
+        })
+    );
+
+
+    return true;
+
+}
+
+
+// =====================================================
+// CRIAR
+// =====================================================
+
+document.getElementById(
+    "create"
+).onclick =
+    async () => {
+
+        if (!saveProfile()) {
+            return;
+        }
+
+
+        const button =
+            document.getElementById(
+                "create"
+            );
+
+
+        button.disabled =
+            true;
+
+
+        button.textContent =
+            "Criando sala...";
+
+
+        try {
+
+            const response =
+                await fetch(
+                    "/api/rooms",
+                    {
+                        method:
+                            "POST"
+                    }
+                );
+
+
+            const data =
+                await response.json();
+
+
+            if (
+                !data.success
+            ) {
+
+                throw new Error(
+                    "Erro"
+                );
+
+            }
+
+
+            window.location.href =
+                "/room/" +
+                data.code;
+
+
+        } catch {
+
+            alert(
+                "Não foi possível criar a sala."
+            );
+
+
+            button.disabled =
+                false;
+
+
+            button.textContent =
+                "🚀 Criar uma sala";
+
+        }
+
+    };
+
+
+// =====================================================
+// ENTRAR
+// =====================================================
+
+document.getElementById(
+    "join"
+).onclick =
+    async () => {
+
+        if (!saveProfile()) {
+            return;
+        }
+
+
+        const code =
+            roomInput.value
+                .trim()
+                .toUpperCase();
+
+
+        if (!code) {
+
+            alert(
+                "Digite o código da sala."
+            );
+
+            return;
+
+        }
+
+
+        try {
+
+            const response =
+                await fetch(
+                    "/api/rooms/" +
+                    encodeURIComponent(
+                        code
+                    )
+                );
+
+
+            if (!response.ok) {
+
+                alert(
+                    "Sala não encontrada."
+                );
+
+                return;
+
+            }
+
+
+            window.location.href =
+                "/room/" +
+                encodeURIComponent(
+                    code
+                );
+
+
+        } catch {
+
+            alert(
+                "Erro ao entrar na sala."
+            );
+
+        }
+
+    };
+
+</script>
+
+</body>
+
+</html>
