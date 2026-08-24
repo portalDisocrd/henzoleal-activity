@@ -797,6 +797,38 @@ setInterval(
 ).unref();
 
 
+
+// =====================================================
+// DISCORD ACTIVITY
+// =====================================================
+
+app.use(
+    "/assets",
+    express.static(
+        path.join(
+            __dirname,
+            "dist",
+            "assets"
+        )
+    )
+);
+
+app.get(
+    "/activity",
+    (req, res) => {
+
+        res.sendFile(
+            path.join(
+                __dirname,
+                "dist",
+                "activity.html"
+            )
+        );
+
+    }
+);
+
+
 // =====================================================
 // HOME
 // =====================================================
