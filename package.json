@@ -6,7 +6,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "activity:dev": "vite --host 0.0.0.0",
-    "activity:build": "vite build"
+    "activity:build": "vite build && node copy-dist.js"
   },
   "keywords": [],
   "author": "",
