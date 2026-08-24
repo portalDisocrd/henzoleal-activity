@@ -5,6 +5,24 @@ const CLIENT_ID = "1541114643693572128";
 const statusElement =
     document.getElementById("status");
 
+const connectionElement =
+    document.getElementById("discordConnection");
+
+const nameElement =
+    document.getElementById("discordName");
+
+const userInfoElement =
+    document.getElementById("discordUserInfo");
+
+const avatarElement =
+    document.getElementById("discordAvatar");
+
+const createButton =
+    document.getElementById("createRoom");
+
+const joinButton =
+    document.getElementById("joinRoom");
+
 const params =
     new URLSearchParams(
         window.location.search
@@ -13,41 +31,33 @@ const params =
 const frameId =
     params.get("frame_id");
 
-const instanceId =
-    params.get("instance_id");
+const discordSdk =
+    new DiscordSDK(CLIENT_ID);
 
-const platform =
-    params.get("platform");
 
-console.log(
-    "URL Activity:",
-    window.location.href
-);
+function setDisconnected(message) {
 
-console.log(
-    "frame_id:",
-    frameId
-);
+    connectionElement.textContent =
+        "Erro";
 
-console.log(
-    "instance_id:",
-    instanceId
-);
+    statusElement.textContent =
+        message;
 
-console.log(
-    "platform:",
-    platform
-);
+    createButton.disabled =
+        true;
+
+    joinButton.disabled =
+        true;
+
+}
+
 
 async function start() {
 
     if (!frameId) {
 
-        statusElement.textContent =
-            "Discord abriu a página sem frame_id";
-
-        console.error(
-            "Activity iniciada sem frame_id."
+        setDisconnected(
+            "Abra esta página através da Activity do Discord."
         );
 
         return;
@@ -56,29 +66,141 @@ async function start() {
 
     try {
 
-        const discordSdk =
-            new DiscordSDK(
-                CLIENT_ID
-            );
-
         await discordSdk.ready();
 
-        console.log(
-            "HL Activity conectada ao Discord."
-        );
+        connectionElement.textContent =
+            "🟢 Discord conectado";
 
         statusElement.textContent =
-            "🟢 Conectado ao Discord";
+            "Autorizando perfil...";
+
+
+        const { code } =
+            await discordSdk.commands.authorize({
+                client_id:
+                    CLIENT_ID,
+
+                response_type:
+                    "code",
+
+                state:
+                    "",
+
+                prompt:
+                    "none",
+
+                scope: [
+                    "identify"
+                ]
+            });
+
+
+        const tokenResponse =
+            await fetch(
+                "/api/token",
+                {
+                    method:
+                        "POST",
+
+                    headers: {
+                        "Content-Type":
+                            "application/json"
+                    },
+
+                    body:
+                        JSON.stringify({
+                            code
+                        })
+                }
+            );
+
+
+        const tokenData =
+            await tokenResponse.json();
+
+
+        if (
+            !tokenResponse.ok ||
+            !tokenData.access_token
+        ) {
+
+            throw new Error(
+                tokenData.message ||
+                "Falha ao obter token."
+            );
+
+        }
+
+
+        const auth =
+            await discordSdk.commands.authenticate({
+                access_token:
+                    tokenData.access_token
+            });
+
+
+        if (
+            !auth ||
+            !auth.user
+        ) {
+
+            throw new Error(
+                "Discord não retornou o usuário."
+            );
+
+        }
+
+
+        const user =
+            auth.user;
+
+
+        nameElement.textContent =
+            user.global_name ||
+            user.username ||
+            "Usuário Discord";
+
+
+        userInfoElement.textContent =
+            `@${user.username}`;
+
+
+        if (
+            user.avatar
+        ) {
+
+            avatarElement.src =
+                `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png?size=128`;
+
+        }
+
+
+        statusElement.textContent =
+            "Perfil conectado com sucesso.";
+
+        createButton.disabled =
+            false;
+
+        joinButton.disabled =
+            false;
+
+
+        console.log(
+            "Usuário Discord:",
+            user
+        );
+
 
     } catch (error) {
 
         console.error(
-            "Erro ao iniciar HL Activity:",
+            "Erro ao autenticar Discord:",
             error
         );
 
-        statusElement.textContent =
-            "🔴 Erro ao conectar ao Discord";
+        setDisconnected(
+            "Não foi possível carregar seu perfil do Discord."
+        );
 
     }
 

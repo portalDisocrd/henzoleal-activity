@@ -2,82 +2,594 @@
 <html lang="pt-BR">
 
 <head>
-    <meta charset="UTF-8">
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0"
-    >
 
-    <title>HL Activity • Discord</title>
+<meta charset="UTF-8">
 
-    <link
-        rel="icon"
-        type="image/png"
-        href="/assets/logo-hl-TjQg0FAA.png"
-    >
+<meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+>
 
-    <style>
+<title>HL Activity • Discord</title>
 
-        * {
-            box-sizing: border-box;
-        }
+<link
+    rel="icon"
+    type="image/png"
+    href="/assets/logo-hl-TjQg0FAA.png"
+>
 
-        body {
-            margin: 0;
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: #09090c;
-            color: white;
-            font-family: Arial, Helvetica, sans-serif;
-        }
+<style>
 
-        .box {
-            text-align: center;
-            padding: 30px;
-        }
+* {
+    box-sizing: border-box;
+}
 
-        .logo {
-            width: 90px;
-            height: 90px;
-            border-radius: 50%;
-            object-fit: cover;
-            margin-bottom: 18px;
-        }
+body {
 
-        h1 {
-            margin: 0 0 10px;
-        }
+    margin: 0;
 
-        #status {
-            color: #a1a1aa;
-        }
+    min-height: 100vh;
 
-    </style>
+    background:
+        radial-gradient(
+            circle at 15% 20%,
+            rgba(88,101,242,.28),
+            transparent 34%
+        ),
+        #09090c;
 
-  <script type="module" crossorigin src="/assets/activity-8qKzS2N8.js"></script>
+    color: white;
+
+    font-family:
+        Arial,
+        Helvetica,
+        sans-serif;
+
+}
+
+
+/* TOPO */
+
+header {
+
+    height: 68px;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+    padding: 0 22px;
+
+    background:
+        rgba(17,17,22,.94);
+
+    border-bottom:
+        1px solid #292930;
+
+}
+
+
+.brand {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 11px;
+
+}
+
+
+.brand img {
+
+    width: 42px;
+
+    height: 42px;
+
+    border-radius: 50%;
+
+    object-fit: cover;
+
+}
+
+
+.brand-name {
+
+    font-weight: 800;
+
+    font-size: 16px;
+
+    letter-spacing: .5px;
+
+}
+
+
+.discord-status {
+
+    padding: 8px 11px;
+
+    border-radius: 999px;
+
+    background: #18181e;
+
+    border:
+        1px solid #303038;
+
+    color: #a1a1aa;
+
+    font-size: 11px;
+
+}
+
+
+/* CONTEÚDO */
+
+main {
+
+    width:
+        min(
+            1050px,
+            94%
+        );
+
+    margin:
+        0 auto;
+
+    padding:
+        38px 0;
+
+}
+
+
+.hero {
+
+    margin-bottom: 30px;
+
+}
+
+
+.hero h1 {
+
+    margin: 0;
+
+    font-size:
+        clamp(
+            36px,
+            6vw,
+            64px
+        );
+
+    letter-spacing: -3px;
+
+}
+
+
+.hero h1 span {
+
+    color: #747bff;
+
+}
+
+
+.hero p {
+
+    color: #a1a1aa;
+
+    line-height: 1.6;
+
+    max-width: 600px;
+
+}
+
+
+/* GRID */
+
+.grid {
+
+    display: grid;
+
+    grid-template-columns:
+        .8fr
+        1.2fr;
+
+    gap: 18px;
+
+}
+
+
+/* CARDS */
+
+.card {
+
+    background:
+        rgba(
+            18,
+            18,
+            23,
+            .95
+        );
+
+    border:
+        1px solid #292930;
+
+    border-radius: 18px;
+
+    padding: 22px;
+
+}
+
+
+/* PERFIL */
+
+.profile {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 14px;
+
+    margin-top: 16px;
+
+}
+
+
+.profile img {
+
+    width: 58px;
+
+    height: 58px;
+
+    border-radius: 50%;
+
+    background: #292930;
+
+    object-fit: cover;
+
+}
+
+
+.profile-name {
+
+    font-size: 16px;
+
+    font-weight: 800;
+
+}
+
+
+.profile-sub {
+
+    margin-top: 4px;
+
+    color: #71717a;
+
+    font-size: 11px;
+
+}
+
+
+/* SALA */
+
+.label {
+
+    display: block;
+
+    margin:
+        15px 0 7px;
+
+    color: #a1a1aa;
+
+    font-size: 11px;
+
+}
+
+
+input {
+
+    width: 100%;
+
+    padding: 14px;
+
+    border-radius: 10px;
+
+    border:
+        1px solid #303038;
+
+    background: #0d0d11;
+
+    color: white;
+
+    outline: none;
+
+    font-size: 14px;
+
+}
+
+
+input:focus {
+
+    border-color: #5865f2;
+
+}
+
+
+button {
+
+    width: 100%;
+
+    border: 0;
+
+    border-radius: 10px;
+
+    padding: 14px;
+
+    margin-top: 12px;
+
+    color: white;
+
+    font-weight: 800;
+
+    cursor: pointer;
+
+}
+
+
+#createRoom {
+
+    background:
+        linear-gradient(
+            135deg,
+            #5865f2,
+            #746cff
+        );
+
+}
+
+
+#joinRoom {
+
+    background: #29292f;
+
+}
+
+
+button:disabled {
+
+    opacity: .45;
+
+    cursor: not-allowed;
+
+}
+
+
+.divider {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 10px;
+
+    margin: 18px 0 5px;
+
+    color: #52525b;
+
+    font-size: 10px;
+
+}
+
+
+.divider::before,
+.divider::after {
+
+    content: "";
+
+    height: 1px;
+
+    flex: 1;
+
+    background: #292930;
+
+}
+
+
+/* STATUS */
+
+#status {
+
+    margin-top: 16px;
+
+    color: #a1a1aa;
+
+    font-size: 12px;
+
+}
+
+
+/* MOBILE */
+
+@media(max-width: 760px) {
+
+    .grid {
+
+        grid-template-columns:
+            1fr;
+
+    }
+
+
+    main {
+
+        padding-top: 25px;
+
+    }
+
+
+    .hero h1 {
+
+        letter-spacing: -2px;
+
+    }
+
+}
+
+</style>
+
+  <script type="module" crossorigin src="/assets/activity-DFTuVybJ.js"></script>
 </head>
+
 
 <body>
 
-    <div class="box">
+
+<header>
+
+    <div class="brand">
 
         <img
             src="/assets/logo-hl-TjQg0FAA.png"
-            class="logo"
             alt="HL Activity"
         >
 
-        <h1>
+        <div class="brand-name">
             HL ACTIVITY
-        </h1>
+        </div>
+
+    </div>
+
+
+    <div
+        id="discordConnection"
+        class="discord-status"
+    >
+        Conectando...
+    </div>
+
+</header>
+
+
+<main>
+
+
+<section class="hero">
+
+    <h1>
+
+        Sua sala.<br>
+
+        <span>
+            Dentro do Discord.
+        </span>
+
+    </h1>
+
+    <p>
+        Entre com seu perfil do Discord,
+        crie uma sala e compartilhe a experiência
+        com quem estiver com você.
+    </p>
+
+</section>
+
+
+<div class="grid">
+
+
+    <section class="card">
+
+        <strong>
+            Seu perfil
+        </strong>
+
+
+        <div class="profile">
+
+            <img
+                id="discordAvatar"
+                src="/assets/logo-hl-TjQg0FAA.png"
+                alt="Avatar"
+            >
+
+            <div>
+
+                <div
+                    id="discordName"
+                    class="profile-name"
+                >
+                    Carregando perfil...
+                </div>
+
+                <div
+                    id="discordUserInfo"
+                    class="profile-sub"
+                >
+                    Aguardando Discord
+                </div>
+
+            </div>
+
+        </div>
+
 
         <div id="status">
             Conectando ao Discord...
         </div>
 
-    </div>
+    </section>
+
+
+
+    <section class="card">
+
+        <strong>
+            Entrar em uma sala
+        </strong>
+
+
+        <button
+            id="createRoom"
+            disabled
+        >
+            🚀 Criar uma sala
+        </button>
+
+
+        <div class="divider">
+            OU ENTRE COM UM CÓDIGO
+        </div>
+
+
+        <span class="label">
+            Código da sala
+        </span>
+
+
+        <input
+            id="roomCode"
+            maxlength="8"
+            placeholder="Ex: A710A1F8"
+        >
+
+
+        <button
+            id="joinRoom"
+            disabled
+        >
+            Entrar na sala
+        </button>
+
+    </section>
+
+
+</div>
+
+
+</main>
+
+
 
 
 </body>
