@@ -837,13 +837,34 @@ app.get(
     "/",
     (req, res) => {
 
-        res.sendFile(
+        const userAgent =
+            String(
+                req.headers["user-agent"] || ""
+            ).toLowerCase();
 
+        const referer =
+            String(
+                req.headers.referer || ""
+            ).toLowerCase();
+
+        const fromDiscord =
+            userAgent.includes("discord") ||
+            referer.includes("discord.com") ||
+            referer.includes("discordapp.com");
+
+        if (fromDiscord) {
+
+            return res.redirect(
+                "/activity"
+            );
+
+        }
+
+        res.sendFile(
             path.join(
                 __dirname,
                 "index.html"
             )
-
         );
 
     }
