@@ -30,6 +30,17 @@ const {
     ALLOWED_AVATARS
 } = require("./src/config/constants");
 
+const {
+    isPlainObject,
+    normalizeText,
+    isValidRoomCode,
+    sanitizeRoomCode,
+    sanitizeProfile,
+    isValidDescription,
+    isValidCandidate,
+    isValidFlowId
+} = require("./src/utils/validation");
+
 
 // =====================================================
 // SOCKET.IO
@@ -258,110 +269,19 @@ app.use(
 // FUNÇÕES DE SEGURANÇA
 // =====================================================
 
-function isPlainObject(value) {
-
-    return (
-        value !== null &&
-        typeof value ===
-            "object" &&
-        !Array.isArray(value)
-    );
-
-}
 
 
-function normalizeText(
-    value,
-    maxLength
-) {
-
-    return String(
-        value ?? ""
-    )
-        .normalize("NFKC")
-        .replace(
-            /[\u0000-\u001F\u007F]/g,
-            ""
-        )
-        .trim()
-        .substring(
-            0,
-            maxLength
-        );
-
-}
 
 
-function isValidRoomCode(
-    code
-) {
-
-    return (
-        typeof code ===
-            "string" &&
-        /^[A-F0-9]{8}$/.test(
-            code
-        )
-    );
-
-}
 
 
-function sanitizeRoomCode(
-    value
-) {
-
-    const code =
-        normalizeText(
-            value,
-            8
-        )
-        .toUpperCase();
-
-    return code;
-
-}
 
 
-function sanitizeProfile(
-    profile
-) {
-
-    const name =
-        normalizeText(
-            profile?.name ||
-            "Usuário",
-            24
-        );
 
 
-    const requestedAvatar =
-        normalizeText(
-            profile?.avatar ||
-            "😎",
-            8
-        );
 
 
-    const avatar =
-        ALLOWED_AVATARS.has(
-            requestedAvatar
-        )
-            ? requestedAvatar
-            : "😎";
 
-
-    return {
-
-        name:
-            name ||
-            "Usuário",
-
-        avatar
-
-    };
-
-}
 
 
 // =====================================================
@@ -535,133 +455,21 @@ function getSafeTargetSocket(
 // VALIDAR SDP
 // =====================================================
 
-function isValidDescription(
-    description,
-    expectedType
-) {
 
-    if (
-        !isPlainObject(
-            description
-        )
-    ) {
-
-        return false;
-
-    }
-
-
-    if (
-        description.type !==
-        expectedType
-    ) {
-
-        return false;
-
-    }
-
-
-    if (
-        typeof description.sdp !==
-        "string"
-    ) {
-
-        return false;
-
-    }
-
-
-    if (
-        description.sdp.length === 0 ||
-        description.sdp.length >
-            50000
-    ) {
-
-        return false;
-
-    }
-
-
-    return true;
-
-}
 
 
 // =====================================================
 // VALIDAR ICE
 // =====================================================
 
-function isValidCandidate(
-    candidate
-) {
 
-    if (
-        !isPlainObject(
-            candidate
-        )
-    ) {
-
-        return false;
-
-    }
-
-
-    if (
-        typeof candidate.candidate !==
-        "string"
-    ) {
-
-        return false;
-
-    }
-
-
-    if (
-        candidate.candidate.length >
-        5000
-    ) {
-
-        return false;
-
-    }
-
-
-    return true;
-
-}
 
 
 // =====================================================
 // VALIDAR FLOW ID
 // =====================================================
 
-function isValidFlowId(
-    socket,
-    targetId,
-    flowId
-) {
 
-    if (
-        typeof flowId !==
-        "string"
-    ) {
-
-        return false;
-
-    }
-
-
-    // No sistema atual o flowId
-    // precisa representar o transmissor:
-    // ou quem envia ou quem recebe.
-    return (
-        flowId ===
-            socket.id ||
-        flowId ===
-            targetId
-    );
-
-}
 
 
 // =====================================================
