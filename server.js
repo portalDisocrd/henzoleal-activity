@@ -20,44 +20,15 @@ const server = http.createServer(app);
 // CONFIGURAÇÕES
 // =====================================================
 
-const PORT =
-    process.env.PORT || 3000;
-
-const HOST =
-    "0.0.0.0";
-
-
-// Máximo de salas existentes ao mesmo tempo
-const MAX_ROOMS =
-    500;
-
-
-// Máximo de pessoas por sala
-const MAX_USERS_PER_ROOM =
-    20;
-
-
-// Sala criada mas nunca usada expira
-// depois de 30 minutos
-const EMPTY_ROOM_TTL =
-    30 * 60 * 1000;
-
-
-// Limite de tamanho dos eventos Socket.IO
-const MAX_SOCKET_PAYLOAD =
-    64 * 1024;
-
-
-// Avatares permitidos
-const ALLOWED_AVATARS =
-    new Set([
-        "😎",
-        "👾",
-        "🐺",
-        "🦊",
-        "🐉",
-        "🤖"
-    ]);
+const {
+    PORT,
+    HOST,
+    MAX_ROOMS,
+    MAX_USERS_PER_ROOM,
+    EMPTY_ROOM_TTL,
+    MAX_SOCKET_PAYLOAD,
+    ALLOWED_AVATARS
+} = require("./src/config/constants");
 
 
 // =====================================================
