@@ -207,3 +207,270 @@ async function start() {
 }
 
 start();
+
+/* =====================================================
+   SALAS
+===================================================== */
+
+const roomCodeElement =
+    document.getElementById("roomCode");
+
+
+function normalizeRoomCode(value) {
+
+    return String(value || "")
+        .trim()
+        .toUpperCase()
+        .replace(/[^A-F0-9]/g, "")
+        .slice(0, 8);
+
+}
+
+
+function openRoom(code) {
+
+    const safeCode =
+        normalizeRoomCode(code);
+
+    if (safeCode.length !== 8) {
+
+        statusElement.textContent =
+            "Código de sala inválido.";
+
+        return;
+
+    }
+
+    statusElement.textContent =
+        "Entrando na sala...";
+
+    window.location.href =
+        `/room/${safeCode}`;
+
+}
+
+
+/* =====================================================
+   CRIAR SALA
+===================================================== */
+
+createButton.addEventListener(
+    "click",
+    async () => {
+
+        if (createButton.disabled) {
+            return;
+        }
+
+        createButton.disabled =
+            true;
+
+        joinButton.disabled =
+            true;
+
+        statusElement.textContent =
+            "Criando sala...";
+
+        try {
+
+            const response =
+                await fetch(
+                    "/api/rooms",
+                    {
+                        method:
+                            "POST",
+
+                        headers: {
+                            "Accept":
+                                "application/json"
+                        }
+                    }
+                );
+
+
+            const data =
+                await response.json();
+
+
+            if (
+                !response.ok ||
+                !data.success ||
+                !data.code
+            ) {
+
+                throw new Error(
+                    data.message ||
+                    "Não foi possível criar a sala."
+                );
+
+            }
+
+
+            openRoom(
+                data.code
+            );
+
+
+        } catch (error) {
+
+            console.error(
+                "Erro ao criar sala:",
+                error
+            );
+
+            statusElement.textContent =
+                error.message ||
+                "Não foi possível criar a sala.";
+
+            createButton.disabled =
+                false;
+
+            joinButton.disabled =
+                false;
+
+        }
+
+    }
+);
+
+
+/* =====================================================
+   ENTRAR EM SALA
+===================================================== */
+
+joinButton.addEventListener(
+    "click",
+    async () => {
+
+        if (joinButton.disabled) {
+            return;
+        }
+
+
+        const code =
+            normalizeRoomCode(
+                roomCodeElement.value
+            );
+
+
+        roomCodeElement.value =
+            code;
+
+
+        if (code.length !== 8) {
+
+            statusElement.textContent =
+                "Digite um código de sala válido.";
+
+            roomCodeElement.focus();
+
+            return;
+
+        }
+
+
+        createButton.disabled =
+            true;
+
+        joinButton.disabled =
+            true;
+
+        statusElement.textContent =
+            "Verificando sala...";
+
+
+        try {
+
+            const response =
+                await fetch(
+                    `/api/rooms/${encodeURIComponent(code)}`,
+                    {
+                        headers: {
+                            "Accept":
+                                "application/json"
+                        }
+                    }
+                );
+
+
+            const data =
+                await response.json();
+
+
+            if (
+                !response.ok ||
+                !data.success
+            ) {
+
+                throw new Error(
+                    data.message ||
+                    "Sala não encontrada."
+                );
+
+            }
+
+
+            openRoom(
+                data.code ||
+                code
+            );
+
+
+        } catch (error) {
+
+            console.error(
+                "Erro ao entrar na sala:",
+                error
+            );
+
+            statusElement.textContent =
+                error.message ||
+                "Não foi possível entrar na sala.";
+
+            createButton.disabled =
+                false;
+
+            joinButton.disabled =
+                false;
+
+        }
+
+    }
+);
+
+
+/* =====================================================
+   INPUT DO CODIGO
+===================================================== */
+
+roomCodeElement.addEventListener(
+    "input",
+    () => {
+
+        roomCodeElement.value =
+            normalizeRoomCode(
+                roomCodeElement.value
+            );
+
+    }
+);
+
+
+roomCodeElement.addEventListener(
+    "keydown",
+    event => {
+
+        if (
+            event.key === "Enter" &&
+            !joinButton.disabled
+        ) {
+
+            event.preventDefault();
+
+            joinButton.click();
+
+        }
+
+    }
+);
+
