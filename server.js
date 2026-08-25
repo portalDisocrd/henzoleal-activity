@@ -46,6 +46,10 @@ const {
     getParticipants
 } = require("./src/utils/room-utils");
 
+const {
+    createRoomService
+} = require("./src/services/room-service");
+
 
 // =====================================================
 // SOCKET.IO
@@ -73,8 +77,14 @@ const io =
 // SALAS
 // =====================================================
 
-const rooms =
-    new Map();
+const roomService =
+    createRoomService({
+        maxRooms:
+            MAX_ROOMS,
+
+        emptyRoomTtl:
+            EMPTY_ROOM_TTL
+    });
 
 
 // =====================================================
@@ -308,7 +318,7 @@ function updateParticipants(
 ) {
 
     const room =
-        rooms.get(
+        roomService.get(
             roomCode
         );
 
@@ -496,38 +506,18 @@ function allowSocketEvent(
 setInterval(
     () => {
 
-        const now =
-            Date.now();
+        const removed =
+            roomService.cleanupExpired();
 
-
-        for (
-            const [
-                code,
-                room
-            ]
-            of rooms
-        ) {
-
-            if (
-                room.users.size ===
-                    0 &&
-                now -
-                    room.createdAt >
-                    EMPTY_ROOM_TTL
-            ) {
-
-                rooms.delete(
-                    code
-                );
-
+        removed.forEach(
+            code => {
 
                 console.log(
                     `Sala expirada: ${code}`
                 );
 
             }
-
-        }
+        );
 
     },
 
@@ -715,43 +705,23 @@ app.post(
 
     (req, res) => {
 
-        if (
-            rooms.size >=
-            MAX_ROOMS
-        ) {
+        const created =
+            roomService.create();
+
+        if (!created.success) {
 
             return res
                 .status(503)
                 .json({
-
-                    success:
-                        false,
-
+                    success: false,
                     message:
-                        "Limite temporário de salas atingido."
-
+                        "Limite temporario de salas atingido."
                 });
 
         }
 
-
         const code =
-            generateRoomCode(rooms);
-
-
-        rooms.set(
-            code,
-            {
-
-                createdAt:
-                    Date.now(),
-
-                users:
-                    new Map()
-
-            }
-        );
-
+            created.code;
 
         console.log(
             "Sala criada:",
@@ -811,7 +781,7 @@ app.get(
 
 
         const room =
-            rooms.get(
+            roomService.get(
                 code
             );
 
@@ -870,7 +840,7 @@ app.get(
             !isValidRoomCode(
                 code
             ) ||
-            !rooms.has(code)
+            !roomService.has(code)
         ) {
 
             return res
@@ -1056,7 +1026,7 @@ io.on(
 
 
                 const room =
-                    rooms.get(
+                    roomService.get(
                         roomCode
                     );
 
@@ -1206,7 +1176,7 @@ io.on(
 
 
                 const room =
-                    rooms.get(
+                    roomService.get(
                         roomCode
                     );
 
@@ -1273,7 +1243,7 @@ io.on(
 
 
                 const room =
-                    rooms.get(
+                    roomService.get(
                         roomCode
                     );
 
@@ -1636,7 +1606,7 @@ io.on(
 
 
                 const room =
-                    rooms.get(
+                    roomService.get(
                         roomCode
                     );
 
@@ -1679,19 +1649,14 @@ io.on(
 
 
                 if (
-                    room.users.size ===
-                    0
-                ) {
-
-                    rooms.delete(
+                    roomService.removeIfEmpty(
                         roomCode
-                    );
-
+                    )
+                ) {
 
                     console.log(
                         `Sala ${roomCode} encerrada`
                     );
-
 
                     return;
 
