@@ -50,6 +50,10 @@ const {
     createRoomService
 } = require("./src/services/room-service");
 
+const {
+    createParticipantManager
+} = require("./src/socket/participants");
+
 
 // =====================================================
 // SOCKET.IO
@@ -85,6 +89,13 @@ const roomService =
         emptyRoomTtl:
             EMPTY_ROOM_TTL
     });
+
+const {
+    updateParticipants
+} = createParticipantManager({
+    io,
+    roomService
+});
 
 
 // =====================================================
@@ -313,34 +324,7 @@ app.use(
 
 
 
-function updateParticipants(
-    roomCode
-) {
 
-    const room =
-        roomService.get(
-            roomCode
-        );
-
-
-    if (!room) {
-        return;
-    }
-
-
-    io.to(
-        roomCode
-    ).emit(
-
-        "participants-update",
-
-        getParticipants(
-            room
-        )
-
-    );
-
-}
 
 
 // =====================================================
