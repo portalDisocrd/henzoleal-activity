@@ -114,6 +114,9 @@ const io =
         server,
         {
 
+            path:
+                "/api/socket.io",
+
             maxHttpBufferSize:
                 MAX_SOCKET_PAYLOAD,
 

@@ -14,7 +14,7 @@
 
 <link rel="icon" type="image/png" href="/logo-hl.png?v=3">
 
-<script src="/socket.io/socket.io.js"></script>
+<script src="/api/socket.io/socket.io.js"></script>
 
 <style>
 
@@ -728,7 +728,9 @@ Entrar
 // ELEMENTOS
 // =====================================================
 
-const socket = io();
+const socket = io({
+    path: "/api/socket.io"
+});
 
 
 const roomCode =
