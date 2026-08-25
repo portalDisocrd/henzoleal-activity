@@ -3,7 +3,6 @@ const http = require("http");
 const path = require("path");
 const crypto = require("crypto");
 const helmet = require("helmet");
-const rateLimit = require("express-rate-limit");
 const { Server } = require("socket.io");
 
 
@@ -90,6 +89,10 @@ const {
     registerAuthRoutes
 } = require("./src/routes/auth-routes");
 
+const {
+    createRateLimiters
+} = require("./src/middleware/rate-limiters");
+
 
 // =====================================================
 // SOCKET.IO
@@ -125,6 +128,11 @@ const roomService =
         emptyRoomTtl:
             EMPTY_ROOM_TTL
     });
+
+const {
+    apiLimiter,
+    createRoomLimiter
+} = createRateLimiters();
 
 const {
     updateParticipants
@@ -255,32 +263,7 @@ app.use(
 
 
 // Rate limit geral da API
-const apiLimiter =
-    rateLimit({
 
-        windowMs:
-            15 * 60 * 1000,
-
-        limit:
-            300,
-
-        standardHeaders:
-            "draft-8",
-
-        legacyHeaders:
-            false,
-
-        message: {
-
-            success:
-                false,
-
-            message:
-                "Muitas requisições. Aguarde um pouco."
-
-        }
-
-    });
 
 
 app.use(
@@ -290,32 +273,7 @@ app.use(
 
 
 // Limite específico para criação de sala
-const createRoomLimiter =
-    rateLimit({
 
-        windowMs:
-            15 * 60 * 1000,
-
-        limit:
-            20,
-
-        standardHeaders:
-            "draft-8",
-
-        legacyHeaders:
-            false,
-
-        message: {
-
-            success:
-                false,
-
-            message:
-                "Muitas salas foram criadas. Aguarde alguns minutos."
-
-        }
-
-    });
 
 
 // =====================================================
