@@ -62,6 +62,10 @@ const {
     createSocketRateLimiter
 } = require("./src/socket/rate-limiter");
 
+const {
+    registerJoinRoom
+} = require("./src/socket/join-room");
+
 
 // =====================================================
 // SOCKET.IO
@@ -857,179 +861,18 @@ io.on(
         // ENTRAR NA SALA
         // =============================================
 
-        socket.on(
-            "join-room",
-            data => {
-
-                if (
-                    !allowSocketEvent(
-                        socket
-                    )
-                ) {
-
-                    return;
-
-                }
-
-
-                if (
-                    !isPlainObject(
-                        data
-                    )
-                ) {
-
-                    socket.emit(
-                        "room-error",
-                        "Dados inválidos."
-                    );
-
-                    return;
-
-                }
-
-
-                const roomCode =
-                    sanitizeRoomCode(
-                        data.roomCode
-                    );
-
-
-                if (
-                    !isValidRoomCode(
-                        roomCode
-                    )
-                ) {
-
-                    socket.emit(
-                        "room-error",
-                        "Código de sala inválido."
-                    );
-
-                    return;
-
-                }
-
-
-                const room =
-                    roomService.get(
-                        roomCode
-                    );
-
-
-                if (!room) {
-
-                    socket.emit(
-                        "room-error",
-                        "Sala não encontrada."
-                    );
-
-                    return;
-
-                }
-
-
-                // Já entrou
-                if (
-                    socket.data.roomCode ===
-                    roomCode
-                ) {
-
-                    return;
-
-                }
-
-
-                // Não permitir trocar de sala
-                // no mesmo socket.
-                if (
-                    socket.data.roomCode &&
-                    socket.data.roomCode !==
-                        roomCode
-                ) {
-
-                    socket.emit(
-                        "room-error",
-                        "Conexão já vinculada a outra sala."
-                    );
-
-                    return;
-
-                }
-
-
-                if (
-                    room.users.size >=
-                    MAX_USERS_PER_ROOM
-                ) {
-
-                    socket.emit(
-                        "room-error",
-                        "A sala atingiu o limite de participantes."
-                    );
-
-                    return;
-
-                }
-
-
-                const profile =
-                    sanitizeProfile(
-                        data.profile
-                    );
-
-
-                socket.data.roomCode =
-                    roomCode;
-
-
-                socket.data.profile =
-                    profile;
-
-
-                socket.join(
-                    roomCode
-                );
-
-
-                room.users.set(
-                    socket.id,
-                    {
-
-                        ...profile,
-
-                        streaming:
-                            false
-
-                    }
-                );
-
-
-                console.log(
-                    `${profile.name} entrou em ${roomCode}`
-                );
-
-
-                socket.to(
-                    roomCode
-                ).emit(
-                    "user-joined",
-                    {
-
-                        id:
-                            socket.id,
-
-                        ...profile
-
-                    }
-                );
-
-
-                updateParticipants(
-                    roomCode
-                );
-
-            }
-        );
+        registerJoinRoom({
+            socket,
+            roomService,
+            sanitizeRoomCode,
+            isValidRoomCode,
+            sanitizeProfile,
+            isPlainObject,
+            allowSocketEvent,
+            maxUsersPerRoom:
+                MAX_USERS_PER_ROOM,
+            updateParticipants
+        });
 
 
         // =============================================
