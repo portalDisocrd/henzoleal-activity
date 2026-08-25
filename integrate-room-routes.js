@@ -1,0 +1,261 @@
+﻿const fs = require("fs");
+
+const file = "C:\\lealbot\\server.js";
+let code = fs.readFileSync(file, "utf8");
+
+if (
+    code.includes(
+        'require("./src/routes/room-routes")'
+    )
+) {
+    console.log(
+        "ROOM ROUTES JA INTEGRADO"
+    );
+    process.exit(0);
+}
+
+
+// =============================================
+// ADICIONAR IMPORT
+// =============================================
+
+const disconnectRequire =
+    'require("./src/socket/disconnect");';
+
+const importIndex =
+    code.indexOf(
+        disconnectRequire
+    );
+
+if (importIndex === -1) {
+    throw new Error(
+        "Import de disconnect nao localizado"
+    );
+}
+
+const insertAt =
+    importIndex +
+    disconnectRequire.length;
+
+const routeImport = `
+
+const {
+    registerRoomRoutes
+} = require("./src/routes/room-routes");`;
+
+code =
+    code.slice(0, insertAt) +
+    routeImport +
+    code.slice(insertAt);
+
+
+// =============================================
+// REMOVER ROTA EXPRESS
+// =============================================
+
+function removeAppRoute(
+    source,
+    method,
+    route
+) {
+
+    const routePosition =
+        source.indexOf(
+            `"${route}"`
+        );
+
+    if (routePosition === -1) {
+        throw new Error(
+            `Rota nao encontrada: ${route}`
+        );
+    }
+
+    const marker =
+        `app.${method}(`;
+
+    const start =
+        source.lastIndexOf(
+            marker,
+            routePosition
+        );
+
+    if (start === -1) {
+        throw new Error(
+            `Inicio nao encontrado: ${method} ${route}`
+        );
+    }
+
+    const openParen =
+        source.indexOf(
+            "(",
+            start
+        );
+
+    let parenDepth = 0;
+    let braceDepth = 0;
+    let bracketDepth = 0;
+
+    let quote = null;
+    let escaped = false;
+    let end = -1;
+
+    for (
+        let i = openParen;
+        i < source.length;
+        i++
+    ) {
+
+        const char =
+            source[i];
+
+        if (escaped) {
+            escaped = false;
+            continue;
+        }
+
+        if (char === "\\") {
+            escaped = true;
+            continue;
+        }
+
+        if (quote) {
+
+            if (char === quote) {
+                quote = null;
+            }
+
+            continue;
+        }
+
+        if (
+            char === '"' ||
+            char === "'" ||
+            char === "`"
+        ) {
+            quote = char;
+            continue;
+        }
+
+        if (char === "(") parenDepth++;
+        if (char === ")") parenDepth--;
+
+        if (char === "{") braceDepth++;
+        if (char === "}") braceDepth--;
+
+        if (char === "[") bracketDepth++;
+        if (char === "]") bracketDepth--;
+
+        if (
+            parenDepth === 0 &&
+            braceDepth === 0 &&
+            bracketDepth === 0
+        ) {
+
+            let j =
+                i + 1;
+
+            while (
+                /\s/.test(
+                    source[j] || ""
+                )
+            ) {
+                j++;
+            }
+
+            if (source[j] === ";") {
+                end = j + 1;
+            } else {
+                end = i + 1;
+            }
+
+            break;
+        }
+    }
+
+    if (end === -1) {
+        throw new Error(
+            `Final nao encontrado: ${route}`
+        );
+    }
+
+    return (
+        source.slice(0, start) +
+        source.slice(end)
+    );
+}
+
+
+// =============================================
+// REMOVER ROTAS ANTIGAS
+// =============================================
+
+code =
+    removeAppRoute(
+        code,
+        "post",
+        "/api/rooms"
+    );
+
+code =
+    removeAppRoute(
+        code,
+        "get",
+        "/api/rooms/:code"
+    );
+
+
+// =============================================
+// REGISTRAR NOVO MODULO
+// =============================================
+
+const tokenPosition =
+    code.indexOf(
+        '"/api/token"'
+    );
+
+if (tokenPosition === -1) {
+    throw new Error(
+        "Rota /api/token nao localizada"
+    );
+}
+
+const tokenStart =
+    code.lastIndexOf(
+        "app.post(",
+        tokenPosition
+    );
+
+if (tokenStart === -1) {
+    throw new Error(
+        "Inicio de /api/token nao localizado"
+    );
+}
+
+const registration = `
+
+registerRoomRoutes({
+    app,
+    roomService,
+    createRoomLimiter,
+    sanitizeRoomCode,
+    isValidRoomCode
+});
+
+
+`;
+
+code =
+    code.slice(0, tokenStart) +
+    registration +
+    code.slice(tokenStart);
+
+
+fs.writeFileSync(
+    file,
+    code,
+    "utf8"
+);
+
+console.log(
+    "ROOM ROUTES INTEGRADO AO SERVER"
+);
