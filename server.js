@@ -58,6 +58,10 @@ const {
     createSocketGuard
 } = require("./src/socket/socket-guard");
 
+const {
+    createSocketRateLimiter
+} = require("./src/socket/rate-limiter");
+
 
 // =====================================================
 // SOCKET.IO
@@ -105,6 +109,13 @@ const {
     getSafeTargetSocket
 } = createSocketGuard({
     io
+});
+
+const {
+    allowSocketEvent
+} = createSocketRateLimiter({
+    maxEvents: 250,
+    windowMs: 10000
 });
 
 
@@ -370,58 +381,7 @@ app.use(
 // RATE LIMIT SIMPLES PARA SOCKET
 // =====================================================
 
-function allowSocketEvent(
-    socket
-) {
 
-    const now =
-        Date.now();
-
-
-    if (
-        !socket.data.eventWindow ||
-        now -
-            socket.data.eventWindow >
-            10000
-    ) {
-
-        socket.data.eventWindow =
-            now;
-
-        socket.data.eventCount =
-            0;
-
-    }
-
-
-    socket.data.eventCount =
-        (
-            socket.data.eventCount ||
-            0
-        ) + 1;
-
-
-    // Máximo aproximado:
-    // 250 eventos a cada 10 segundos
-    if (
-        socket.data.eventCount >
-        250
-    ) {
-
-        console.warn(
-            "Socket limitado:",
-            socket.id
-        );
-
-
-        return false;
-
-    }
-
-
-    return true;
-
-}
 
 
 // =====================================================
