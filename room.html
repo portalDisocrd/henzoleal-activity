@@ -362,6 +362,224 @@ footer button {
     background: #29292f;
 }
 
+
+/* =====================================================
+   UI ANIMATIONS V2
+===================================================== */
+
+footer button {
+    position: relative;
+    overflow: hidden;
+
+    transition:
+        transform .18s ease,
+        box-shadow .22s ease,
+        filter .18s ease,
+        background .22s ease;
+}
+
+footer button::after {
+    content: "";
+
+    position: absolute;
+    top: 0;
+    bottom: 0;
+
+    width: 45%;
+
+    background:
+        linear-gradient(
+            110deg,
+            transparent,
+            rgba(255,255,255,.18),
+            transparent
+        );
+
+    transform:
+        translateX(-250%) skewX(-18deg);
+
+    transition:
+        transform .55s ease;
+
+    pointer-events: none;
+}
+
+footer button:hover {
+    transform:
+        translateY(-3px);
+
+    filter:
+        brightness(1.1);
+
+    box-shadow:
+        0 10px 28px
+        rgba(0,0,0,.3);
+}
+
+footer button:hover::after {
+    transform:
+        translateX(350%) skewX(-18deg);
+}
+
+footer button:active {
+    transform:
+        translateY(0)
+        scale(.95);
+}
+
+
+/* COMPARTILHAR */
+
+#share {
+    animation:
+        shareGlow 2.6s
+        ease-in-out infinite;
+}
+
+#share:hover {
+    box-shadow:
+        0 8px 32px
+        rgba(88,101,242,.45);
+}
+
+@keyframes shareGlow {
+
+    0%,
+    100% {
+        box-shadow:
+            0 0 0
+            rgba(88,101,242,0);
+    }
+
+    50% {
+        box-shadow:
+            0 0 22px
+            rgba(88,101,242,.27);
+    }
+}
+
+
+/* CONVITE */
+
+#copy:hover {
+    background:
+        #373740;
+}
+
+#copy.copied {
+    background:
+        #248046;
+
+    box-shadow:
+        0 8px 28px
+        rgba(36,128,70,.38);
+
+    animation:
+        inviteSuccess .48s ease;
+}
+
+@keyframes inviteSuccess {
+
+    0% {
+        transform:
+            scale(.88);
+    }
+
+    50% {
+        transform:
+            translateY(-3px)
+            scale(1.1);
+    }
+
+    75% {
+        transform:
+            translateY(-2px)
+            scale(.98);
+    }
+
+    100% {
+        transform:
+            translateY(0)
+            scale(1);
+    }
+}
+
+
+/* PARAR TRANSMISSAO */
+
+#stop:hover {
+    box-shadow:
+        0 8px 30px
+        rgba(237,66,69,.35);
+}
+
+
+/* SAIR */
+
+#leave:hover {
+    background:
+        #402b2e;
+
+    box-shadow:
+        0 8px 26px
+        rgba(237,66,69,.2);
+}
+
+
+/* STATUS */
+
+#status {
+    transition:
+        opacity .2s ease,
+        transform .2s ease;
+}
+
+#status.status-pop {
+    animation:
+        statusPop .4s ease;
+}
+
+@keyframes statusPop {
+
+    0% {
+        opacity: .3;
+
+        transform:
+            translateY(6px)
+            scale(.94);
+    }
+
+    60% {
+        opacity: 1;
+
+        transform:
+            translateY(-2px)
+            scale(1.04);
+    }
+
+    100% {
+        transform:
+            translateY(0)
+            scale(1);
+    }
+}
+
+
+@media (prefers-reduced-motion: reduce) {
+
+    footer button,
+    #share,
+    #copy,
+    #status {
+        animation:
+            none !important;
+
+        transition:
+            none !important;
+    }
+}
+
+
 #status {
     position: fixed;
     bottom: 75px;
@@ -511,6 +729,689 @@ footer button {
         width: 145px;
         min-width: 145px;
         height: 82px;
+    }
+
+}
+
+
+
+/* =====================================================
+   UI ANIMATIONS V3 SAFE
+===================================================== */
+
+
+/* PARTICIPANTES */
+
+.person {
+    transition:
+        transform .20s ease,
+        background .20s ease,
+        border-color .20s ease,
+        box-shadow .20s ease;
+
+    animation:
+        personSafeEnter .30s ease both;
+}
+
+.person:hover {
+    transform:
+        translateX(3px);
+
+    background:
+        rgba(255,255,255,.035);
+}
+
+@keyframes personSafeEnter {
+
+    from {
+        opacity: 0;
+
+        transform:
+            translateY(5px);
+    }
+
+    to {
+        opacity: 1;
+
+        transform:
+            translateY(0);
+    }
+
+}
+
+
+/* QUEM ESTA TRANSMITINDO */
+
+.person.streaming {
+    box-shadow:
+        0 0 0 1px
+        rgba(88,101,242,.16);
+
+    animation:
+        personSafeEnter .30s ease both,
+        streamerSafeGlow 2.2s ease-in-out infinite;
+}
+
+@keyframes streamerSafeGlow {
+
+    0%,
+    100% {
+        box-shadow:
+            0 0 0 1px
+            rgba(88,101,242,.12);
+    }
+
+    50% {
+        box-shadow:
+            0 0 16px
+            rgba(88,101,242,.20);
+    }
+
+}
+
+
+/* AO VIVO DO PARTICIPANTE */
+
+.person.streaming .person-status {
+    animation:
+        liveSafeText 1.5s
+        ease-in-out infinite;
+}
+
+@keyframes liveSafeText {
+
+    0%,
+    100% {
+        opacity: .72;
+    }
+
+    50% {
+        opacity: 1;
+    }
+
+}
+
+
+/* BADGE PRINCIPAL AO VIVO */
+
+#liveBadge {
+    transform-origin:
+        center;
+
+    animation:
+        liveSafeBadge 1.6s
+        ease-in-out infinite;
+}
+
+@keyframes liveSafeBadge {
+
+    0%,
+    100% {
+        transform:
+            scale(1);
+
+        opacity:
+            .88;
+    }
+
+    50% {
+        transform:
+            scale(1.045);
+
+        opacity:
+            1;
+    }
+
+}
+
+
+/* MINI TRANSMISSOES */
+
+.stream-thumb {
+    transition:
+        transform .20s ease,
+        border-color .20s ease,
+        box-shadow .20s ease,
+        filter .20s ease;
+
+    animation:
+        thumbSafeEnter .30s ease both;
+}
+
+.stream-thumb:hover {
+    transform:
+        translateY(-3px);
+
+    filter:
+        brightness(1.07);
+
+    box-shadow:
+        0 8px 24px
+        rgba(0,0,0,.28);
+}
+
+.stream-thumb:active {
+    transform:
+        scale(.98);
+}
+
+.stream-thumb.active {
+    box-shadow:
+        0 0 18px
+        rgba(88,101,242,.20);
+}
+
+@keyframes thumbSafeEnter {
+
+    from {
+        opacity: 0;
+
+        transform:
+            translateY(6px);
+    }
+
+    to {
+        opacity: 1;
+
+        transform:
+            translateY(0);
+    }
+
+}
+
+
+/* PAINEL DE PARTICIPANTES */
+
+.people-panel {
+    transition:
+        border-color .22s ease,
+        box-shadow .22s ease;
+}
+
+.people-panel:hover {
+    border-color:
+        rgba(88,101,242,.25);
+
+    box-shadow:
+        0 8px 28px
+        rgba(0,0,0,.16);
+}
+
+
+/* TELA VAZIA */
+
+.stage-empty {
+    animation:
+        emptySafeFloat 3s
+        ease-in-out infinite;
+}
+
+@keyframes emptySafeFloat {
+
+    0%,
+    100% {
+        transform:
+            translateY(0);
+    }
+
+    50% {
+        transform:
+            translateY(-3px);
+    }
+
+}
+
+
+/* ACESSIBILIDADE */
+
+@media (
+    prefers-reduced-motion:
+    reduce
+) {
+
+    .person,
+    .person.streaming,
+    .person-status,
+    #liveBadge,
+    .stream-thumb,
+    .stage-empty {
+        animation:
+            none !important;
+
+        transition:
+            none !important;
+    }
+
+}
+
+
+
+/* =====================================================
+   UI ANIMATIONS V4
+   ACABAMENTO GERAL
+===================================================== */
+
+
+/* ENTRADA DA INTERFACE */
+
+body {
+    animation:
+        pageEnter .38s ease both;
+}
+
+@keyframes pageEnter {
+
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+
+}
+
+
+/* HEADER */
+
+header {
+    animation:
+        headerEnter .42s ease both;
+}
+
+@keyframes headerEnter {
+
+    from {
+        opacity: 0;
+
+        transform:
+            translateY(-8px);
+    }
+
+    to {
+        opacity: 1;
+
+        transform:
+            translateY(0);
+    }
+
+}
+
+
+/* LOGO / MARCA */
+
+.brand {
+    transition:
+        transform .2s ease,
+        filter .2s ease;
+}
+
+.brand:hover {
+    transform:
+        translateX(2px);
+
+    filter:
+        brightness(1.08);
+}
+
+.brand img {
+    transition:
+        transform .25s ease,
+        box-shadow .25s ease;
+}
+
+.brand:hover img {
+    transform:
+        rotate(-3deg)
+        scale(1.04);
+
+    box-shadow:
+        0 0 18px
+        rgba(88,101,242,.22);
+}
+
+
+/* CONTEUDO PRINCIPAL */
+
+.app {
+    animation:
+        appEnter .45s
+        cubic-bezier(.2,.8,.2,1)
+        both;
+}
+
+@keyframes appEnter {
+
+    from {
+        opacity: 0;
+
+        transform:
+            translateY(8px);
+    }
+
+    to {
+        opacity: 1;
+
+        transform:
+            translateY(0);
+    }
+
+}
+
+
+/* PALCO */
+
+.stage {
+    transition:
+        border-color .22s ease,
+        box-shadow .22s ease,
+        transform .22s ease;
+}
+
+.stage:hover {
+    border-color:
+        rgba(88,101,242,.24);
+
+    box-shadow:
+        0 12px 36px
+        rgba(0,0,0,.20);
+}
+
+
+/* TELA VAZIA */
+
+.stage-empty .icon {
+    transition:
+        transform .25s ease,
+        filter .25s ease;
+}
+
+.stage:hover .stage-empty .icon {
+    transform:
+        scale(1.06);
+
+    filter:
+        brightness(1.12);
+}
+
+
+/* VIDEO CONTROLS */
+
+.video-control {
+    transition:
+        transform .16s ease,
+        background .18s ease,
+        box-shadow .18s ease,
+        filter .18s ease;
+}
+
+.video-control:hover {
+    transform:
+        translateY(-2px)
+        scale(1.04);
+
+    filter:
+        brightness(1.1);
+
+    box-shadow:
+        0 6px 18px
+        rgba(0,0,0,.25);
+}
+
+.video-control:active {
+    transform:
+        scale(.94);
+}
+
+
+/* LABEL PRINCIPAL */
+
+#mainLabel {
+    transition:
+        opacity .2s ease,
+        transform .2s ease;
+
+    animation:
+        labelEnter .3s ease both;
+}
+
+@keyframes labelEnter {
+
+    from {
+        opacity: 0;
+
+        transform:
+            translateY(4px);
+    }
+
+    to {
+        opacity: 1;
+
+        transform:
+            translateY(0);
+    }
+
+}
+
+
+/* TITULO PARTICIPANTES */
+
+.people-title {
+    transition:
+        letter-spacing .2s ease,
+        color .2s ease;
+}
+
+.people-panel:hover .people-title {
+    letter-spacing:
+        .4px;
+
+    color:
+        #c7c9ff;
+}
+
+
+/* STATUS GLOBAL */
+
+#status {
+    backdrop-filter:
+        blur(8px);
+
+    transition:
+        opacity .2s ease,
+        transform .2s ease,
+        box-shadow .2s ease;
+}
+
+#status:hover {
+    transform:
+        translateY(-2px);
+
+    box-shadow:
+        0 7px 20px
+        rgba(0,0,0,.22);
+}
+
+
+/* FOOTER */
+
+footer {
+    animation:
+        footerEnter .42s ease both;
+
+    transition:
+        border-color .22s ease,
+        box-shadow .22s ease;
+}
+
+footer:hover {
+    border-color:
+        rgba(88,101,242,.20);
+
+    box-shadow:
+        0 -8px 28px
+        rgba(0,0,0,.14);
+}
+
+@keyframes footerEnter {
+
+    from {
+        opacity: 0;
+
+        transform:
+            translateY(8px);
+    }
+
+    to {
+        opacity: 1;
+
+        transform:
+            translateY(0);
+    }
+
+}
+
+
+/* AVATARES / PERFIL */
+
+.profile-avatar {
+    transition:
+        transform .18s ease,
+        box-shadow .18s ease,
+        border-color .18s ease,
+        filter .18s ease;
+}
+
+.profile-avatar:hover {
+    transform:
+        translateY(-3px)
+        scale(1.06);
+
+    filter:
+        brightness(1.08);
+
+    box-shadow:
+        0 7px 20px
+        rgba(0,0,0,.22);
+}
+
+.profile-avatar:active {
+    transform:
+        scale(.95);
+}
+
+.profile-avatar.selected {
+    box-shadow:
+        0 0 0 2px
+        rgba(88,101,242,.26);
+}
+
+
+/* INPUTS */
+
+input {
+    transition:
+        border-color .18s ease,
+        box-shadow .18s ease,
+        background .18s ease;
+}
+
+input:focus {
+    box-shadow:
+        0 0 0 3px
+        rgba(88,101,242,.10);
+}
+
+
+/* MODAL / PERFIL */
+
+.modal,
+.profile-modal {
+    animation:
+        modalFadeIn .25s ease both;
+}
+
+.modal-content,
+.profile-card {
+    animation:
+        modalCardEnter .30s
+        cubic-bezier(.2,.8,.2,1)
+        both;
+}
+
+@keyframes modalFadeIn {
+
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+
+}
+
+@keyframes modalCardEnter {
+
+    from {
+        opacity: 0;
+
+        transform:
+            translateY(10px)
+            scale(.97);
+    }
+
+    to {
+        opacity: 1;
+
+        transform:
+            translateY(0)
+            scale(1);
+    }
+
+}
+
+
+/* SCROLL SUAVE DAS MINI STREAMS */
+
+.stream-strip {
+    scroll-behavior:
+        smooth;
+}
+
+
+/* MOBILE */
+
+@media (max-width: 760px) {
+
+    footer button:hover,
+    .video-control:hover,
+    .profile-avatar:hover {
+        transform:
+            none;
+    }
+
+}
+
+
+/* ACESSIBILIDADE */
+
+@media (
+    prefers-reduced-motion:
+    reduce
+) {
+
+    body,
+    header,
+    .app,
+    footer,
+    #mainLabel,
+    .modal,
+    .profile-modal,
+    .modal-content,
+    .profile-card {
+        animation:
+            none !important;
     }
 
 }
@@ -2620,8 +3521,59 @@ document.getElementById(
                 );
 
 
+            /* INVITE FEEDBACK V2 */
+
             statusElement.textContent =
                 "✅ Convite copiado";
+
+            const copyButton =
+                document.getElementById(
+                    "copy"
+                );
+
+            copyButton.textContent =
+                "✅ Copiado!";
+
+            copyButton.classList.remove(
+                "copied"
+            );
+
+            void copyButton.offsetWidth;
+
+            copyButton.classList.add(
+                "copied"
+            );
+
+
+            statusElement.classList.remove(
+                "status-pop"
+            );
+
+            void statusElement.offsetWidth;
+
+            statusElement.classList.add(
+                "status-pop"
+            );
+
+
+            clearTimeout(
+                copyButton._copiedTimer
+            );
+
+            copyButton._copiedTimer =
+                setTimeout(
+                    () => {
+
+                        copyButton.textContent =
+                            "🔗 Convite";
+
+                        copyButton.classList.remove(
+                            "copied"
+                        );
+
+                    },
+                    1800
+                );
 
 
         } catch {
