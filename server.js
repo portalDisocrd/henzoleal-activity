@@ -2,7 +2,6 @@ const express = require("express");
 const http = require("http");
 const path = require("path");
 const crypto = require("crypto");
-const helmet = require("helmet");
 const { Server } = require("socket.io");
 
 
@@ -93,6 +92,18 @@ const {
     createRateLimiters
 } = require("./src/middleware/rate-limiters");
 
+const {
+    registerHttpSecurity
+} = require("./src/middleware/http-security");
+
+const {
+    registerStaticFiles
+} = require("./src/middleware/static-files");
+
+const {
+    registerFinalHandlers
+} = require("./src/middleware/final-handlers");
+
 
 // =====================================================
 // SOCKET.IO
@@ -168,98 +179,28 @@ app.set(
 
 
 // Esconder informação de tecnologia
-app.disable(
-    "x-powered-by"
-);
+
 
 
 // =====================================================
 // HEADERS DE SEGURANÇA
 // =====================================================
 
-app.use(
 
-    helmet({
-
-        crossOriginEmbedderPolicy:
-            false,
-
-        contentSecurityPolicy: {
-
-            directives: {
-
-                defaultSrc: [
-                    "'self'"
-                ],
-
-                scriptSrc: [
-                    "'self'",
-                    "'unsafe-inline'"
-                ],
-
-                styleSrc: [
-                    "'self'",
-                    "'unsafe-inline'"
-                ],
-
-                imgSrc: [
-                    "'self'",
-                    "data:",
-                    "https:"
-                ],
-
-                connectSrc: [
-                    "'self'",
-                    "ws:",
-                    "wss:"
-                ],
-
-                mediaSrc: [
-                    "'self'",
-                    "blob:"
-                ],
-
-                fontSrc: [
-                    "'self'",
-                    "data:"
-                ],
-
-                objectSrc: [
-                    "'none'"
-                ],
-
-                baseUri: [
-                    "'self'"
-                ],
-
-                frameAncestors: [
-                    "'none'"
-                ]
-
-            }
-
-        }
-
-    })
-
-);
 
 
 // =====================================================
+registerHttpSecurity({
+    app,
+    express
+});
+
+
 // LIMITES HTTP
 // =====================================================
 
 // Não aceitar JSON gigante
-app.use(
 
-    express.json({
-
-        limit:
-            "16kb"
-
-    })
-
-);
 
 
 // Rate limit geral da API
@@ -280,22 +221,7 @@ app.use(
 // ARQUIVOS ESTÁTICOS
 // =====================================================
 
-app.use(
 
-    express.static(
-        __dirname,
-        {
-
-            dotfiles:
-                "deny",
-
-            index:
-                false
-
-        }
-    )
-
-);
 
 
 // =====================================================
@@ -401,16 +327,7 @@ setInterval(
 // DISCORD ACTIVITY
 // =====================================================
 
-app.use(
-    "/assets",
-    express.static(
-        path.join(
-            __dirname,
-            "dist",
-            "assets"
-        )
-    )
-);
+
 
 
 
@@ -431,6 +348,13 @@ app.use(
 // DISCORD OAUTH - TOKEN
 // =====================================================
 
+
+
+registerStaticFiles({
+    app,
+    express,
+    rootDir: __dirname
+});
 
 
 registerRoomRoutes({
@@ -478,22 +402,7 @@ registerAuthRoutes({
 // 404 API
 // =====================================================
 
-app.use(
-    "/api",
-    (req, res) => {
 
-        res.status(404).json({
-
-            success:
-                false,
-
-            message:
-                "Endpoint não encontrado."
-
-        });
-
-    }
-);
 
 
 // =====================================================
@@ -602,47 +511,15 @@ io.on(
 // ERROS EXPRESS
 // =====================================================
 
-app.use(
-    (
-        error,
-        req,
-        res,
-        next
-    ) => {
 
-        console.error(
-            "Erro interno:",
-            error?.message ||
-            "Erro desconhecido"
-        );
-
-
-        if (
-            res.headersSent
-        ) {
-
-            return next(
-                error
-            );
-
-        }
-
-
-        res.status(500).json({
-
-            success:
-                false,
-
-            message:
-                "Erro interno do servidor."
-
-        });
-
-    }
-);
 
 
 // =====================================================
+registerFinalHandlers({
+    app
+});
+
+
 // SERVIDOR
 // =====================================================
 
