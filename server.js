@@ -41,6 +41,11 @@ const {
     isValidFlowId
 } = require("./src/utils/validation");
 
+const {
+    generateRoomCode,
+    getParticipants
+} = require("./src/utils/room-utils");
+
 
 // =====================================================
 // SOCKET.IO
@@ -288,60 +293,14 @@ app.use(
 // GERAR CÓDIGO
 // =====================================================
 
-function generateRoomCode() {
 
-    let code;
-
-
-    do {
-
-        code =
-            crypto
-                .randomBytes(4)
-                .toString("hex")
-                .toUpperCase();
-
-
-    } while (
-        rooms.has(code)
-    );
-
-
-    return code;
-
-}
 
 
 // =====================================================
 // PARTICIPANTES
 // =====================================================
 
-function getParticipants(
-    room
-) {
 
-    return Array.from(
-        room.users.entries()
-    ).map(
-        ([id, user]) => ({
-
-            id,
-
-            name:
-                user.name,
-
-            avatar:
-                user.avatar,
-
-            streaming:
-                Boolean(
-                    user.streaming
-                )
-
-        })
-    );
-
-}
 
 
 function updateParticipants(
@@ -777,7 +736,7 @@ app.post(
 
 
         const code =
-            generateRoomCode();
+            generateRoomCode(rooms);
 
 
         rooms.set(
