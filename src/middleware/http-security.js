@@ -23,6 +23,11 @@ function registerHttpSecurity({
             crossOriginEmbedderPolicy:
                 false,
 
+            // A Activity roda dentro de um iframe do Discord.
+            // A CSP abaixo controla quais sites podem incorporar.
+            xFrameOptions:
+                false,
+
             contentSecurityPolicy: {
 
                 directives: {
@@ -72,7 +77,9 @@ function registerHttpSecurity({
                     ],
 
                     frameAncestors: [
-                        "'none'"
+                        "'self'",
+                        "https://discord.com",
+                        "https://*.discord.com"
                     ]
 
                 }
@@ -100,3 +107,4 @@ function registerHttpSecurity({
 module.exports = {
     registerHttpSecurity
 };
+
