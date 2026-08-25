@@ -245,7 +245,7 @@ function openRoom(code) {
         "Entrando na sala...";
 
     window.location.href =
-        `https://henzoleal-activity.onrender.com/room/${safeCode}`;
+        `/room/${safeCode}`;
 
 }
 
@@ -473,5 +473,6 @@ roomCodeElement.addEventListener(
 
     }
 );
+
 
 
