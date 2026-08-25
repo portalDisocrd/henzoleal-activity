@@ -1795,7 +1795,25 @@ Entrar
 // =====================================================
 
 const socket = io({
-    path: "/api/socket.io"
+
+    path:
+        "/api/socket.io",
+
+    reconnection:
+        true,
+
+    reconnectionAttempts:
+        Infinity,
+
+    reconnectionDelay:
+        800,
+
+    reconnectionDelayMax:
+        5000,
+
+    timeout:
+        10000
+
 });
 
 
@@ -2499,6 +2517,239 @@ document.getElementById(
 let joined = false;
 
 
+// =====================================================
+// RECONNECT V1
+// =====================================================
+
+let reconnectingRoom =
+    false;
+
+let reconnectGeneration =
+    0;
+
+
+/* RECONNECT V1 FIX */
+
+let pendingReconnectRepair =
+    false;
+
+let reconnectRepairTimer =
+    null;
+
+
+function closePeerMap(
+    peerMap,
+    iceMap
+) {
+
+    peerMap.forEach(
+        peer => {
+
+            try {
+                peer.close();
+            } catch {}
+
+        }
+    );
+
+    peerMap.clear();
+
+    if (iceMap) {
+        iceMap.clear();
+    }
+
+}
+
+
+function resetPeersForReconnect() {
+
+    closePeerMap(
+        outboundPeers,
+        outboundIce
+    );
+
+    closePeerMap(
+        inboundPeers,
+        inboundIce
+    );
+
+}
+
+
+function repairOutboundPeers() {
+
+    if (
+        !localStream ||
+        !socket.connected ||
+        !joined
+    ) {
+
+        return;
+
+    }
+
+
+    clearTimeout(
+        reconnectRepairTimer
+    );
+
+
+    reconnectRepairTimer =
+        setTimeout(
+            () => {
+
+                participants.forEach(
+                    user => {
+
+                        if (
+                            user.id !==
+                            socket.id
+                        ) {
+
+                            startOutbound(
+                                user.id
+                            ).catch(
+                                () => {}
+                            );
+
+                        }
+
+                    }
+                );
+
+            },
+            350
+        );
+
+}
+
+
+// Evita que uma falha antiga de peer
+// reinicie uma conexao que ja foi substituida.
+function watchOutboundPeer(
+    peer,
+    targetId
+) {
+
+    const generation =
+        reconnectGeneration;
+
+
+    let recoveryTimer =
+        null;
+
+
+    const recover =
+        () => {
+
+            if (
+                generation !==
+                reconnectGeneration
+            ) {
+
+                return;
+
+            }
+
+
+            if (
+                !socket.connected ||
+                !joined ||
+                !localStream
+            ) {
+
+                return;
+
+            }
+
+
+            clearTimeout(
+                recoveryTimer
+            );
+
+
+            recoveryTimer =
+                setTimeout(
+                    () => {
+
+                        if (
+                            outboundPeers.get(
+                                targetId
+                            ) !==
+                            peer
+                        ) {
+
+                            return;
+
+                        }
+
+
+                        startOutbound(
+                            targetId
+                        ).catch(
+                            () => {}
+                        );
+
+                    },
+                    1200
+                );
+
+        };
+
+
+    peer.addEventListener(
+        "connectionstatechange",
+        () => {
+
+            const state =
+                peer.connectionState;
+
+
+            if (
+                state === "failed"
+            ) {
+
+                recover();
+
+            }
+
+
+            if (
+                state === "connected"
+            ) {
+
+                clearTimeout(
+                    recoveryTimer
+                );
+
+            }
+
+        }
+    );
+
+
+    peer.addEventListener(
+        "iceconnectionstatechange",
+        () => {
+
+            const state =
+                peer.iceConnectionState;
+
+
+            if (
+                state === "failed"
+            ) {
+
+                recover();
+
+            }
+
+        }
+    );
+
+}
+
+
 function joinRoom() {
 
     if (
@@ -2537,11 +2788,169 @@ socket.on(
     "connect",
     () => {
 
+        const wasReconnecting =
+            reconnectingRoom;
+
+
+        pendingReconnectRepair =
+            wasReconnecting;
+
+
         statusElement.textContent =
-            "🟢 Conectado";
+            wasReconnecting
+                ? "🟡 Reconectando à sala..."
+                : "🟢 Conectado";
+
+
+        // O Socket.IO recebe um novo socket.id
+        // depois de uma reconexao.
+        // Precisamos permitir novo join-room.
+        joined =
+            false;
+
+
+        reconnectGeneration +=
+            1;
+
+
+        resetPeersForReconnect();
 
 
         joinRoom();
+
+
+        reconnectingRoom =
+            false;
+
+
+        setTimeout(
+            () => {
+
+                if (
+                    socket.connected &&
+                    joined
+                ) {
+
+                    statusElement.textContent =
+                        wasReconnecting
+                            ? "🟢 Reconectado"
+                            : "🟢 Conectado";
+
+                }
+
+            },
+            500
+        );
+
+    }
+);
+
+
+socket.on(
+    "disconnect",
+    reason => {
+
+        if (
+            leavingRoom
+        ) {
+
+            return;
+
+        }
+
+
+        reconnectingRoom =
+            true;
+
+        joined =
+            false;
+
+
+        statusElement.textContent =
+            "🟠 Conexão perdida. Reconectando...";
+
+
+        resetPeersForReconnect();
+
+
+        console.warn(
+            "Socket desconectado:",
+            reason
+        );
+
+    }
+);
+
+
+socket.on(
+    "connect_error",
+    error => {
+
+        if (
+            leavingRoom
+        ) {
+
+            return;
+
+        }
+
+
+        reconnectingRoom =
+            true;
+
+
+        statusElement.textContent =
+            "🔴 Falha de conexão. Tentando novamente...";
+
+
+        console.warn(
+            "Erro de conexão:",
+            error?.message ||
+            error
+        );
+
+    }
+);
+
+
+window.addEventListener(
+    "online",
+    () => {
+
+        if (
+            !socket.connected &&
+            !leavingRoom
+        ) {
+
+            statusElement.textContent =
+                "🟡 Internet voltou. Reconectando...";
+
+
+            try {
+                socket.connect();
+            } catch {}
+
+        }
+
+    }
+);
+
+
+window.addEventListener(
+    "offline",
+    () => {
+
+        if (
+            leavingRoom
+        ) {
+
+            return;
+
+        }
+
+
+        statusElement.textContent =
+            "🔴 Sem internet • reconexão automática ativa";
 
     }
 );
@@ -2571,6 +2980,21 @@ socket.on(
 
 
         renderParticipants();
+
+
+        if (
+            pendingReconnectRepair &&
+            localStream &&
+            socket.connected &&
+            joined
+        ) {
+
+            pendingReconnectRepair =
+                false;
+
+            repairOutboundPeers();
+
+        }
 
 
         if (
@@ -3346,6 +3770,12 @@ async function startOutbound(
     outboundPeers.set(
         targetId,
         peer
+    );
+
+
+    watchOutboundPeer(
+        peer,
+        targetId
     );
 
 
