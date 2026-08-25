@@ -1416,6 +1416,133 @@ input:focus {
 
 }
 
+
+
+/* =====================================================
+   QUALITY SELECTOR V1
+===================================================== */
+
+.quality-control {
+    height: 39px;
+
+    display: flex;
+    align-items: center;
+
+    background:
+        #202027;
+
+    border:
+        1px solid #303038;
+
+    border-radius:
+        9px;
+
+    overflow: hidden;
+
+    transition:
+        border-color .18s ease,
+        box-shadow .18s ease,
+        transform .18s ease;
+}
+
+.quality-control:hover {
+    transform:
+        translateY(-2px);
+
+    border-color:
+        rgba(88,101,242,.55);
+
+    box-shadow:
+        0 7px 22px
+        rgba(0,0,0,.22);
+}
+
+.quality-icon {
+    padding-left:
+        10px;
+
+    font-size:
+        13px;
+
+    pointer-events:
+        none;
+}
+
+#qualitySelect {
+    height:
+        100%;
+
+    border:
+        0;
+
+    outline:
+        0;
+
+    padding:
+        0 10px 0 7px;
+
+    background:
+        transparent;
+
+    color:
+        white;
+
+    cursor:
+        pointer;
+
+    font-weight:
+        700;
+
+    font-size:
+        11px;
+}
+
+#qualitySelect option {
+    background:
+        #18181e;
+
+    color:
+        white;
+}
+
+.quality-control.quality-changing {
+    animation:
+        qualityChange .42s ease;
+}
+
+@keyframes qualityChange {
+
+    0% {
+        transform:
+            scale(.95);
+    }
+
+    55% {
+        transform:
+            scale(1.04);
+    }
+
+    100% {
+        transform:
+            scale(1);
+    }
+
+}
+
+@media (max-width: 650px) {
+
+    .quality-icon {
+        display:
+            none;
+    }
+
+    #qualitySelect {
+        max-width:
+            110px;
+    }
+
+}
+
 </style>
 
 </head>
@@ -1546,6 +1673,44 @@ Conectando...
 
 <footer>
 
+
+<div
+    class="quality-control"
+    title="Qualidade da transmissão"
+>
+    <span class="quality-icon">
+        ⚙️
+    </span>
+
+    <select
+        id="qualitySelect"
+        aria-label="Qualidade da transmissão"
+    >
+        <option value="auto">
+            Auto
+        </option>
+
+        <option value="720p30">
+            720p • 30 FPS
+        </option>
+
+        <option value="720p60">
+            720p • 60 FPS
+        </option>
+
+        <option value="1080p30">
+            1080p • 30 FPS
+        </option>
+
+        <option
+            value="1080p60"
+            selected
+        >
+            1080p • 60 FPS
+        </option>
+    </select>
+</div>
+
 <button id="share">
 🖥️ Compartilhar
 </button>
@@ -1632,6 +1797,405 @@ Entrar
 const socket = io({
     path: "/api/socket.io"
 });
+
+
+// =====================================================
+// QUALITY SELECTOR V1
+// =====================================================
+
+const qualitySelect =
+    document.getElementById(
+        "qualitySelect"
+    );
+
+
+const qualityProfiles = {
+
+    auto: {
+        label:
+            "Auto",
+
+        width:
+            1920,
+
+        height:
+            1080,
+
+        fps:
+            60,
+
+        bitrate:
+            6000000,
+
+        auto:
+            true
+    },
+
+    "720p30": {
+        label:
+            "720p • 30 FPS",
+
+        width:
+            1280,
+
+        height:
+            720,
+
+        fps:
+            30,
+
+        bitrate:
+            3500000
+    },
+
+    "720p60": {
+        label:
+            "720p • 60 FPS",
+
+        width:
+            1280,
+
+        height:
+            720,
+
+        fps:
+            60,
+
+        bitrate:
+            5500000
+    },
+
+    "1080p30": {
+        label:
+            "1080p • 30 FPS",
+
+        width:
+            1920,
+
+        height:
+            1080,
+
+        fps:
+            30,
+
+        bitrate:
+            6000000
+    },
+
+    "1080p60": {
+        label:
+            "1080p • 60 FPS",
+
+        width:
+            1920,
+
+        height:
+            1080,
+
+        fps:
+            60,
+
+        bitrate:
+            8000000
+    }
+
+};
+
+
+function getQualityProfile() {
+
+    return (
+        qualityProfiles[
+            qualitySelect?.value ||
+            "1080p60"
+        ] ||
+        qualityProfiles[
+            "1080p60"
+        ]
+    );
+
+}
+
+
+async function applyQualityToSender(
+    sender,
+    profile
+) {
+
+    if (
+        !sender ||
+        sender.track?.kind !==
+            "video"
+    ) {
+
+        return;
+
+    }
+
+
+    try {
+
+        const parameters =
+            sender.getParameters();
+
+        if (
+            !parameters.encodings ||
+            parameters.encodings.length === 0
+        ) {
+
+            parameters.encodings =
+                [{}];
+
+        }
+
+
+        parameters
+            .encodings[0]
+            .maxBitrate =
+                profile.bitrate;
+
+
+        parameters
+            .encodings[0]
+            .maxFramerate =
+                profile.fps;
+
+
+        parameters
+            .degradationPreference =
+                profile.auto
+                    ? "balanced"
+                    : "maintain-resolution";
+
+
+        await sender
+            .setParameters(
+                parameters
+            );
+
+    } catch (
+        error
+    ) {
+
+        console.warn(
+            "Nao foi possivel alterar parametros WebRTC:",
+            error?.message ||
+            error
+        );
+
+    }
+
+}
+
+
+async function applySelectedQuality() {
+
+    const profile =
+        getQualityProfile();
+
+
+    const videoTrack =
+        localStream
+            ?.getVideoTracks?.()[0];
+
+
+    if (
+        videoTrack
+    ) {
+
+        try {
+
+            videoTrack.contentHint =
+                profile.auto
+                    ? "motion"
+                    : "detail";
+
+        } catch {}
+
+
+        try {
+
+            if (
+                profile.auto
+            ) {
+
+                await videoTrack
+                    .applyConstraints({
+                        frameRate: {
+                            ideal:
+                                60,
+                            max:
+                                60
+                        }
+                    });
+
+            } else {
+
+                await videoTrack
+                    .applyConstraints({
+
+                        width: {
+                            ideal:
+                                profile.width,
+                            max:
+                                profile.width
+                        },
+
+                        height: {
+                            ideal:
+                                profile.height,
+                            max:
+                                profile.height
+                        },
+
+                        frameRate: {
+                            ideal:
+                                profile.fps,
+                            max:
+                                profile.fps
+                        }
+
+                    });
+
+            }
+
+        } catch (
+            error
+        ) {
+
+            console.warn(
+                "Navegador nao aplicou todos os constraints:",
+                error?.message ||
+                error
+            );
+
+        }
+
+    }
+
+
+    const jobs =
+        [];
+
+    outboundPeers
+        .forEach(
+            peer => {
+
+                peer
+                    .getSenders()
+                    .forEach(
+                        sender => {
+
+                            if (
+                                sender.track?.kind ===
+                                "video"
+                            ) {
+
+                                jobs.push(
+                                    applyQualityToSender(
+                                        sender,
+                                        profile
+                                    )
+                                );
+
+                            }
+
+                        }
+                    );
+
+            }
+        );
+
+
+    await Promise.allSettled(
+        jobs
+    );
+
+
+    if (
+        statusElement
+    ) {
+
+        statusElement.textContent =
+            "🎥 Qualidade: " +
+            profile.label;
+
+        statusElement.classList.remove(
+            "status-pop"
+        );
+
+        void statusElement.offsetWidth;
+
+        statusElement.classList.add(
+            "status-pop"
+        );
+
+    }
+
+
+    const qualityControl =
+        document.querySelector(
+            ".quality-control"
+        );
+
+    if (
+        qualityControl
+    ) {
+
+        qualityControl.classList.remove(
+            "quality-changing"
+        );
+
+        void qualityControl.offsetWidth;
+
+        qualityControl.classList.add(
+            "quality-changing"
+        );
+
+    }
+
+}
+
+
+if (
+    qualitySelect
+) {
+
+    const savedQuality =
+        localStorage.getItem(
+            "leal_stream_quality"
+        );
+
+    if (
+        savedQuality &&
+        qualityProfiles[
+            savedQuality
+        ]
+    ) {
+
+        qualitySelect.value =
+            savedQuality;
+
+    }
+
+
+    qualitySelect.addEventListener(
+        "change",
+        async () => {
+
+            localStorage.setItem(
+                "leal_stream_quality",
+                qualitySelect.value
+            );
+
+            await applySelectedQuality();
+
+        }
+    );
+
+}
+
+
 
 
 const roomCode =
@@ -2810,14 +3374,19 @@ async function startOutbound(
                             parameters.encodings = [{}];
                         }
 
+                        const qualityProfile =
+                            getQualityProfile();
+
                         parameters.encodings[0].maxBitrate =
-                            8000000;
+                            qualityProfile.bitrate;
 
                         parameters.encodings[0].maxFramerate =
-                            60;
+                            qualityProfile.fps;
 
                         parameters.degradationPreference =
-                            "maintain-resolution";
+                            qualityProfile.auto
+                                ? "balanced"
+                                : "maintain-resolution";
 
                         sender
                             .setParameters(parameters)
@@ -3346,18 +3915,27 @@ shareButton.onclick =
                         video: {
 
                             width: {
-                                ideal: 1920,
-                                max: 1920
+                                ideal:
+                                    getQualityProfile().width,
+
+                                max:
+                                    getQualityProfile().width
                             },
 
                             height: {
-                                ideal: 1080,
-                                max: 1080
+                                ideal:
+                                    getQualityProfile().height,
+
+                                max:
+                                    getQualityProfile().height
                             },
 
                             frameRate: {
-                                ideal: 60,
-                                max: 60
+                                ideal:
+                                    getQualityProfile().fps,
+
+                                max:
+                                    getQualityProfile().fps
                             }
 
                         },
