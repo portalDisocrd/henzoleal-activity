@@ -155,6 +155,45 @@ async function start() {
             auth.user;
 
 
+// =====================================================
+// ACTIVITY PROFILE V1
+// =====================================================
+
+        const discordProfile = {
+
+            name:
+                (
+                    user.global_name ||
+                    user.username ||
+                    "Usuario Discord"
+                )
+                    .substring(
+                        0,
+                        24
+                    ),
+
+            avatar:
+                user.avatar
+                    ? `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png?size=128`
+                    : "😎",
+
+            discordId:
+                user.id,
+
+            source:
+                "discord"
+
+        };
+
+
+        sessionStorage.setItem(
+            "leal_profile",
+            JSON.stringify(
+                discordProfile
+            )
+        );
+
+
         nameElement.textContent =
             user.global_name ||
             user.username ||
@@ -245,7 +284,7 @@ function openRoom(code) {
         "Entrando na sala...";
 
     window.location.href =
-        `/room/${safeCode}`;
+        `/activity-room.html?room=${encodeURIComponent(safeCode)}`;
 
 }
 
@@ -473,6 +512,7 @@ roomCodeElement.addEventListener(
 
     }
 );
+
 
 
 

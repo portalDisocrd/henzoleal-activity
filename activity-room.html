@@ -1,0 +1,7239 @@
+﻿<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+>
+
+<title>HL ACTIVITY • Sala</title>
+
+<link rel="icon" type="image/png" href="/logo-hl.png?v=3">
+
+<script src="/api/socket.io/socket.io.js"></script>
+
+<style>
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    height: 100vh;
+    overflow: hidden;
+    background: #09090c;
+    color: white;
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+
+/* =====================================================
+   TOPO
+===================================================== */
+
+header {
+    height: 62px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 20px;
+    background: #111116;
+    border-bottom: 1px solid #27272e;
+}
+
+.logo {
+    font-weight: 800;
+    font-size: 19px;
+}
+
+.logo span {
+    color: #747bff;
+}
+
+.room-code {
+    color: #71717a;
+    font-size: 13px;
+}
+
+.room-code strong {
+    color: white;
+}
+
+
+/* =====================================================
+   CONTEÚDO
+===================================================== */
+
+.app {
+    height: calc(100vh - 126px);
+    display: flex;
+    gap: 12px;
+    padding: 14px;
+}
+
+.main-area {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+
+/* =====================================================
+   PALCO PRINCIPAL
+===================================================== */
+
+.stage {
+    flex: 1;
+    min-height: 0;
+    position: relative;
+    overflow: hidden;
+    border-radius: 18px;
+    background:
+        radial-gradient(
+            circle at center,
+            #1d1d26,
+            #101014
+        );
+    border: 1px solid #292930;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#mainVideo {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    background: black;
+    display: none;
+}
+
+.stage-empty {
+    text-align: center;
+    color: #71717a;
+}
+
+.stage-empty .icon {
+    font-size: 55px;
+    margin-bottom: 13px;
+}
+
+.main-label {
+    position: absolute;
+    bottom: 14px;
+    left: 14px;
+    z-index: 5;
+    background: rgba(0, 0, 0, .72);
+    padding: 8px 12px;
+    border-radius: 9px;
+    font-size: 13px;
+    font-weight: bold;
+    display: none;
+}
+
+.live {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    z-index: 5;
+    background: #ed4245;
+    border-radius: 7px;
+    padding: 5px 8px;
+    font-size: 10px;
+    font-weight: 800;
+    display: none;
+}
+
+
+/* =====================================================
+   CONTROLES SOBRE O VÍDEO
+===================================================== */
+
+.video-controls {
+    position: absolute;
+    right: 14px;
+    bottom: 14px;
+    z-index: 10;
+    display: none;
+    gap: 7px;
+}
+
+.video-control {
+    background: rgba(0, 0, 0, .72);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255,255,255,.08);
+    color: white;
+    width: 42px;
+    height: 38px;
+    border-radius: 9px;
+    padding: 0;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+.video-control:hover {
+    background: rgba(40,40,48,.92);
+}
+
+.video-control:disabled {
+    opacity: .4;
+    cursor: default;
+}
+
+
+/* =====================================================
+   MINI TRANSMISSÕES
+===================================================== */
+
+.stream-strip {
+    display: none;
+    gap: 9px;
+    overflow-x: auto;
+    min-height: 104px;
+    padding-bottom: 2px;
+}
+
+.stream-thumb {
+    width: 180px;
+    min-width: 180px;
+    height: 100px;
+    border-radius: 11px;
+    overflow: hidden;
+    background: #16161b;
+    border: 2px solid transparent;
+    cursor: pointer;
+    position: relative;
+}
+
+.stream-thumb.active {
+    border-color: #5865f2;
+}
+
+.stream-thumb video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    background: black;
+}
+
+.thumb-name {
+    position: absolute;
+    left: 6px;
+    bottom: 6px;
+    background: rgba(0,0,0,.78);
+    padding: 4px 7px;
+    border-radius: 6px;
+    font-size: 10px;
+}
+
+
+/* =====================================================
+   PARTICIPANTES
+===================================================== */
+
+.people-panel {
+    width: 220px;
+    min-width: 220px;
+    background: #111116;
+    border: 1px solid #27272e;
+    border-radius: 15px;
+    padding: 11px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.people-title {
+    color: #a1a1aa;
+    font-size: 12px;
+    font-weight: bold;
+    padding: 4px 3px 10px;
+}
+
+.people {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    overflow-y: auto;
+}
+
+.person {
+    min-height: 72px;
+    background: #18181e;
+    border: 1px solid #292930;
+    border-radius: 11px;
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 9px;
+    cursor: default;
+    position: relative;
+}
+
+.person.streaming {
+    cursor: pointer;
+    border-color: rgba(88,101,242,.65);
+}
+
+.person.streaming:hover {
+    background: #1e1e27;
+}
+
+.avatar {
+    width: 42px;
+    min-width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background: #292932;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 21px;
+}
+
+.person-info {
+    min-width: 0;
+    flex: 1;
+}
+
+.person-name {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.person-status {
+    color: #71717a;
+    font-size: 9px;
+    margin-top: 4px;
+}
+
+.person.streaming .person-status {
+    color: #3ba55d;
+}
+
+
+/* =====================================================
+   RODAPÉ
+===================================================== */
+
+footer {
+    height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 9px;
+    background: #111116;
+    border-top: 1px solid #27272e;
+}
+
+footer button {
+    border: 0;
+    border-radius: 9px;
+    padding: 11px 15px;
+    color: white;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+#share {
+    background: #5865f2;
+}
+
+#stop {
+    background: #ed4245;
+    display: none;
+}
+
+#copy {
+    background: #29292f;
+}
+
+#leave {
+    background: #29292f;
+}
+
+
+/* =====================================================
+   UI ANIMATIONS V2
+===================================================== */
+
+footer button {
+    position: relative;
+    overflow: hidden;
+
+    transition:
+        transform .18s ease,
+        box-shadow .22s ease,
+        filter .18s ease,
+        background .22s ease;
+}
+
+footer button::after {
+    content: "";
+
+    position: absolute;
+    top: 0;
+    bottom: 0;
+
+    width: 45%;
+
+    background:
+        linear-gradient(
+            110deg,
+            transparent,
+            rgba(255,255,255,.18),
+            transparent
+        );
+
+    transform:
+        translateX(-250%) skewX(-18deg);
+
+    transition:
+        transform .55s ease;
+
+    pointer-events: none;
+}
+
+footer button:hover {
+    transform:
+        translateY(-3px);
+
+    filter:
+        brightness(1.1);
+
+    box-shadow:
+        0 10px 28px
+        rgba(0,0,0,.3);
+}
+
+footer button:hover::after {
+    transform:
+        translateX(350%) skewX(-18deg);
+}
+
+footer button:active {
+    transform:
+        translateY(0)
+        scale(.95);
+}
+
+
+/* COMPARTILHAR */
+
+#share {
+    animation:
+        shareGlow 2.6s
+        ease-in-out infinite;
+}
+
+#share:hover {
+    box-shadow:
+        0 8px 32px
+        rgba(88,101,242,.45);
+}
+
+@keyframes shareGlow {
+
+    0%,
+    100% {
+        box-shadow:
+            0 0 0
+            rgba(88,101,242,0);
+    }
+
+    50% {
+        box-shadow:
+            0 0 22px
+            rgba(88,101,242,.27);
+    }
+}
+
+
+/* CONVITE */
+
+#copy:hover {
+    background:
+        #373740;
+}
+
+#copy.copied {
+    background:
+        #248046;
+
+    box-shadow:
+        0 8px 28px
+        rgba(36,128,70,.38);
+
+    animation:
+        inviteSuccess .48s ease;
+}
+
+@keyframes inviteSuccess {
+
+    0% {
+        transform:
+            scale(.88);
+    }
+
+    50% {
+        transform:
+            translateY(-3px)
+            scale(1.1);
+    }
+
+    75% {
+        transform:
+            translateY(-2px)
+            scale(.98);
+    }
+
+    100% {
+        transform:
+            translateY(0)
+            scale(1);
+    }
+}
+
+
+/* PARAR TRANSMISSAO */
+
+#stop:hover {
+    box-shadow:
+        0 8px 30px
+        rgba(237,66,69,.35);
+}
+
+
+/* SAIR */
+
+#leave:hover {
+    background:
+        #402b2e;
+
+    box-shadow:
+        0 8px 26px
+        rgba(237,66,69,.2);
+}
+
+
+/* STATUS */
+
+#status {
+    transition:
+        opacity .2s ease,
+        transform .2s ease;
+}
+
+#status.status-pop {
+    animation:
+        statusPop .4s ease;
+}
+
+@keyframes statusPop {
+
+    0% {
+        opacity: .3;
+
+        transform:
+            translateY(6px)
+            scale(.94);
+    }
+
+    60% {
+        opacity: 1;
+
+        transform:
+            translateY(-2px)
+            scale(1.04);
+    }
+
+    100% {
+        transform:
+            translateY(0)
+            scale(1);
+    }
+}
+
+
+@media (prefers-reduced-motion: reduce) {
+
+    footer button,
+    #share,
+    #copy,
+    #status {
+        animation:
+            none !important;
+
+        transition:
+            none !important;
+    }
+}
+
+
+#status {
+    position: fixed;
+    bottom: 75px;
+    left: 14px;
+    padding: 6px 9px;
+    border-radius: 7px;
+    background: rgba(0,0,0,.75);
+    color: #a1a1aa;
+    font-size: 11px;
+    z-index: 100;
+}
+
+
+/* =====================================================
+   PERFIL
+===================================================== */
+
+.profile-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    background: rgba(5,5,8,.96);
+    display: none;
+    align-items: center;
+    justify-content: center;
+}
+
+.profile-card {
+    width: min(390px, 90%);
+    background: #18181e;
+    border: 1px solid #303038;
+    border-radius: 18px;
+    padding: 25px;
+}
+
+.profile-card h2 {
+    margin-top: 0;
+}
+
+.profile-card p {
+    color: #a1a1aa;
+}
+
+.profile-card input {
+    width: 100%;
+    background: #0e0e12;
+    border: 1px solid #303038;
+    border-radius: 9px;
+    color: white;
+    padding: 13px;
+    outline: none;
+}
+
+.avatar-options {
+    display: grid;
+    grid-template-columns: repeat(6,1fr);
+    gap: 6px;
+    margin: 12px 0;
+}
+
+.profile-avatar {
+    aspect-ratio: 1;
+    padding: 0;
+    border: 0;
+    border-radius: 9px;
+    font-size: 20px;
+    background: #292930;
+    color: white;
+    cursor: pointer;
+}
+
+.profile-avatar.selected {
+    outline: 2px solid #5865f2;
+}
+
+#enterRoom {
+    width: 100%;
+    border: 0;
+    border-radius: 9px;
+    padding: 12px;
+    background: #5865f2;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+    margin-top: 10px;
+}
+
+
+/* =====================================================
+   RESPONSIVO
+===================================================== */
+
+@media (max-width: 1050px) {
+
+    .app {
+        flex-direction: column;
+    }
+
+    .people-panel {
+        width: 100%;
+        min-width: 0;
+        height: 105px;
+        flex-direction: row;
+        align-items: center;
+    }
+
+    .people-title {
+        display: none;
+    }
+
+    .people {
+        width: 100%;
+        flex-direction: row;
+        overflow-x: auto;
+        overflow-y: hidden;
+    }
+
+    .person {
+        width: 145px;
+        min-width: 145px;
+        height: 78px;
+    }
+
+}
+
+
+@media (max-width: 650px) {
+
+    header {
+        padding: 0 12px;
+    }
+
+    .logo {
+        font-size: 16px;
+    }
+
+    .app {
+        padding: 8px;
+    }
+
+    footer button {
+        padding: 10px 11px;
+        font-size: 11px;
+    }
+
+    .stream-thumb {
+        width: 145px;
+        min-width: 145px;
+        height: 82px;
+    }
+
+}
+
+
+
+/* =====================================================
+   UI ANIMATIONS V3 SAFE
+===================================================== */
+
+
+/* PARTICIPANTES */
+
+.person {
+    transition:
+        transform .20s ease,
+        background .20s ease,
+        border-color .20s ease,
+        box-shadow .20s ease;
+
+    animation:
+        personSafeEnter .30s ease both;
+}
+
+.person:hover {
+    transform:
+        translateX(3px);
+
+    background:
+        rgba(255,255,255,.035);
+}
+
+@keyframes personSafeEnter {
+
+    from {
+        opacity: 0;
+
+        transform:
+            translateY(5px);
+    }
+
+    to {
+        opacity: 1;
+
+        transform:
+            translateY(0);
+    }
+
+}
+
+
+/* QUEM ESTA TRANSMITINDO */
+
+.person.streaming {
+    box-shadow:
+        0 0 0 1px
+        rgba(88,101,242,.16);
+
+    animation:
+        personSafeEnter .30s ease both,
+        streamerSafeGlow 2.2s ease-in-out infinite;
+}
+
+@keyframes streamerSafeGlow {
+
+    0%,
+    100% {
+        box-shadow:
+            0 0 0 1px
+            rgba(88,101,242,.12);
+    }
+
+    50% {
+        box-shadow:
+            0 0 16px
+            rgba(88,101,242,.20);
+    }
+
+}
+
+
+/* AO VIVO DO PARTICIPANTE */
+
+.person.streaming .person-status {
+    animation:
+        liveSafeText 1.5s
+        ease-in-out infinite;
+}
+
+@keyframes liveSafeText {
+
+    0%,
+    100% {
+        opacity: .72;
+    }
+
+    50% {
+        opacity: 1;
+    }
+
+}
+
+
+/* BADGE PRINCIPAL AO VIVO */
+
+#liveBadge {
+    transform-origin:
+        center;
+
+    animation:
+        liveSafeBadge 1.6s
+        ease-in-out infinite;
+}
+
+@keyframes liveSafeBadge {
+
+    0%,
+    100% {
+        transform:
+            scale(1);
+
+        opacity:
+            .88;
+    }
+
+    50% {
+        transform:
+            scale(1.045);
+
+        opacity:
+            1;
+    }
+
+}
+
+
+/* MINI TRANSMISSOES */
+
+.stream-thumb {
+    transition:
+        transform .20s ease,
+        border-color .20s ease,
+        box-shadow .20s ease,
+        filter .20s ease;
+
+    animation:
+        thumbSafeEnter .30s ease both;
+}
+
+.stream-thumb:hover {
+    transform:
+        translateY(-3px);
+
+    filter:
+        brightness(1.07);
+
+    box-shadow:
+        0 8px 24px
+        rgba(0,0,0,.28);
+}
+
+.stream-thumb:active {
+    transform:
+        scale(.98);
+}
+
+.stream-thumb.active {
+    box-shadow:
+        0 0 18px
+        rgba(88,101,242,.20);
+}
+
+@keyframes thumbSafeEnter {
+
+    from {
+        opacity: 0;
+
+        transform:
+            translateY(6px);
+    }
+
+    to {
+        opacity: 1;
+
+        transform:
+            translateY(0);
+    }
+
+}
+
+
+/* PAINEL DE PARTICIPANTES */
+
+.people-panel {
+    transition:
+        border-color .22s ease,
+        box-shadow .22s ease;
+}
+
+.people-panel:hover {
+    border-color:
+        rgba(88,101,242,.25);
+
+    box-shadow:
+        0 8px 28px
+        rgba(0,0,0,.16);
+}
+
+
+/* TELA VAZIA */
+
+.stage-empty {
+    animation:
+        emptySafeFloat 3s
+        ease-in-out infinite;
+}
+
+@keyframes emptySafeFloat {
+
+    0%,
+    100% {
+        transform:
+            translateY(0);
+    }
+
+    50% {
+        transform:
+            translateY(-3px);
+    }
+
+}
+
+
+/* ACESSIBILIDADE */
+
+@media (
+    prefers-reduced-motion:
+    reduce
+) {
+
+    .person,
+    .person.streaming,
+    .person-status,
+    #liveBadge,
+    .stream-thumb,
+    .stage-empty {
+        animation:
+            none !important;
+
+        transition:
+            none !important;
+    }
+
+}
+
+
+
+/* =====================================================
+   UI ANIMATIONS V4
+   ACABAMENTO GERAL
+===================================================== */
+
+
+/* ENTRADA DA INTERFACE */
+
+body {
+    animation:
+        pageEnter .38s ease both;
+}
+
+@keyframes pageEnter {
+
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+
+}
+
+
+/* HEADER */
+
+header {
+    animation:
+        headerEnter .42s ease both;
+}
+
+@keyframes headerEnter {
+
+    from {
+        opacity: 0;
+
+        transform:
+            translateY(-8px);
+    }
+
+    to {
+        opacity: 1;
+
+        transform:
+            translateY(0);
+    }
+
+}
+
+
+/* LOGO / MARCA */
+
+.brand {
+    transition:
+        transform .2s ease,
+        filter .2s ease;
+}
+
+.brand:hover {
+    transform:
+        translateX(2px);
+
+    filter:
+        brightness(1.08);
+}
+
+.brand img {
+    transition:
+        transform .25s ease,
+        box-shadow .25s ease;
+}
+
+.brand:hover img {
+    transform:
+        rotate(-3deg)
+        scale(1.04);
+
+    box-shadow:
+        0 0 18px
+        rgba(88,101,242,.22);
+}
+
+
+/* CONTEUDO PRINCIPAL */
+
+.app {
+    animation:
+        appEnter .45s
+        cubic-bezier(.2,.8,.2,1)
+        both;
+}
+
+@keyframes appEnter {
+
+    from {
+        opacity: 0;
+
+        transform:
+            translateY(8px);
+    }
+
+    to {
+        opacity: 1;
+
+        transform:
+            translateY(0);
+    }
+
+}
+
+
+/* PALCO */
+
+.stage {
+    transition:
+        border-color .22s ease,
+        box-shadow .22s ease,
+        transform .22s ease;
+}
+
+.stage:hover {
+    border-color:
+        rgba(88,101,242,.24);
+
+    box-shadow:
+        0 12px 36px
+        rgba(0,0,0,.20);
+}
+
+
+/* TELA VAZIA */
+
+.stage-empty .icon {
+    transition:
+        transform .25s ease,
+        filter .25s ease;
+}
+
+.stage:hover .stage-empty .icon {
+    transform:
+        scale(1.06);
+
+    filter:
+        brightness(1.12);
+}
+
+
+/* VIDEO CONTROLS */
+
+.video-control {
+    transition:
+        transform .16s ease,
+        background .18s ease,
+        box-shadow .18s ease,
+        filter .18s ease;
+}
+
+.video-control:hover {
+    transform:
+        translateY(-2px)
+        scale(1.04);
+
+    filter:
+        brightness(1.1);
+
+    box-shadow:
+        0 6px 18px
+        rgba(0,0,0,.25);
+}
+
+.video-control:active {
+    transform:
+        scale(.94);
+}
+
+
+/* LABEL PRINCIPAL */
+
+#mainLabel {
+    transition:
+        opacity .2s ease,
+        transform .2s ease;
+
+    animation:
+        labelEnter .3s ease both;
+}
+
+@keyframes labelEnter {
+
+    from {
+        opacity: 0;
+
+        transform:
+            translateY(4px);
+    }
+
+    to {
+        opacity: 1;
+
+        transform:
+            translateY(0);
+    }
+
+}
+
+
+/* TITULO PARTICIPANTES */
+
+.people-title {
+    transition:
+        letter-spacing .2s ease,
+        color .2s ease;
+}
+
+.people-panel:hover .people-title {
+    letter-spacing:
+        .4px;
+
+    color:
+        #c7c9ff;
+}
+
+
+/* STATUS GLOBAL */
+
+#status {
+    backdrop-filter:
+        blur(8px);
+
+    transition:
+        opacity .2s ease,
+        transform .2s ease,
+        box-shadow .2s ease;
+}
+
+#status:hover {
+    transform:
+        translateY(-2px);
+
+    box-shadow:
+        0 7px 20px
+        rgba(0,0,0,.22);
+}
+
+
+/* FOOTER */
+
+footer {
+    animation:
+        footerEnter .42s ease both;
+
+    transition:
+        border-color .22s ease,
+        box-shadow .22s ease;
+}
+
+footer:hover {
+    border-color:
+        rgba(88,101,242,.20);
+
+    box-shadow:
+        0 -8px 28px
+        rgba(0,0,0,.14);
+}
+
+@keyframes footerEnter {
+
+    from {
+        opacity: 0;
+
+        transform:
+            translateY(8px);
+    }
+
+    to {
+        opacity: 1;
+
+        transform:
+            translateY(0);
+    }
+
+}
+
+
+/* AVATARES / PERFIL */
+
+.profile-avatar {
+    transition:
+        transform .18s ease,
+        box-shadow .18s ease,
+        border-color .18s ease,
+        filter .18s ease;
+}
+
+.profile-avatar:hover {
+    transform:
+        translateY(-3px)
+        scale(1.06);
+
+    filter:
+        brightness(1.08);
+
+    box-shadow:
+        0 7px 20px
+        rgba(0,0,0,.22);
+}
+
+.profile-avatar:active {
+    transform:
+        scale(.95);
+}
+
+.profile-avatar.selected {
+    box-shadow:
+        0 0 0 2px
+        rgba(88,101,242,.26);
+}
+
+
+/* INPUTS */
+
+input {
+    transition:
+        border-color .18s ease,
+        box-shadow .18s ease,
+        background .18s ease;
+}
+
+input:focus {
+    box-shadow:
+        0 0 0 3px
+        rgba(88,101,242,.10);
+}
+
+
+/* MODAL / PERFIL */
+
+.modal,
+.profile-modal {
+    animation:
+        modalFadeIn .25s ease both;
+}
+
+.modal-content,
+.profile-card {
+    animation:
+        modalCardEnter .30s
+        cubic-bezier(.2,.8,.2,1)
+        both;
+}
+
+@keyframes modalFadeIn {
+
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+
+}
+
+@keyframes modalCardEnter {
+
+    from {
+        opacity: 0;
+
+        transform:
+            translateY(10px)
+            scale(.97);
+    }
+
+    to {
+        opacity: 1;
+
+        transform:
+            translateY(0)
+            scale(1);
+    }
+
+}
+
+
+/* SCROLL SUAVE DAS MINI STREAMS */
+
+.stream-strip {
+    scroll-behavior:
+        smooth;
+}
+
+
+/* MOBILE */
+
+@media (max-width: 760px) {
+
+    footer button:hover,
+    .video-control:hover,
+    .profile-avatar:hover {
+        transform:
+            none;
+    }
+
+}
+
+
+/* ACESSIBILIDADE */
+
+@media (
+    prefers-reduced-motion:
+    reduce
+) {
+
+    body,
+    header,
+    .app,
+    footer,
+    #mainLabel,
+    .modal,
+    .profile-modal,
+    .modal-content,
+    .profile-card {
+        animation:
+            none !important;
+    }
+
+}
+
+
+
+/* =====================================================
+   QUALITY SELECTOR V1
+===================================================== */
+
+.quality-control {
+    height: 39px;
+
+    display: flex;
+    align-items: center;
+
+    background:
+        #202027;
+
+    border:
+        1px solid #303038;
+
+    border-radius:
+        9px;
+
+    overflow: hidden;
+
+    transition:
+        border-color .18s ease,
+        box-shadow .18s ease,
+        transform .18s ease;
+}
+
+.quality-control:hover {
+    transform:
+        translateY(-2px);
+
+    border-color:
+        rgba(88,101,242,.55);
+
+    box-shadow:
+        0 7px 22px
+        rgba(0,0,0,.22);
+}
+
+.quality-icon {
+    padding-left:
+        10px;
+
+    font-size:
+        13px;
+
+    pointer-events:
+        none;
+}
+
+#qualitySelect {
+    height:
+        100%;
+
+    border:
+        0;
+
+    outline:
+        0;
+
+    padding:
+        0 10px 0 7px;
+
+    background:
+        transparent;
+
+    color:
+        white;
+
+    cursor:
+        pointer;
+
+    font-weight:
+        700;
+
+    font-size:
+        11px;
+}
+
+#qualitySelect option {
+    background:
+        #18181e;
+
+    color:
+        white;
+}
+
+.quality-control.quality-changing {
+    animation:
+        qualityChange .42s ease;
+}
+
+@keyframes qualityChange {
+
+    0% {
+        transform:
+            scale(.95);
+    }
+
+    55% {
+        transform:
+            scale(1.04);
+    }
+
+    100% {
+        transform:
+            scale(1);
+    }
+
+}
+
+@media (max-width: 650px) {
+
+    .quality-icon {
+        display:
+            none;
+    }
+
+    #qualitySelect {
+        max-width:
+            110px;
+    }
+
+}
+
+
+
+/* =====================================================
+   MONITOR UI V2
+===================================================== */
+
+
+/* MONITOR CENTRAL */
+
+.hl-monitor {
+    position: relative;
+
+    display: block;
+
+    width: 72px;
+    height: 46px;
+
+    margin:
+        0 auto 26px;
+
+    border:
+        3px solid
+        #676978;
+
+    border-radius:
+        6px;
+
+    background:
+        linear-gradient(
+            145deg,
+            #252733,
+            #15161d
+        );
+
+    box-shadow:
+        inset 0 0 0 2px
+        rgba(255,255,255,.025),
+        0 10px 30px
+        rgba(0,0,0,.22);
+
+    animation:
+        hlMonitorFloat
+        3s ease-in-out
+        infinite;
+}
+
+
+.hl-monitor::before {
+    content: "";
+
+    position: absolute;
+
+    left: 50%;
+    bottom: -13px;
+
+    width: 7px;
+    height: 13px;
+
+    transform:
+        translateX(-50%);
+
+    border-radius:
+        0 0 2px 2px;
+
+    background:
+        #676978;
+}
+
+
+.hl-monitor::after {
+    content: "";
+
+    position: absolute;
+
+    left: 50%;
+    bottom: -17px;
+
+    width: 30px;
+    height: 4px;
+
+    transform:
+        translateX(-50%);
+
+    border-radius:
+        4px;
+
+    background:
+        #676978;
+}
+
+
+.hl-monitor {
+    background:
+        radial-gradient(
+            circle at 50% 50%,
+            rgba(104,117,255,.11),
+            transparent 60%
+        ),
+        linear-gradient(
+            145deg,
+            #20222c,
+            #121319
+        );
+}
+
+
+@keyframes hlMonitorFloat {
+
+    0%,
+    100% {
+        transform:
+            translateY(0);
+
+        filter:
+            brightness(1);
+    }
+
+    50% {
+        transform:
+            translateY(-4px);
+
+        filter:
+            brightness(1.12);
+    }
+
+}
+
+
+/* BOTÃO COMPARTILHAR */
+
+.share-monitor-icon {
+    position: relative;
+
+    display: inline-block;
+
+    width: 15px;
+    height: 10px;
+
+    margin-right:
+        2px;
+
+    border:
+        1.7px solid
+        currentColor;
+
+    border-radius:
+        2px;
+}
+
+
+.share-monitor-icon::before {
+    content: "";
+
+    position: absolute;
+
+    left: 50%;
+    bottom: -4px;
+
+    width: 2px;
+    height: 4px;
+
+    transform:
+        translateX(-50%);
+
+    background:
+        currentColor;
+}
+
+
+.share-monitor-icon::after {
+    content: "";
+
+    position: absolute;
+
+    left: 50%;
+    bottom: -5px;
+
+    width: 7px;
+    height: 1.5px;
+
+    transform:
+        translateX(-50%);
+
+    border-radius:
+        2px;
+
+    background:
+        currentColor;
+}
+
+
+/* ENGRENAGEM */
+
+.quality-icon {
+    font-family:
+        Arial,
+        sans-serif;
+
+    opacity:
+        .9;
+}
+
+
+
+
+/* =====================================================
+   ROOM UI V2 FIXED
+   HL ACTIVITY
+===================================================== */
+
+:root {
+
+    --hl-primary:
+        #6875ff;
+
+    --hl-primary-soft:
+        rgba(104,117,255,.13);
+
+    --hl-border:
+        rgba(255,255,255,.075);
+
+}
+
+
+/* =====================================================
+   HEADER
+===================================================== */
+
+.hl-room-header {
+
+    height:
+        70px;
+
+    display:
+        flex;
+
+    align-items:
+        center;
+
+    justify-content:
+        space-between;
+
+    padding:
+        0 18px;
+
+    position:
+        relative;
+
+    z-index:
+        50;
+
+    background:
+        linear-gradient(
+            180deg,
+            rgba(17,17,23,.98),
+            rgba(13,13,18,.96)
+        );
+
+    border-bottom:
+        1px solid
+        rgba(255,255,255,.07);
+
+    box-shadow:
+        0 12px 40px
+        rgba(0,0,0,.14);
+
+    backdrop-filter:
+        blur(18px);
+
+}
+
+
+/* pequena luz superior */
+
+.hl-room-header::before {
+
+    content:
+        "";
+
+    position:
+        absolute;
+
+    top:
+        0;
+
+    left:
+        40px;
+
+    width:
+        240px;
+
+    height:
+        1px;
+
+    background:
+        linear-gradient(
+            90deg,
+            transparent,
+            rgba(104,117,255,.7),
+            transparent
+        );
+
+    opacity:
+        .55;
+
+}
+
+
+/* =====================================================
+   MARCA
+===================================================== */
+
+.hl-room-brand {
+
+    display:
+        flex;
+
+    align-items:
+        center;
+
+    gap:
+        11px;
+
+}
+
+
+.hl-logo-shell {
+
+    width:
+        43px;
+
+    height:
+        43px;
+
+    position:
+        relative;
+
+    flex:
+        0 0 auto;
+
+}
+
+
+.hl-room-logo {
+
+    width:
+        43px;
+
+    height:
+        43px;
+
+    display:
+        block;
+
+    object-fit:
+        cover;
+
+    border-radius:
+        11px;
+
+    border:
+        1px solid
+        rgba(255,255,255,.055);
+
+    box-shadow:
+        0 8px 25px
+        rgba(0,0,0,.26),
+        0 0 25px
+        rgba(104,117,255,.055);
+
+    transition:
+        transform .22s ease,
+        border-color .22s ease,
+        box-shadow .22s ease;
+
+}
+
+
+.hl-room-brand:hover
+.hl-room-logo {
+
+    transform:
+        translateY(-1px)
+        rotate(-2deg)
+        scale(1.035);
+
+    border-color:
+        rgba(104,117,255,.25);
+
+    box-shadow:
+        0 10px 30px
+        rgba(0,0,0,.30),
+        0 0 28px
+        rgba(104,117,255,.12);
+
+}
+
+
+/* bolinha na logo */
+
+.hl-logo-presence {
+
+    position:
+        absolute;
+
+    right:
+        -2px;
+
+    bottom:
+        -2px;
+
+    width:
+        10px;
+
+    height:
+        10px;
+
+    border:
+        2px solid
+        #101016;
+
+    border-radius:
+        50%;
+
+    background:
+        #43b581;
+
+    box-shadow:
+        0 0 10px
+        rgba(67,181,129,.65);
+
+}
+
+
+/* textos */
+
+.hl-room-brand-text {
+
+    display:
+        flex;
+
+    flex-direction:
+        column;
+
+    gap:
+        4px;
+
+}
+
+
+.hl-room-brand-name {
+
+    color:
+        #f7f7fa;
+
+    font-size:
+        15px;
+
+    line-height:
+        1;
+
+    font-weight:
+        900;
+
+    letter-spacing:
+        1px;
+
+}
+
+
+.hl-room-brand-name span {
+
+    color:
+        #8a91ff;
+
+}
+
+
+.hl-room-brand-subtitle {
+
+    color:
+        #62636f;
+
+    font-size:
+        7px;
+
+    line-height:
+        1;
+
+    font-weight:
+        800;
+
+    letter-spacing:
+        2.4px;
+
+}
+
+
+/* =====================================================
+   ONLINE
+===================================================== */
+
+.hl-room-live-system {
+
+    display:
+        flex;
+
+    align-items:
+        center;
+
+    gap:
+        5px;
+
+    margin-left:
+        7px;
+
+    padding:
+        5px 8px;
+
+    color:
+        #79d5a3;
+
+    font-size:
+        7px;
+
+    font-weight:
+        900;
+
+    letter-spacing:
+        .8px;
+
+    border:
+        1px solid
+        rgba(67,181,129,.12);
+
+    border-radius:
+        999px;
+
+    background:
+        rgba(67,181,129,.045);
+
+}
+
+
+.hl-system-dot {
+
+    width:
+        5px;
+
+    height:
+        5px;
+
+    border-radius:
+        50%;
+
+    background:
+        #43b581;
+
+    box-shadow:
+        0 0 8px
+        rgba(67,181,129,.8);
+
+    animation:
+        hlSystemPulse
+        2.3s ease-in-out
+        infinite;
+
+}
+
+
+@keyframes hlSystemPulse {
+
+    0%,
+    100% {
+
+        opacity:
+            .55;
+
+        transform:
+            scale(.9);
+
+    }
+
+    50% {
+
+        opacity:
+            1;
+
+        transform:
+            scale(1.12);
+
+    }
+
+}
+
+
+/* =====================================================
+   SALA / CODIGO
+===================================================== */
+
+.hl-room-info {
+
+    display:
+        flex;
+
+    align-items:
+        center;
+
+    gap:
+        8px;
+
+}
+
+
+.hl-room-type {
+
+    padding:
+        6px 8px;
+
+    color:
+        #666875;
+
+    font-size:
+        7px;
+
+    font-weight:
+        900;
+
+    letter-spacing:
+        1.2px;
+
+    border:
+        1px solid
+        rgba(255,255,255,.055);
+
+    border-radius:
+        7px;
+
+    background:
+        rgba(255,255,255,.018);
+
+}
+
+
+.hl-room-code-v2 {
+
+    display:
+        flex;
+
+    align-items:
+        center;
+
+    gap:
+        8px;
+
+    min-height:
+        34px;
+
+    padding:
+        5px 10px;
+
+    border:
+        1px solid
+        rgba(104,117,255,.16);
+
+    border-radius:
+        9px;
+
+    background:
+        linear-gradient(
+            180deg,
+            rgba(104,117,255,.075),
+            rgba(104,117,255,.035)
+        );
+
+    box-shadow:
+        inset 0 1px 0
+        rgba(255,255,255,.025);
+
+    transition:
+        border-color .18s ease,
+        background .18s ease,
+        transform .18s ease;
+
+}
+
+
+.hl-room-code-v2:hover {
+
+    transform:
+        translateY(-1px);
+
+    border-color:
+        rgba(104,117,255,.32);
+
+    background:
+        rgba(104,117,255,.09);
+
+}
+
+
+.hl-room-code-label {
+
+    color:
+        #737582;
+
+    font-size:
+        7px;
+
+    font-weight:
+        900;
+
+    letter-spacing:
+        1.3px;
+
+}
+
+
+.hl-room-code-v2
+#roomCode {
+
+    color:
+        #f1f2ff;
+
+    font-size:
+        12px;
+
+    font-weight:
+        900;
+
+    letter-spacing:
+        1.1px;
+
+}
+
+
+/* =====================================================
+   STAGE - MAIS PROFUNDIDADE
+===================================================== */
+
+.stage {
+
+    background:
+        radial-gradient(
+            circle at 50% 48%,
+            rgba(104,117,255,.045),
+            transparent 26%
+        ),
+        linear-gradient(
+            145deg,
+            #181920,
+            #14151b
+        );
+
+    box-shadow:
+        inset 0 1px 0
+        rgba(255,255,255,.02),
+        inset 0 0 80px
+        rgba(0,0,0,.07);
+
+}
+
+
+/* brilho quase invisivel */
+
+.stage::after {
+
+    content:
+        "";
+
+    position:
+        absolute;
+
+    width:
+        380px;
+
+    height:
+        380px;
+
+    left:
+        50%;
+
+    top:
+        50%;
+
+    transform:
+        translate(-50%, -50%);
+
+    border-radius:
+        50%;
+
+    background:
+        rgba(104,117,255,.025);
+
+    filter:
+        blur(80px);
+
+    pointer-events:
+        none;
+
+}
+
+
+/* =====================================================
+   PARTICIPANTES
+===================================================== */
+
+.people-panel {
+
+    background:
+        linear-gradient(
+            180deg,
+            #121219,
+            #101016
+        );
+
+    box-shadow:
+        inset 0 1px 0
+        rgba(255,255,255,.02);
+
+}
+
+
+.person {
+
+    transition:
+        transform .18s ease,
+        border-color .18s ease,
+        background .18s ease;
+
+}
+
+
+.person:hover {
+
+    transform:
+        translateX(3px);
+
+    border-color:
+        rgba(104,117,255,.18);
+
+    background:
+        rgba(104,117,255,.04);
+
+}
+
+
+/* =====================================================
+   FOOTER
+===================================================== */
+
+footer {
+
+    background:
+        linear-gradient(
+            180deg,
+            rgba(17,17,23,.96),
+            rgba(13,13,18,.99)
+        );
+
+    border-top:
+        1px solid
+        rgba(255,255,255,.065);
+
+    box-shadow:
+        0 -14px 35px
+        rgba(0,0,0,.10);
+
+}
+
+
+footer button {
+
+    transition:
+        transform .17s ease,
+        box-shadow .17s ease,
+        filter .17s ease;
+
+}
+
+
+footer button:hover {
+
+    transform:
+        translateY(-2px);
+
+}
+
+
+#share {
+
+    box-shadow:
+        0 8px 24px
+        rgba(88,101,242,.14),
+        inset 0 1px 0
+        rgba(255,255,255,.08);
+
+}
+
+
+#share:hover {
+
+    box-shadow:
+        0 12px 32px
+        rgba(88,101,242,.24),
+        inset 0 1px 0
+        rgba(255,255,255,.10);
+
+}
+
+
+/* =====================================================
+   MOBILE
+===================================================== */
+
+@media (
+    max-width:
+    720px
+) {
+
+    .hl-room-live-system,
+    .hl-room-type {
+
+        display:
+            none;
+
+    }
+
+    .hl-room-header {
+
+        padding:
+            0 10px;
+
+    }
+
+    .hl-room-logo,
+    .hl-logo-shell {
+
+        width:
+            36px;
+
+        height:
+            36px;
+
+    }
+
+    .hl-room-brand-name {
+
+        font-size:
+            12px;
+
+    }
+
+    .hl-room-brand-subtitle {
+
+        font-size:
+            6px;
+
+    }
+
+}
+
+
+/* respeita configuracao do usuario */
+
+@media (
+    prefers-reduced-motion:
+    reduce
+) {
+
+    .hl-system-dot {
+
+        animation:
+            none;
+
+    }
+
+}
+
+
+
+
+/* =====================================================
+   PROFILE UI V2
+===================================================== */
+
+
+/* FUNDO */
+
+#profileOverlay {
+
+    background:
+        radial-gradient(
+            circle at 50% 45%,
+            rgba(104,117,255,.075),
+            transparent 27%
+        ),
+        rgba(5,5,9,.91);
+
+    backdrop-filter:
+        blur(9px);
+
+}
+
+
+/* CARD */
+
+#profileOverlay .profile-card {
+
+    position:
+        relative;
+
+    width:
+        min(430px, calc(100vw - 32px));
+
+    padding:
+        28px;
+
+    overflow:
+        hidden;
+
+    border:
+        1px solid
+        rgba(255,255,255,.085);
+
+    border-radius:
+        20px;
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(25,25,33,.98),
+            rgba(18,18,25,.98)
+        );
+
+    box-shadow:
+        0 30px 90px
+        rgba(0,0,0,.46),
+        inset 0 1px 0
+        rgba(255,255,255,.035);
+
+    animation:
+        hlProfileEnter
+        .32s cubic-bezier(.2,.8,.2,1);
+
+}
+
+
+#profileOverlay .profile-card::before {
+
+    content:
+        "";
+
+    position:
+        absolute;
+
+    width:
+        180px;
+
+    height:
+        180px;
+
+    right:
+        -100px;
+
+    top:
+        -110px;
+
+    border-radius:
+        50%;
+
+    background:
+        rgba(104,117,255,.12);
+
+    filter:
+        blur(45px);
+
+    pointer-events:
+        none;
+
+}
+
+
+@keyframes hlProfileEnter {
+
+    from {
+
+        opacity:
+            0;
+
+        transform:
+            translateY(10px)
+            scale(.975);
+
+    }
+
+    to {
+
+        opacity:
+            1;
+
+        transform:
+            translateY(0)
+            scale(1);
+
+    }
+
+}
+
+
+/* TITULO */
+
+#profileOverlay h2 {
+
+    position:
+        relative;
+
+    margin:
+        0 0 8px;
+
+    color:
+        #f7f7fa;
+
+    font-size:
+        25px;
+
+    letter-spacing:
+        -.6px;
+
+}
+
+
+#profileOverlay p {
+
+    position:
+        relative;
+
+    margin:
+        0 0 20px;
+
+    color:
+        #92939e;
+
+    font-size:
+        14px;
+
+}
+
+
+/* INPUT */
+
+#profileName {
+
+    width:
+        100%;
+
+    box-sizing:
+        border-box;
+
+    min-height:
+        50px;
+
+    padding:
+        0 15px;
+
+    border:
+        1px solid
+        rgba(255,255,255,.09);
+
+    border-radius:
+        11px;
+
+    background:
+        rgba(8,8,13,.72);
+
+    color:
+        #f4f4f7;
+
+    font-size:
+        14px;
+
+    transition:
+        border-color .18s ease,
+        box-shadow .18s ease,
+        background .18s ease;
+
+}
+
+
+#profileName:focus {
+
+    border-color:
+        rgba(104,117,255,.65);
+
+    background:
+        rgba(10,10,16,.92);
+
+    box-shadow:
+        0 0 0 3px
+        rgba(104,117,255,.10);
+
+}
+
+
+#profileName::placeholder {
+
+    color:
+        #60616b;
+
+}
+
+
+/* AVATARES */
+
+#profileOverlay .avatar-options {
+
+    display:
+        grid;
+
+    grid-template-columns:
+        repeat(6, 1fr);
+
+    gap:
+        8px;
+
+    margin:
+        16px 0 18px;
+
+}
+
+
+#profileOverlay .profile-avatar {
+
+    position:
+        relative;
+
+    aspect-ratio:
+        1;
+
+    display:
+        flex;
+
+    align-items:
+        center;
+
+    justify-content:
+        center;
+
+    padding:
+        0;
+
+    border:
+        1px solid
+        rgba(255,255,255,.055);
+
+    border-radius:
+        12px;
+
+    outline:
+        none;
+
+    background:
+        rgba(255,255,255,.045);
+
+    font-size:
+        23px;
+
+    cursor:
+        pointer;
+
+    box-shadow:
+        inset 0 1px 0
+        rgba(255,255,255,.025);
+
+    transition:
+        transform .17s ease,
+        border-color .17s ease,
+        background .17s ease,
+        box-shadow .17s ease;
+
+}
+
+
+#profileOverlay .profile-avatar:hover {
+
+    transform:
+        translateY(-3px);
+
+    border-color:
+        rgba(104,117,255,.28);
+
+    background:
+        rgba(104,117,255,.08);
+
+}
+
+
+#profileOverlay .profile-avatar.selected {
+
+    transform:
+        translateY(-2px);
+
+    border:
+        1px solid
+        rgba(104,117,255,.90);
+
+    outline:
+        none;
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(104,117,255,.22),
+            rgba(104,117,255,.09)
+        );
+
+    box-shadow:
+        0 0 0 2px
+        rgba(104,117,255,.10),
+        0 8px 25px
+        rgba(88,101,242,.12);
+
+}
+
+
+#profileOverlay .profile-avatar.selected::after {
+
+    content:
+        "";
+
+    position:
+        absolute;
+
+    right:
+        6px;
+
+    top:
+        6px;
+
+    width:
+        5px;
+
+    height:
+        5px;
+
+    border-radius:
+        50%;
+
+    background:
+        #7f89ff;
+
+    box-shadow:
+        0 0 8px
+        rgba(127,137,255,.85);
+
+}
+
+
+/* BOTAO */
+
+#enterRoom {
+
+    width:
+        100%;
+
+    min-height:
+        50px;
+
+    margin-top:
+        0;
+
+    border:
+        1px solid
+        rgba(255,255,255,.07);
+
+    border-radius:
+        11px;
+
+    background:
+        linear-gradient(
+            135deg,
+            #5865f2,
+            #6c63ff
+        );
+
+    color:
+        white;
+
+    font-size:
+        14px;
+
+    font-weight:
+        800;
+
+    cursor:
+        pointer;
+
+    box-shadow:
+        0 10px 28px
+        rgba(88,101,242,.18),
+        inset 0 1px 0
+        rgba(255,255,255,.12);
+
+    transition:
+        transform .17s ease,
+        box-shadow .17s ease,
+        filter .17s ease;
+
+}
+
+
+#enterRoom:hover {
+
+    transform:
+        translateY(-2px);
+
+    filter:
+        brightness(1.06);
+
+    box-shadow:
+        0 14px 34px
+        rgba(88,101,242,.28);
+
+}
+
+
+#enterRoom:active {
+
+    transform:
+        translateY(0)
+        scale(.99);
+
+}
+
+
+/* MOBILE */
+
+@media (max-width: 520px) {
+
+    #profileOverlay .profile-card {
+
+        padding:
+            22px;
+
+    }
+
+    #profileOverlay .avatar-options {
+
+        gap:
+            6px;
+
+    }
+
+    #profileOverlay .profile-avatar {
+
+        font-size:
+            20px;
+
+        border-radius:
+            10px;
+
+    }
+
+}
+
+
+/* ACESSIBILIDADE */
+
+@media (
+    prefers-reduced-motion:
+    reduce
+) {
+
+    #profileOverlay .profile-card {
+
+        animation:
+            none;
+
+    }
+
+}
+
+
+</style>
+
+</head>
+
+
+<body>
+
+
+
+<header class="hl-room-header">
+
+    <div class="hl-room-brand">
+
+        <div class="hl-logo-shell">
+
+            <img
+                src="/logo-hl.png?v=3"
+                alt="HL Activity"
+                class="hl-room-logo"
+            >
+
+            <span class="hl-logo-presence"></span>
+
+        </div>
+
+        <div class="hl-room-brand-text">
+
+            <div class="hl-room-brand-name">
+                HL <span>ACTIVITY</span>
+            </div>
+
+            <div class="hl-room-brand-subtitle">
+                STREAM • CONNECT
+            </div>
+
+        </div>
+
+        <div class="hl-room-live-system">
+
+            <span class="hl-system-dot"></span>
+
+            ONLINE
+
+        </div>
+
+    </div>
+
+
+    <div class="hl-room-info">
+
+        <div class="hl-room-type">
+            PRIVATE ROOM
+        </div>
+
+        <div class="hl-room-code-v2">
+
+            <span class="hl-room-code-label">
+                SALA
+            </span>
+
+            <strong id="roomCode"></strong>
+
+        </div>
+
+    </div>
+
+</header>
+
+
+
+<div class="app">
+
+
+<div class="main-area">
+
+
+<div
+    id="stage"
+    class="stage"
+>
+
+    <video
+        id="mainVideo"
+        autoplay
+        playsinline
+    ></video>
+
+
+    <div
+        id="stageEmpty"
+        class="stage-empty"
+    >
+
+        <div class="icon"><span class="hl-monitor"></span></div>
+
+        <div>
+            Nenhuma transmissão ativa
+        </div>
+
+    </div>
+
+
+    <div
+        id="mainLabel"
+        class="main-label"
+    ></div>
+
+
+    <div
+        id="liveBadge"
+        class="live"
+    >
+        AO VIVO
+    </div>
+
+
+    <div
+        id="videoControls"
+        class="video-controls"
+    >
+
+        <button
+            id="audioButton"
+            class="video-control"
+            title="Ativar/desativar áudio"
+        >
+            🔇
+        </button>
+
+
+        <button
+            id="fullscreenButton"
+            class="video-control"
+            title="Tela cheia"
+        >
+            ⛶
+        </button>
+
+    </div>
+
+</div>
+
+
+<div
+    id="streamStrip"
+    class="stream-strip"
+></div>
+
+
+</div>
+
+
+<aside class="people-panel">
+
+<div class="people-title">
+PARTICIPANTES
+</div>
+
+<div
+    id="people"
+    class="people"
+></div>
+
+</aside>
+
+
+</div>
+
+
+<div id="status">
+Conectando...
+</div>
+
+
+<footer>
+
+
+<div
+    class="quality-control"
+    title="Qualidade da transmissão"
+>
+    <span class="quality-icon">⚙</span>
+
+    <select
+        id="qualitySelect"
+        aria-label="Qualidade da transmissão"
+    >
+        <option value="auto">
+            Auto
+        </option>
+
+        <option value="720p30">
+            720p • 30 FPS
+        </option>
+
+        <option value="720p60">
+            720p • 60 FPS
+        </option>
+
+        <option value="1080p30">
+            1080p • 30 FPS
+        </option>
+
+        <option
+            value="1080p60"
+            selected
+        >
+            1080p • 60 FPS
+        </option>
+    </select>
+</div>
+
+<button id="share">
+<span class="share-monitor-icon"></span>
+<span>Compartilhar</span>
+</button>
+
+<button id="stop">
+⏹ Parar transmissão
+</button>
+
+<button id="copy">
+🔗 Convite
+</button>
+
+<button id="leave">
+🚪 Sair
+</button>
+
+</footer>
+
+
+<div
+    id="profileOverlay"
+    class="profile-overlay"
+>
+
+<div class="profile-card">
+
+<h2>
+Entre na sala
+</h2>
+
+<p>
+Escolha seu próprio perfil.
+</p>
+
+<input
+    id="profileName"
+    maxlength="24"
+    placeholder="Seu nome"
+>
+
+
+<div class="avatar-options">
+
+    <button
+        class="profile-avatar selected"
+        data-avatar="😎"
+        type="button"
+        aria-label="Avatar óculos"
+    >😎</button>
+
+    <button
+        class="profile-avatar"
+        data-avatar="👾"
+        type="button"
+        aria-label="Avatar alien"
+    >👾</button>
+
+    <button
+        class="profile-avatar"
+        data-avatar="🐺"
+        type="button"
+        aria-label="Avatar lobo"
+    >🐺</button>
+
+    <button
+        class="profile-avatar"
+        data-avatar="🦊"
+        type="button"
+        aria-label="Avatar raposa"
+    >🦊</button>
+
+    <button
+        class="profile-avatar"
+        data-avatar="🐉"
+        type="button"
+        aria-label="Avatar dragão"
+    >🐉</button>
+
+    <button
+        class="profile-avatar"
+        data-avatar="🤖"
+        type="button"
+        aria-label="Avatar robô"
+    >🤖</button>
+
+</div>
+
+
+<button id="enterRoom">
+Entrar
+</button>
+
+</div>
+
+</div>
+
+
+<script>
+
+// =====================================================
+// ELEMENTOS
+// =====================================================
+
+const socket = io({
+
+    path:
+        "/api/socket.io",
+
+    reconnection:
+        true,
+
+    reconnectionAttempts:
+        Infinity,
+
+    reconnectionDelay:
+        800,
+
+    reconnectionDelayMax:
+        5000,
+
+    timeout:
+        10000
+
+});
+
+
+// =====================================================
+// QUALITY SELECTOR V1
+// =====================================================
+
+const qualitySelect =
+    document.getElementById(
+        "qualitySelect"
+    );
+
+
+const qualityProfiles = {
+
+    auto: {
+        label:
+            "Auto",
+
+        width:
+            1920,
+
+        height:
+            1080,
+
+        fps:
+            60,
+
+        bitrate:
+            8000000,
+
+        auto:
+            true,
+
+        _autoQualityV2:
+            true
+    },
+
+    "720p30": {
+        label:
+            "720p • 30 FPS",
+
+        width:
+            1280,
+
+        height:
+            720,
+
+        fps:
+            30,
+
+        bitrate:
+            3500000
+    },
+
+    "720p60": {
+        label:
+            "720p • 60 FPS",
+
+        width:
+            1280,
+
+        height:
+            720,
+
+        fps:
+            60,
+
+        bitrate:
+            5500000
+    },
+
+    "1080p30": {
+        label:
+            "1080p • 30 FPS",
+
+        width:
+            1920,
+
+        height:
+            1080,
+
+        fps:
+            30,
+
+        bitrate:
+            6000000
+    },
+
+    "1080p60": {
+        label:
+            "1080p • 60 FPS",
+
+        width:
+            1920,
+
+        height:
+            1080,
+
+        fps:
+            60,
+
+        bitrate:
+            8000000
+    }
+
+};
+
+
+function getQualityProfile() {
+
+    return (
+        qualityProfiles[
+            qualitySelect?.value ||
+            "1080p60"
+        ] ||
+        qualityProfiles[
+            "1080p60"
+        ]
+    );
+
+}
+
+
+async function applyQualityToSender(
+    sender,
+    profile
+) {
+
+    if (
+        !sender ||
+        sender.track?.kind !==
+            "video"
+    ) {
+
+        return;
+
+    }
+
+
+    try {
+
+        const parameters =
+            sender.getParameters();
+
+        if (
+            !parameters.encodings ||
+            parameters.encodings.length === 0
+        ) {
+
+            parameters.encodings =
+                [{}];
+
+        }
+
+
+        parameters
+            .encodings[0]
+            .maxBitrate =
+                profile.bitrate;
+
+
+        parameters
+            .encodings[0]
+            .maxFramerate =
+                profile.fps;
+
+
+        parameters
+            .degradationPreference =
+                profile.auto
+                    ? "balanced"
+                    : "maintain-resolution";
+
+
+        await sender
+            .setParameters(
+                parameters
+            );
+
+    } catch (
+        error
+    ) {
+
+        console.warn(
+            "Nao foi possivel alterar parametros WebRTC:",
+            error?.message ||
+            error
+        );
+
+    }
+
+}
+
+
+async function applySelectedQuality() {
+
+    const profile =
+        getQualityProfile();
+
+
+    const videoTrack =
+        localStream
+            ?.getVideoTracks?.()[0];
+
+
+    if (
+        videoTrack
+    ) {
+
+        try {
+
+            videoTrack.contentHint =
+                profile.auto
+                    ? "motion"
+                    : "detail";
+
+        } catch {}
+
+
+        try {
+
+            if (
+                profile.auto
+            ) {
+
+                await videoTrack
+                    .applyConstraints({
+                        frameRate: {
+                            ideal:
+                                60,
+                            max:
+                                60
+                        }
+                    });
+
+            } else {
+
+                await videoTrack
+                    .applyConstraints({
+
+                        width: {
+                            ideal:
+                                profile.width,
+                            max:
+                                profile.width
+                        },
+
+                        height: {
+                            ideal:
+                                profile.height,
+                            max:
+                                profile.height
+                        },
+
+                        frameRate: {
+                            ideal:
+                                profile.fps,
+                            max:
+                                profile.fps
+                        }
+
+                    });
+
+            }
+
+        } catch (
+            error
+        ) {
+
+            console.warn(
+                "Navegador nao aplicou todos os constraints:",
+                error?.message ||
+                error
+            );
+
+        }
+
+    }
+
+
+    const jobs =
+        [];
+
+    outboundPeers
+        .forEach(
+            peer => {
+
+                peer
+                    .getSenders()
+                    .forEach(
+                        sender => {
+
+                            if (
+                                sender.track?.kind ===
+                                "video"
+                            ) {
+
+                                jobs.push(
+                                    applyQualityToSender(
+                                        sender,
+                                        profile
+                                    )
+                                );
+
+                            }
+
+                        }
+                    );
+
+            }
+        );
+
+
+    await Promise.allSettled(
+        jobs
+    );
+
+
+    if (
+        statusElement
+    ) {
+
+        statusElement.textContent =
+            "🎥 Qualidade: " +
+            profile.label;
+
+        statusElement.classList.remove(
+            "status-pop"
+        );
+
+        void statusElement.offsetWidth;
+
+        statusElement.classList.add(
+            "status-pop"
+        );
+
+    }
+
+
+    const qualityControl =
+        document.querySelector(
+            ".quality-control"
+        );
+
+    if (
+        qualityControl
+    ) {
+
+        qualityControl.classList.remove(
+            "quality-changing"
+        );
+
+        void qualityControl.offsetWidth;
+
+        qualityControl.classList.add(
+            "quality-changing"
+        );
+
+    }
+
+}
+
+
+if (
+    qualitySelect
+) {
+
+    const savedQuality =
+        localStorage.getItem(
+            "leal_stream_quality"
+        );
+
+    if (
+        savedQuality &&
+        qualityProfiles[
+            savedQuality
+        ]
+    ) {
+
+        qualitySelect.value =
+            savedQuality;
+
+    }
+
+
+    qualitySelect.addEventListener(
+        "change",
+        async () => {
+
+            localStorage.setItem(
+                "leal_stream_quality",
+                qualitySelect.value
+            );
+
+            await applySelectedQuality();
+
+        }
+    );
+
+}
+
+
+
+
+
+
+// =====================================================
+// AUTO QUALITY V2
+// =====================================================
+
+const autoQualityLevels = [
+
+    "720p30",
+    "720p60",
+    "1080p30",
+    "1080p60"
+
+];
+
+
+let autoQualityLevel =
+    3;
+
+
+let autoQualityBadSamples =
+    0;
+
+
+let autoQualityGoodSamples =
+    0;
+
+
+let autoQualityRunning =
+    false;
+
+
+let autoQualityTimer =
+    null;
+
+
+const autoQualityPreviousStats =
+    new Map();
+
+
+function getAutoQualityProfile() {
+
+    return qualityProfiles[
+        autoQualityLevels[
+            autoQualityLevel
+        ]
+    ];
+
+}
+
+
+function getAutoQualityLabel() {
+
+    const profile =
+        getAutoQualityProfile();
+
+    return profile?.label ||
+        "Auto";
+
+}
+
+
+function updateAutoQualityUI(
+    state = "Estável"
+) {
+
+    const control =
+        document.querySelector(
+            ".quality-control"
+        );
+
+    if (!control) {
+        return;
+    }
+
+
+    control.dataset.autoState =
+        state;
+
+
+    control.title =
+        qualitySelect?.value ===
+            "auto"
+            ? (
+                "Auto • " +
+                getAutoQualityLabel() +
+                " • " +
+                state
+            )
+            : "";
+
+}
+
+
+async function applyAutoQualityLevel() {
+
+    if (
+        qualitySelect?.value !==
+            "auto"
+    ) {
+        return;
+    }
+
+
+    const profile =
+        getAutoQualityProfile();
+
+
+    const videoTrack =
+        localStream
+            ?.getVideoTracks?.()[0];
+
+
+    if (videoTrack) {
+
+        try {
+
+            videoTrack.contentHint =
+                autoQualityLevel >= 2
+                    ? "detail"
+                    : "motion";
+
+        } catch {}
+
+
+        try {
+
+            await videoTrack
+                .applyConstraints({
+
+                    width: {
+                        ideal:
+                            profile.width,
+                        max:
+                            profile.width
+                    },
+
+                    height: {
+                        ideal:
+                            profile.height,
+                        max:
+                            profile.height
+                    },
+
+                    frameRate: {
+                        ideal:
+                            profile.fps,
+                        max:
+                            profile.fps
+                    }
+
+                });
+
+        } catch (
+            error
+        ) {
+
+            console.warn(
+                "Auto Quality: constraints:",
+                error?.message ||
+                    error
+            );
+
+        }
+
+    }
+
+
+    const jobs =
+        [];
+
+
+    outboundPeers.forEach(
+        peer => {
+
+            peer
+                .getSenders()
+                .forEach(
+                    sender => {
+
+                        if (
+                            sender.track
+                                ?.kind ===
+                                "video"
+                        ) {
+
+                            jobs.push(
+                                applyQualityToSender(
+                                    sender,
+                                    profile
+                                )
+                            );
+
+                        }
+
+                    }
+                );
+
+        }
+    );
+
+
+    await Promise.allSettled(
+        jobs
+    );
+
+
+    updateAutoQualityUI(
+        "Estável"
+    );
+
+}
+
+
+async function readAutoQualityStats() {
+
+    const samples =
+        [];
+
+
+    for (
+        const [
+            targetId,
+            peer
+        ]
+        of outboundPeers
+    ) {
+
+        if (
+            !peer ||
+            peer.connectionState !==
+                "connected"
+        ) {
+            continue;
+        }
+
+
+        try {
+
+            const report =
+                await peer.getStats();
+
+
+            let outboundVideo =
+                null;
+
+            let remoteInbound =
+                null;
+
+            let candidatePair =
+                null;
+
+
+            report.forEach(
+                stat => {
+
+                    if (
+                        stat.type ===
+                            "outbound-rtp" &&
+                        stat.kind ===
+                            "video"
+                    ) {
+
+                        outboundVideo =
+                            stat;
+
+                    }
+
+
+                    if (
+                        stat.type ===
+                            "remote-inbound-rtp" &&
+                        stat.kind ===
+                            "video"
+                    ) {
+
+                        remoteInbound =
+                            stat;
+
+                    }
+
+
+                    if (
+                        stat.type ===
+                            "candidate-pair" &&
+                        stat.state ===
+                            "succeeded" &&
+                        stat.nominated
+                    ) {
+
+                        candidatePair =
+                            stat;
+
+                    }
+
+                }
+            );
+
+
+            if (!outboundVideo) {
+                continue;
+            }
+
+
+            const key =
+                String(targetId);
+
+
+            const previous =
+                autoQualityPreviousStats
+                    .get(key);
+
+
+            const current = {
+
+                timestamp:
+                    outboundVideo
+                        .timestamp,
+
+                bytesSent:
+                    outboundVideo
+                        .bytesSent ||
+                    0
+
+            };
+
+
+            autoQualityPreviousStats
+                .set(
+                    key,
+                    current
+                );
+
+
+            let bitrate =
+                null;
+
+
+            if (
+                previous &&
+                current.timestamp >
+                    previous.timestamp
+            ) {
+
+                const seconds =
+                    (
+                        current.timestamp -
+                        previous.timestamp
+                    ) /
+                    1000;
+
+
+                bitrate =
+                    (
+                        (
+                            current.bytesSent -
+                            previous.bytesSent
+                        ) *
+                        8
+                    ) /
+                    seconds;
+
+            }
+
+
+            samples.push({
+
+                bitrate,
+
+                rtt:
+                    remoteInbound
+                        ?.roundTripTime ??
+                    candidatePair
+                        ?.currentRoundTripTime ??
+                    null,
+
+                fractionLost:
+                    remoteInbound
+                        ?.fractionLost ??
+                    null,
+
+                availableBitrate:
+                    candidatePair
+                        ?.availableOutgoingBitrate ??
+                    null
+
+            });
+
+        } catch (
+            error
+        ) {
+
+            console.warn(
+                "Auto Quality getStats:",
+                error?.message ||
+                    error
+            );
+
+        }
+
+    }
+
+
+    return samples;
+
+}
+
+
+function evaluateAutoQuality(
+    samples
+) {
+
+    if (
+        !samples.length
+    ) {
+
+        return "unknown";
+
+    }
+
+
+    const profile =
+        getAutoQualityProfile();
+
+
+    let bad =
+        false;
+
+
+    let veryGood =
+        true;
+
+
+    for (
+        const sample
+        of samples
+    ) {
+
+        const rtt =
+            sample.rtt;
+
+
+        const loss =
+            sample.fractionLost;
+
+
+        const available =
+            sample.availableBitrate;
+
+
+        const bitrate =
+            sample.bitrate;
+
+
+        if (
+            (
+                rtt !== null &&
+                rtt > 0.32
+            ) ||
+            (
+                loss !== null &&
+                loss > 0.08
+            ) ||
+            (
+                available !== null &&
+                available <
+                    profile.bitrate *
+                    0.82
+            )
+        ) {
+
+            bad =
+                true;
+
+        }
+
+
+        if (
+            (
+                rtt !== null &&
+                rtt > 0.12
+            ) ||
+            (
+                loss !== null &&
+                loss > 0.02
+            ) ||
+            (
+                available !== null &&
+                available <
+                    profile.bitrate *
+                    1.35
+            ) ||
+            (
+                bitrate !== null &&
+                bitrate <
+                    profile.bitrate *
+                    0.45
+            )
+        ) {
+
+            veryGood =
+                false;
+
+        }
+
+    }
+
+
+    if (bad) {
+        return "bad";
+    }
+
+
+    if (veryGood) {
+        return "good";
+    }
+
+
+    return "normal";
+
+}
+
+
+async function autoQualityTick() {
+
+    if (
+        autoQualityRunning ||
+        qualitySelect?.value !==
+            "auto" ||
+        !localStream
+    ) {
+        return;
+    }
+
+
+    autoQualityRunning =
+        true;
+
+
+    try {
+
+        const samples =
+            await readAutoQualityStats();
+
+
+        const state =
+            evaluateAutoQuality(
+                samples
+            );
+
+
+        if (
+            state === "bad"
+        ) {
+
+            autoQualityBadSamples++;
+
+            autoQualityGoodSamples =
+                0;
+
+
+            updateAutoQualityUI(
+                "Ajustando conexão..."
+            );
+
+
+            if (
+                autoQualityBadSamples >=
+                    2 &&
+                autoQualityLevel > 0
+            ) {
+
+                autoQualityLevel--;
+
+                autoQualityBadSamples =
+                    0;
+
+
+                await applyAutoQualityLevel();
+
+            }
+
+        } else if (
+            state === "good"
+        ) {
+
+            autoQualityGoodSamples++;
+
+            autoQualityBadSamples =
+                0;
+
+
+            updateAutoQualityUI(
+                "Estável"
+            );
+
+
+            if (
+                autoQualityGoodSamples >=
+                    5 &&
+                autoQualityLevel <
+                    autoQualityLevels
+                        .length -
+                        1
+            ) {
+
+                autoQualityLevel++;
+
+                autoQualityGoodSamples =
+                    0;
+
+
+                await applyAutoQualityLevel();
+
+            }
+
+        } else {
+
+            autoQualityBadSamples =
+                0;
+
+
+            if (
+                state === "normal"
+            ) {
+
+                autoQualityGoodSamples =
+                    Math.max(
+                        0,
+                        autoQualityGoodSamples -
+                            1
+                    );
+
+
+                updateAutoQualityUI(
+                    "Estável"
+                );
+
+            }
+
+        }
+
+    } finally {
+
+        autoQualityRunning =
+            false;
+
+    }
+
+}
+
+
+function startAutoQuality() {
+
+    clearInterval(
+        autoQualityTimer
+    );
+
+
+    autoQualityTimer =
+        setInterval(
+            autoQualityTick,
+            4000
+        );
+
+}
+
+
+function resetAutoQuality() {
+
+    autoQualityBadSamples =
+        0;
+
+    autoQualityGoodSamples =
+        0;
+
+    autoQualityPreviousStats
+        .clear();
+
+
+    if (
+        qualitySelect?.value ===
+            "auto"
+    ) {
+
+        autoQualityLevel =
+            3;
+
+
+        applyAutoQualityLevel()
+            .catch(
+                () => {}
+            );
+
+
+        updateAutoQualityUI(
+            "Estável"
+        );
+
+    }
+
+}
+
+
+qualitySelect
+    ?.addEventListener(
+        "change",
+        () => {
+
+            if (
+                qualitySelect.value ===
+                    "auto"
+            ) {
+
+                resetAutoQuality();
+
+            } else {
+
+                autoQualityBadSamples =
+                    0;
+
+                autoQualityGoodSamples =
+                    0;
+
+                autoQualityPreviousStats
+                    .clear();
+
+            }
+
+        }
+    );
+
+
+startAutoQuality();
+
+
+// =====================================================
+// FIM AUTO QUALITY V2
+// =====================================================
+
+
+// =====================================================
+// ACTIVITY ROOM CODE V1
+// =====================================================
+
+const activityRoomParams =
+    new URLSearchParams(
+        window.location.search
+    );
+
+const roomCode =
+    (
+        activityRoomParams.get(
+            "room"
+        ) ||
+        ""
+    )
+        .trim()
+        .toUpperCase();
+
+
+// ACTIVITY ROOM VALIDATION V1
+
+if (
+    !/^[A-F0-9]{8}$/.test(
+        roomCode
+    )
+) {
+
+    console.error(
+        "Codigo de sala invalido:",
+        roomCode
+    );
+
+}
+
+document.getElementById(
+    "roomCode"
+).textContent =
+    roomCode;
+
+
+const stage =
+    document.getElementById(
+        "stage"
+    );
+
+
+const mainVideo =
+    document.getElementById(
+        "mainVideo"
+    );
+
+
+const stageEmpty =
+    document.getElementById(
+        "stageEmpty"
+    );
+
+
+const mainLabel =
+    document.getElementById(
+        "mainLabel"
+    );
+
+
+const liveBadge =
+    document.getElementById(
+        "liveBadge"
+    );
+
+
+const videoControls =
+    document.getElementById(
+        "videoControls"
+    );
+
+
+const audioButton =
+    document.getElementById(
+        "audioButton"
+    );
+
+
+const fullscreenButton =
+    document.getElementById(
+        "fullscreenButton"
+    );
+
+
+const peopleElement =
+    document.getElementById(
+        "people"
+    );
+
+
+const streamStrip =
+    document.getElementById(
+        "streamStrip"
+    );
+
+
+const shareButton =
+    document.getElementById(
+        "share"
+    );
+
+
+const stopButton =
+    document.getElementById(
+        "stop"
+    );
+
+
+const statusElement =
+    document.getElementById(
+        "status"
+    );
+
+
+const profileOverlay =
+    document.getElementById(
+        "profileOverlay"
+    );
+
+
+// =====================================================
+// DADOS
+// =====================================================
+
+let profile = null;
+
+
+// =====================================================
+// DISCORD AVATAR V1
+// =====================================================
+
+function isDiscordAvatarUrl(
+    value
+) {
+
+    return (
+        typeof value === "string" &&
+        /^https:\/\/cdn\.discordapp\.com\//i.test(
+            value
+        )
+    );
+
+}
+
+
+function renderUserAvatar(
+    container,
+    avatarValue,
+    fallback = "😎"
+) {
+
+    if (!container) {
+        return;
+    }
+
+
+    container.textContent =
+        "";
+
+
+    if (
+        isDiscordAvatarUrl(
+            avatarValue
+        )
+    ) {
+
+        const img =
+            document.createElement(
+                "img"
+            );
+
+
+        img.src =
+            avatarValue;
+
+
+        img.alt =
+            "Avatar do Discord";
+
+
+        img.loading =
+            "lazy";
+
+
+        img.referrerPolicy =
+            "no-referrer";
+
+
+        img.style.width =
+            "100%";
+
+
+        img.style.height =
+            "100%";
+
+
+        img.style.objectFit =
+            "cover";
+
+
+        img.style.borderRadius =
+            "inherit";
+
+
+        container.appendChild(
+            img
+        );
+
+
+        return;
+
+    }
+
+
+    container.textContent =
+        avatarValue ||
+        fallback;
+
+}
+
+let localStream = null;
+
+let currentMainOwner = null;
+
+let audioMuted = true;
+
+
+const participants =
+    new Map();
+
+
+const streams =
+    new Map();
+
+
+const outboundPeers =
+    new Map();
+
+
+const inboundPeers =
+    new Map();
+
+
+const outboundIce =
+    new Map();
+
+
+const inboundIce =
+    new Map();
+
+
+// =====================================================
+// WEBRTC
+// =====================================================
+
+const rtcConfig = {
+
+    iceServers: [
+
+        {
+            urls:
+                "stun:stun.l.google.com:19302"
+        },
+
+        {
+            urls:
+                "stun:stun1.l.google.com:19302"
+        }
+
+    ]
+
+};
+
+
+// =====================================================
+// PERFIL
+// =====================================================
+
+function loadProfile() {
+
+    try {
+
+        const saved =
+            sessionStorage.getItem(
+                "leal_profile"
+            );
+
+
+        if (!saved) {
+
+            profileOverlay.style.display =
+                "flex";
+
+            return;
+
+        }
+
+
+        profile =
+            JSON.parse(saved);
+
+
+        joinRoom();
+
+
+    } catch {
+
+        profileOverlay.style.display =
+            "flex";
+
+    }
+
+}
+
+
+let selectedAvatar =
+    "😎";
+
+
+document
+    .querySelectorAll(
+        ".profile-avatar"
+    )
+    .forEach(button => {
+
+        button.onclick =
+            () => {
+
+                document
+                    .querySelectorAll(
+                        ".profile-avatar"
+                    )
+                    .forEach(item => {
+
+                        item.classList.remove(
+                            "selected"
+                        );
+
+                    });
+
+
+                button.classList.add(
+                    "selected"
+                );
+
+
+                selectedAvatar =
+                    button.dataset.avatar ||
+                    button.textContent.trim();
+
+            };
+
+    });
+
+
+document.getElementById(
+    "enterRoom"
+).onclick =
+    () => {
+
+        const name =
+            document
+                .getElementById(
+                    "profileName"
+                )
+                .value
+                .trim();
+
+
+        if (!name) {
+
+            alert(
+                "Digite seu nome."
+            );
+
+            return;
+
+        }
+
+
+        profile = {
+
+            name:
+                name.substring(
+                    0,
+                    24
+                ),
+
+            avatar:
+                selectedAvatar
+
+        };
+
+
+        sessionStorage.setItem(
+            "leal_profile",
+            JSON.stringify(
+                profile
+            )
+        );
+
+
+        profileOverlay.style.display =
+            "none";
+
+
+        joinRoom();
+
+    };
+
+
+// =====================================================
+// ENTRAR NA SALA
+// =====================================================
+
+let joined = false;
+
+
+// =====================================================
+// RECONNECT V1
+// =====================================================
+
+let reconnectingRoom =
+    false;
+
+let reconnectGeneration =
+    0;
+
+
+/* RECONNECT V1 FIX */
+
+let pendingReconnectRepair =
+    false;
+
+let reconnectRepairTimer =
+    null;
+
+
+function closePeerMap(
+    peerMap,
+    iceMap
+) {
+
+    peerMap.forEach(
+        peer => {
+
+            try {
+                peer.close();
+            } catch {}
+
+        }
+    );
+
+    peerMap.clear();
+
+    if (iceMap) {
+        iceMap.clear();
+    }
+
+}
+
+
+function resetPeersForReconnect() {
+
+    closePeerMap(
+        outboundPeers,
+        outboundIce
+    );
+
+    closePeerMap(
+        inboundPeers,
+        inboundIce
+    );
+
+}
+
+
+function repairOutboundPeers() {
+
+    if (
+        !localStream ||
+        !socket.connected ||
+        !joined
+    ) {
+
+        return;
+
+    }
+
+
+    clearTimeout(
+        reconnectRepairTimer
+    );
+
+
+    reconnectRepairTimer =
+        setTimeout(
+            () => {
+
+                participants.forEach(
+                    user => {
+
+                        if (
+                            user.id !==
+                            socket.id
+                        ) {
+
+                            startOutbound(
+                                user.id
+                            ).catch(
+                                () => {}
+                            );
+
+                        }
+
+                    }
+                );
+
+            },
+            350
+        );
+
+}
+
+
+// Evita que uma falha antiga de peer
+// reinicie uma conexao que ja foi substituida.
+function watchOutboundPeer(
+    peer,
+    targetId
+) {
+
+    const generation =
+        reconnectGeneration;
+
+
+    let recoveryTimer =
+        null;
+
+
+    const recover =
+        () => {
+
+            if (
+                generation !==
+                reconnectGeneration
+            ) {
+
+                return;
+
+            }
+
+
+            if (
+                !socket.connected ||
+                !joined ||
+                !localStream
+            ) {
+
+                return;
+
+            }
+
+
+            clearTimeout(
+                recoveryTimer
+            );
+
+
+            recoveryTimer =
+                setTimeout(
+                    () => {
+
+                        if (
+                            outboundPeers.get(
+                                targetId
+                            ) !==
+                            peer
+                        ) {
+
+                            return;
+
+                        }
+
+
+                        startOutbound(
+                            targetId
+                        ).catch(
+                            () => {}
+                        );
+
+                    },
+                    1200
+                );
+
+        };
+
+
+    peer.addEventListener(
+        "connectionstatechange",
+        () => {
+
+            const state =
+                peer.connectionState;
+
+
+            if (
+                state === "failed"
+            ) {
+
+                recover();
+
+            }
+
+
+            if (
+                state === "connected"
+            ) {
+
+                clearTimeout(
+                    recoveryTimer
+                );
+
+            }
+
+        }
+    );
+
+
+    peer.addEventListener(
+        "iceconnectionstatechange",
+        () => {
+
+            const state =
+                peer.iceConnectionState;
+
+
+            if (
+                state === "failed"
+            ) {
+
+                recover();
+
+            }
+
+        }
+    );
+
+}
+
+
+function joinRoom() {
+
+    if (
+        joined ||
+        !profile ||
+        !socket.connected
+    ) {
+
+        return;
+
+    }
+
+
+    joined = true;
+
+
+    socket.emit(
+        "join-room",
+        {
+
+            roomCode,
+
+            profile
+
+        }
+    );
+
+}
+
+
+// =====================================================
+// SOCKET
+// =====================================================
+
+socket.on(
+    "connect",
+    () => {
+
+        const wasReconnecting =
+            reconnectingRoom;
+
+
+        pendingReconnectRepair =
+            wasReconnecting;
+
+
+        statusElement.textContent =
+            wasReconnecting
+                ? "🟡 Reconectando à sala..."
+                : "🟢 Conectado";
+
+
+        // O Socket.IO recebe um novo socket.id
+        // depois de uma reconexao.
+        // Precisamos permitir novo join-room.
+        joined =
+            false;
+
+
+        reconnectGeneration +=
+            1;
+
+
+        resetPeersForReconnect();
+
+
+        joinRoom();
+
+
+        reconnectingRoom =
+            false;
+
+
+        setTimeout(
+            () => {
+
+                if (
+                    socket.connected &&
+                    joined
+                ) {
+
+                    statusElement.textContent =
+                        wasReconnecting
+                            ? "🟢 Reconectado"
+                            : "🟢 Conectado";
+
+                }
+
+            },
+            500
+        );
+
+    }
+);
+
+
+socket.on(
+    "disconnect",
+    reason => {
+
+        if (
+            leavingRoom
+        ) {
+
+            return;
+
+        }
+
+
+        reconnectingRoom =
+            true;
+
+        joined =
+            false;
+
+
+        statusElement.textContent =
+            "🟠 Conexão perdida. Reconectando...";
+
+
+        resetPeersForReconnect();
+
+
+        console.warn(
+            "Socket desconectado:",
+            reason
+        );
+
+    }
+);
+
+
+socket.on(
+    "connect_error",
+    error => {
+
+        if (
+            leavingRoom
+        ) {
+
+            return;
+
+        }
+
+
+        reconnectingRoom =
+            true;
+
+
+        statusElement.textContent =
+            "🔴 Falha de conexão. Tentando novamente...";
+
+
+        console.warn(
+            "Erro de conexão:",
+            error?.message ||
+            error
+        );
+
+    }
+);
+
+
+window.addEventListener(
+    "online",
+    () => {
+
+        if (
+            !socket.connected &&
+            !leavingRoom
+        ) {
+
+            statusElement.textContent =
+                "🟡 Internet voltou. Reconectando...";
+
+
+            try {
+                socket.connect();
+            } catch {}
+
+        }
+
+    }
+);
+
+
+window.addEventListener(
+    "offline",
+    () => {
+
+        if (
+            leavingRoom
+        ) {
+
+            return;
+
+        }
+
+
+        statusElement.textContent =
+            "🔴 Sem internet • reconexão automática ativa";
+
+    }
+);
+
+
+// =====================================================
+// PARTICIPANTES
+// =====================================================
+
+socket.on(
+    "participants-update",
+    list => {
+
+        participants.clear();
+
+
+        list.forEach(
+            user => {
+
+                participants.set(
+                    user.id,
+                    user
+                );
+
+            }
+        );
+
+
+        renderParticipants();
+
+
+        if (
+            pendingReconnectRepair &&
+            localStream &&
+            socket.connected &&
+            joined
+        ) {
+
+            pendingReconnectRepair =
+                false;
+
+            repairOutboundPeers();
+
+        }
+
+
+        if (
+            currentMainOwner
+        ) {
+
+            updateMainLabel();
+
+        }
+
+    }
+);
+
+
+function renderParticipants() {
+
+    peopleElement.innerHTML =
+        "";
+
+
+    participants.forEach(
+        user => {
+
+            const card =
+                document.createElement(
+                    "div"
+                );
+
+
+            card.className =
+                "person";
+
+
+            if (
+                user.streaming
+            ) {
+
+                card.classList.add(
+                    "streaming"
+                );
+
+            }
+
+
+            const avatar =
+                document.createElement(
+                    "div"
+                );
+
+
+            avatar.className =
+                "avatar";
+
+
+            renderUserAvatar(
+                avatar,
+                user.avatar
+            );
+
+
+            const info =
+                document.createElement(
+                    "div"
+                );
+
+
+            info.className =
+                "person-info";
+
+
+            const name =
+                document.createElement(
+                    "div"
+                );
+
+
+            name.className =
+                "person-name";
+
+
+            name.textContent =
+                user.name +
+                (
+                    user.id ===
+                    socket.id
+                        ? " (você)"
+                        : ""
+                );
+
+
+            const personStatus =
+                document.createElement(
+                    "div"
+                );
+
+
+            personStatus.className =
+                "person-status";
+
+
+            personStatus.textContent =
+                user.streaming
+                    ? "● AO VIVO"
+                    : "● Online";
+
+
+            info.appendChild(
+                name
+            );
+
+
+            info.appendChild(
+                personStatus
+            );
+
+
+            card.appendChild(
+                avatar
+            );
+
+
+            card.appendChild(
+                info
+            );
+
+
+            if (
+                user.streaming
+            ) {
+
+                card.onclick =
+                    () => {
+
+                        if (
+                            streams.has(
+                                user.id
+                            )
+                        ) {
+
+                            selectMainStream(
+                                user.id
+                            );
+
+                        }
+
+                    };
+
+            }
+
+
+            peopleElement.appendChild(
+                card
+            );
+
+        }
+    );
+
+}
+
+
+// =====================================================
+// STREAM VISUAL
+// =====================================================
+
+function addStream(
+    ownerId,
+    stream
+) {
+
+    streams.set(
+        ownerId,
+        stream
+    );
+
+
+    renderStreamStrip();
+
+
+    if (
+        !currentMainOwner ||
+        !streams.has(
+            currentMainOwner
+        )
+    ) {
+
+        selectMainStream(
+            ownerId
+        );
+
+    }
+
+}
+
+
+function removeStream(
+    ownerId
+) {
+
+    streams.delete(
+        ownerId
+    );
+
+
+    renderStreamStrip();
+
+
+    if (
+        currentMainOwner ===
+        ownerId
+    ) {
+
+        const next =
+            streams.keys()
+                .next()
+                .value;
+
+
+        if (next) {
+
+            selectMainStream(
+                next
+            );
+
+        } else {
+
+            clearMainStage();
+
+        }
+
+    }
+
+}
+
+
+function clearMainStage() {
+
+    currentMainOwner =
+        null;
+
+
+    mainVideo.srcObject =
+        null;
+
+
+    mainVideo.style.display =
+        "none";
+
+
+    stageEmpty.style.display =
+        "block";
+
+
+    mainLabel.style.display =
+        "none";
+
+
+    liveBadge.style.display =
+        "none";
+
+
+    videoControls.style.display =
+        "none";
+
+}
+
+
+function updateMainLabel() {
+
+    if (
+        !currentMainOwner
+    ) {
+
+        return;
+
+    }
+
+
+    const user =
+        participants.get(
+            currentMainOwner
+        );
+
+
+    mainLabel.textContent =
+        user?.name ||
+        "Usuário";
+
+}
+
+
+function updateAudioControls(
+    ownerId,
+    stream
+) {
+
+    const isOwn =
+        ownerId ===
+        socket.id;
+
+
+    const hasAudio =
+        stream
+            .getAudioTracks()
+            .length > 0;
+
+
+    if (
+        isOwn ||
+        !hasAudio
+    ) {
+
+        mainVideo.muted =
+            true;
+
+
+        audioMuted =
+            true;
+
+
+        audioButton.textContent =
+            "🔇";
+
+
+        audioButton.disabled =
+            true;
+
+
+        audioButton.title =
+            isOwn
+                ? "Sua própria transmissão fica muda"
+                : "Esta transmissão não possui áudio";
+
+
+        return;
+
+    }
+
+
+    audioButton.disabled =
+        false;
+
+
+    mainVideo.muted =
+        audioMuted;
+
+
+    audioButton.textContent =
+        audioMuted
+            ? "🔇"
+            : "🔊";
+
+
+    audioButton.title =
+        audioMuted
+            ? "Ativar áudio"
+            : "Mutar áudio";
+
+}
+
+
+function selectMainStream(
+    ownerId
+) {
+
+    const stream =
+        streams.get(
+            ownerId
+        );
+
+
+    if (!stream) {
+        return;
+    }
+
+
+    currentMainOwner =
+        ownerId;
+
+
+    mainVideo.srcObject =
+        stream;
+
+
+    mainVideo.style.display =
+        "block";
+
+
+    stageEmpty.style.display =
+        "none";
+
+
+    liveBadge.style.display =
+        "block";
+
+
+    mainLabel.style.display =
+        "block";
+
+
+    videoControls.style.display =
+        "flex";
+
+
+    updateMainLabel();
+
+
+    updateAudioControls(
+        ownerId,
+        stream
+    );
+
+
+    mainVideo.play()
+        .catch(() => {
+
+            statusElement.textContent =
+                "Clique no botão de áudio para reproduzir.";
+
+        });
+
+
+    renderStreamStrip();
+
+}
+
+
+// =====================================================
+// AUDIO
+// =====================================================
+
+audioButton.onclick =
+    async () => {
+
+        if (
+            audioButton.disabled ||
+            !currentMainOwner
+        ) {
+
+            return;
+
+        }
+
+
+        audioMuted =
+            !audioMuted;
+
+
+        mainVideo.muted =
+            audioMuted;
+
+
+        audioButton.textContent =
+            audioMuted
+                ? "🔇"
+                : "🔊";
+
+
+        audioButton.title =
+            audioMuted
+                ? "Ativar áudio"
+                : "Mutar áudio";
+
+
+        if (!audioMuted) {
+
+            try {
+
+                await mainVideo.play();
+
+                statusElement.textContent =
+                    "🔊 Áudio ativado";
+
+            } catch {
+
+                statusElement.textContent =
+                    "O navegador bloqueou o áudio.";
+
+            }
+
+        } else {
+
+            statusElement.textContent =
+                "🔇 Áudio mutado";
+
+        }
+
+    };
+
+
+// =====================================================
+// TELA CHEIA
+// =====================================================
+
+fullscreenButton.onclick =
+    async () => {
+
+        try {
+
+            if (
+                document.fullscreenElement
+            ) {
+
+                await document
+                    .exitFullscreen();
+
+                return;
+
+            }
+
+
+            await stage
+                .requestFullscreen();
+
+        } catch (error) {
+
+            console.error(
+                "Erro tela cheia:",
+                error
+            );
+
+        }
+
+    };
+
+
+document.addEventListener(
+    "fullscreenchange",
+    () => {
+
+        fullscreenButton.textContent =
+            document.fullscreenElement
+                ? "✕"
+                : "⛶";
+
+    }
+);
+
+
+// =====================================================
+// THUMBNAILS
+// =====================================================
+
+function renderStreamStrip() {
+
+    streamStrip.innerHTML =
+        "";
+
+
+    if (
+        streams.size <= 1
+    ) {
+
+        streamStrip.style.display =
+            "none";
+
+        return;
+
+    }
+
+
+    streamStrip.style.display =
+        "flex";
+
+
+    streams.forEach(
+        (stream, ownerId) => {
+
+            const thumb =
+                document.createElement(
+                    "div"
+                );
+
+
+            thumb.className =
+                "stream-thumb";
+
+
+            if (
+                ownerId ===
+                currentMainOwner
+            ) {
+
+                thumb.classList.add(
+                    "active"
+                );
+
+            }
+
+
+            const video =
+                document.createElement(
+                    "video"
+                );
+
+
+            video.autoplay =
+                true;
+
+
+            video.playsInline =
+                true;
+
+
+            video.muted =
+                true;
+
+
+            video.srcObject =
+                stream;
+
+
+            const user =
+                participants.get(
+                    ownerId
+                );
+
+
+            const name =
+                document.createElement(
+                    "div"
+                );
+
+
+            name.className =
+                "thumb-name";
+
+
+            name.textContent =
+                user?.name ||
+                "Usuário";
+
+
+            thumb.appendChild(
+                video
+            );
+
+
+            thumb.appendChild(
+                name
+            );
+
+
+            thumb.onclick =
+                () => {
+
+                    selectMainStream(
+                        ownerId
+                    );
+
+                };
+
+
+            streamStrip.appendChild(
+                thumb
+            );
+
+
+            video.play()
+                .catch(
+                    () => {}
+                );
+
+        }
+    );
+
+}
+
+
+// =====================================================
+// ICE QUEUE
+// =====================================================
+
+function queueCandidate(
+    map,
+    key,
+    candidate
+) {
+
+    if (
+        !map.has(key)
+    ) {
+
+        map.set(
+            key,
+            []
+        );
+
+    }
+
+
+    map.get(key)
+        .push(candidate);
+
+}
+
+
+async function flushCandidates(
+    map,
+    key,
+    peer
+) {
+
+    const list =
+        map.get(key) ||
+        [];
+
+
+    for (
+        const candidate
+        of list
+    ) {
+
+        try {
+
+            await peer.addIceCandidate(
+                candidate
+            );
+
+        } catch {}
+
+    }
+
+
+    map.delete(
+        key
+    );
+
+}
+
+
+// =====================================================
+// OUTBOUND
+// =====================================================
+
+async function startOutbound(
+    targetId
+) {
+
+    if (
+        !localStream ||
+        targetId === socket.id
+    ) {
+
+        return;
+
+    }
+
+
+    if (
+        outboundPeers.has(
+            targetId
+        )
+    ) {
+
+        try {
+
+            outboundPeers
+                .get(targetId)
+                .close();
+
+        } catch {}
+
+
+        outboundPeers.delete(
+            targetId
+        );
+
+    }
+
+
+    const peer =
+        new RTCPeerConnection(
+            rtcConfig
+        );
+
+
+    outboundPeers.set(
+        targetId,
+        peer
+    );
+
+
+    watchOutboundPeer(
+        peer,
+        targetId
+    );
+
+
+    localStream
+        .getTracks()
+        .forEach(
+            track => {
+
+                const sender =
+                    peer.addTrack(
+                        track,
+                        localStream
+                    );
+
+                if (track.kind === "video") {
+
+                    try {
+
+                        const parameters =
+                            sender.getParameters();
+
+                        if (
+                            !parameters.encodings ||
+                            parameters.encodings.length === 0
+                        ) {
+                            parameters.encodings = [{}];
+                        }
+
+                        const qualityProfile =
+                            getQualityProfile();
+
+                        parameters.encodings[0].maxBitrate =
+                            qualityProfile.bitrate;
+
+                        parameters.encodings[0].maxFramerate =
+                            qualityProfile.fps;
+
+                        parameters.degradationPreference =
+                            qualityProfile.auto
+                                ? "balanced"
+                                : "maintain-resolution";
+
+                        sender
+                            .setParameters(parameters)
+                            .catch(() => {});
+
+                    } catch {}
+
+                }
+
+            }
+        );
+
+
+    peer.onicecandidate =
+        event => {
+
+            if (
+                !event.candidate
+            ) {
+
+                return;
+
+            }
+
+
+            socket.emit(
+                "ice-candidate",
+                {
+
+                    target:
+                        targetId,
+
+                    flowId:
+                        socket.id,
+
+                    candidate:
+                        event.candidate
+
+                }
+            );
+
+        };
+
+
+    const offer =
+        await peer.createOffer();
+
+
+    await peer.setLocalDescription(
+        offer
+    );
+
+
+    socket.emit(
+        "offer",
+        {
+
+            target:
+                targetId,
+
+            flowId:
+                socket.id,
+
+            offer:
+                peer.localDescription
+
+        }
+    );
+
+}
+
+
+// =====================================================
+// OFERTA RECEBIDA
+// =====================================================
+
+socket.on(
+    "offer",
+    async data => {
+
+        const ownerId =
+            data.flowId ||
+            data.sender;
+
+
+        if (
+            inboundPeers.has(
+                ownerId
+            )
+        ) {
+
+            try {
+
+                inboundPeers
+                    .get(ownerId)
+                    .close();
+
+            } catch {}
+
+        }
+
+
+        const peer =
+            new RTCPeerConnection(
+                rtcConfig
+            );
+
+
+        inboundPeers.set(
+            ownerId,
+            peer
+        );
+
+
+        peer.ontrack =
+            event => {
+
+                let stream =
+                    event.streams?.[0];
+
+
+                if (!stream) {
+
+                    stream =
+                        streams.get(
+                            ownerId
+                        ) ||
+                        new MediaStream();
+
+
+                    stream.addTrack(
+                        event.track
+                    );
+
+                }
+
+
+                addStream(
+                    ownerId,
+                    stream
+                );
+
+            };
+
+
+        peer.onicecandidate =
+            event => {
+
+                if (
+                    !event.candidate
+                ) {
+
+                    return;
+
+                }
+
+
+                socket.emit(
+                    "ice-candidate",
+                    {
+
+                        target:
+                            data.sender,
+
+                        flowId:
+                            ownerId,
+
+                        candidate:
+                            event.candidate
+
+                    }
+                );
+
+            };
+
+
+        try {
+
+            await peer.setRemoteDescription(
+                new RTCSessionDescription(
+                    data.offer
+                )
+            );
+
+
+            await flushCandidates(
+                inboundIce,
+                ownerId,
+                peer
+            );
+
+
+            const answer =
+                await peer.createAnswer();
+
+
+            await peer.setLocalDescription(
+                answer
+            );
+
+
+            socket.emit(
+                "answer",
+                {
+
+                    target:
+                        data.sender,
+
+                    flowId:
+                        ownerId,
+
+                    answer:
+                        peer.localDescription
+
+                }
+            );
+
+
+        } catch (error) {
+
+            console.error(
+                "Erro na oferta:",
+                error
+            );
+
+        }
+
+    }
+);
+
+
+// =====================================================
+// ANSWER
+// =====================================================
+
+socket.on(
+    "answer",
+    async data => {
+
+        if (
+            data.flowId !==
+            socket.id
+        ) {
+
+            return;
+
+        }
+
+
+        const peer =
+            outboundPeers.get(
+                data.sender
+            );
+
+
+        if (!peer) {
+            return;
+        }
+
+
+        try {
+
+            await peer.setRemoteDescription(
+                new RTCSessionDescription(
+                    data.answer
+                )
+            );
+
+
+            await flushCandidates(
+                outboundIce,
+                data.sender,
+                peer
+            );
+
+
+        } catch (error) {
+
+            console.error(
+                "Erro na resposta:",
+                error
+            );
+
+        }
+
+    }
+);
+
+
+// =====================================================
+// ICE
+// =====================================================
+
+socket.on(
+    "ice-candidate",
+    async data => {
+
+        const candidate =
+            new RTCIceCandidate(
+                data.candidate
+            );
+
+
+        if (
+            data.flowId ===
+            socket.id
+        ) {
+
+            const peer =
+                outboundPeers.get(
+                    data.sender
+                );
+
+
+            if (
+                !peer ||
+                !peer.remoteDescription
+            ) {
+
+                queueCandidate(
+                    outboundIce,
+                    data.sender,
+                    candidate
+                );
+
+                return;
+
+            }
+
+
+            try {
+
+                await peer.addIceCandidate(
+                    candidate
+                );
+
+            } catch {}
+
+
+            return;
+
+        }
+
+
+        const ownerId =
+            data.flowId;
+
+
+        const peer =
+            inboundPeers.get(
+                ownerId
+            );
+
+
+        if (
+            !peer ||
+            !peer.remoteDescription
+        ) {
+
+            queueCandidate(
+                inboundIce,
+                ownerId,
+                candidate
+            );
+
+            return;
+
+        }
+
+
+        try {
+
+            await peer.addIceCandidate(
+                candidate
+            );
+
+        } catch {}
+
+    }
+);
+
+
+// =====================================================
+// NOVO USUÁRIO
+// =====================================================
+
+socket.on(
+    "user-joined",
+    user => {
+
+        if (
+            localStream
+        ) {
+
+            startOutbound(
+                user.id
+            );
+
+        }
+
+    }
+);
+
+
+// =====================================================
+// USUÁRIO SAIU
+// =====================================================
+
+socket.on(
+    "user-left",
+    userId => {
+
+        if (
+            outboundPeers.has(
+                userId
+            )
+        ) {
+
+            try {
+
+                outboundPeers
+                    .get(userId)
+                    .close();
+
+            } catch {}
+
+
+            outboundPeers.delete(
+                userId
+            );
+
+        }
+
+
+        if (
+            inboundPeers.has(
+                userId
+            )
+        ) {
+
+            try {
+
+                inboundPeers
+                    .get(userId)
+                    .close();
+
+            } catch {}
+
+
+            inboundPeers.delete(
+                userId
+            );
+
+        }
+
+
+        removeStream(
+            userId
+        );
+
+    }
+);
+
+
+// =====================================================
+// OUTRA PESSOA PAROU
+// =====================================================
+
+socket.on(
+    "stream-stopped",
+    ownerId => {
+
+        if (
+            inboundPeers.has(
+                ownerId
+            )
+        ) {
+
+            try {
+
+                inboundPeers
+                    .get(ownerId)
+                    .close();
+
+            } catch {}
+
+
+            inboundPeers.delete(
+                ownerId
+            );
+
+        }
+
+
+        removeStream(
+            ownerId
+        );
+
+    }
+);
+
+
+// =====================================================
+// COMPARTILHAR TELA + ÁUDIO
+// =====================================================
+
+shareButton.onclick =
+    async () => {
+
+        if (
+            localStream
+        ) {
+
+            return;
+
+        }
+
+
+        try {
+
+            localStream =
+                await navigator
+                    .mediaDevices
+                    .getDisplayMedia({
+
+                        video: {
+
+                            width: {
+                                ideal:
+                                    getQualityProfile().width,
+
+                                max:
+                                    getQualityProfile().width
+                            },
+
+                            height: {
+                                ideal:
+                                    getQualityProfile().height,
+
+                                max:
+                                    getQualityProfile().height
+                            },
+
+                            frameRate: {
+                                ideal:
+                                    getQualityProfile().fps,
+
+                                max:
+                                    getQualityProfile().fps
+                            }
+
+                        },
+
+                        audio:
+                            true
+
+                    });
+
+
+            /* STREAM QUALITY V1 */
+
+
+
+
+            const localVideoTrack =
+
+
+
+                localStream.getVideoTracks()[0];
+
+
+
+
+            if (localVideoTrack) {
+
+
+
+
+                try {
+
+
+
+
+                    localVideoTrack.contentHint =
+
+
+
+                        "detail";
+
+
+
+
+                } catch {}
+
+
+
+
+            }
+
+
+
+
+            addStream(
+
+
+
+                socket.id,
+
+
+
+                localStream
+
+
+
+            );
+
+
+            shareButton.style.display =
+                "none";
+
+
+            stopButton.style.display =
+                "inline-block";
+
+
+            statusElement.textContent =
+                "🟢 Você está transmitindo";
+
+
+            socket.emit(
+                "stream-started"
+            );
+
+
+            participants.forEach(
+                user => {
+
+                    if (
+                        user.id !==
+                        socket.id
+                    ) {
+
+                        startOutbound(
+                            user.id
+                        );
+
+                    }
+
+                }
+            );
+
+
+            const track =
+                localStream
+                    .getVideoTracks()[0];
+
+
+            if (track) {
+
+                track.onended =
+                    stopSharing;
+
+            }
+
+
+            if (
+                localStream
+                    .getAudioTracks()
+                    .length === 0
+            ) {
+
+                statusElement.textContent =
+                    "🟢 Transmitindo • sem áudio da tela";
+
+            }
+
+
+        } catch (error) {
+
+            console.error(
+                error
+            );
+
+
+            localStream =
+                null;
+
+        }
+
+    };
+
+
+// =====================================================
+// PARAR SOMENTE MINHA TRANSMISSÃO
+// =====================================================
+
+function stopSharing() {
+
+    if (!localStream) {
+        return;
+    }
+
+
+    const oldStream =
+        localStream;
+
+
+    localStream =
+        null;
+
+
+    oldStream
+        .getTracks()
+        .forEach(
+            track => {
+
+                track.onended =
+                    null;
+
+                track.stop();
+
+            }
+        );
+
+
+    outboundPeers.forEach(
+        peer => {
+
+            try {
+
+                peer.close();
+
+            } catch {}
+
+        }
+    );
+
+
+    outboundPeers.clear();
+
+
+    outboundIce.clear();
+
+
+    // NÃO mexer nas transmissões
+    // que você está recebendo.
+
+    removeStream(
+        socket.id
+    );
+
+
+    socket.emit(
+        "stream-stopped"
+    );
+
+
+    shareButton.style.display =
+        "inline-block";
+
+
+    stopButton.style.display =
+        "none";
+
+
+    statusElement.textContent =
+        "Você parou sua transmissão";
+
+}
+
+
+stopButton.onclick =
+    stopSharing;
+
+
+// =====================================================
+// CONVITE
+// =====================================================
+
+document.getElementById(
+    "copy"
+).onclick =
+    async () => {
+
+        const invite =
+            location.origin +
+            "/room/" +
+            roomCode;
+
+
+        try {
+
+            await navigator
+                .clipboard
+                .writeText(
+                    invite
+                );
+
+
+            /* INVITE FEEDBACK V2 */
+
+            statusElement.textContent =
+                "✅ Convite copiado";
+
+            const copyButton =
+                document.getElementById(
+                    "copy"
+                );
+
+            copyButton.textContent =
+                "✅ Copiado!";
+
+            copyButton.classList.remove(
+                "copied"
+            );
+
+            void copyButton.offsetWidth;
+
+            copyButton.classList.add(
+                "copied"
+            );
+
+
+            statusElement.classList.remove(
+                "status-pop"
+            );
+
+            void statusElement.offsetWidth;
+
+            statusElement.classList.add(
+                "status-pop"
+            );
+
+
+            clearTimeout(
+                copyButton._copiedTimer
+            );
+
+            copyButton._copiedTimer =
+                setTimeout(
+                    () => {
+
+                        copyButton.textContent =
+                            "🔗 Convite";
+
+                        copyButton.classList.remove(
+                            "copied"
+                        );
+
+                    },
+                    1800
+                );
+
+
+        } catch {
+
+            prompt(
+                "Copie o convite:",
+                invite
+            );
+
+        }
+
+    };
+
+
+// =====================================================
+// SAIR
+// =====================================================
+
+
+// =====================================================
+// LIMPEZA COMPLETA AO SAIR
+// =====================================================
+
+let leavingRoom = false;
+
+function cleanupRoomBeforeExit() {
+
+    if (leavingRoom) {
+        return;
+    }
+
+    leavingRoom = true;
+
+
+    // Para minha transmissao
+    if (localStream) {
+
+        const oldStream =
+            localStream;
+
+        localStream =
+            null;
+
+        oldStream
+            .getTracks()
+            .forEach(track => {
+
+                track.onended =
+                    null;
+
+                try {
+                    track.stop();
+                } catch {}
+
+            });
+
+    }
+
+
+    // Fecha conexoes de envio
+    outboundPeers.forEach(peer => {
+
+        try {
+            peer.close();
+        } catch {}
+
+    });
+
+    outboundPeers.clear();
+    outboundIce.clear();
+
+
+    // Fecha conexoes recebidas
+    inboundPeers.forEach(peer => {
+
+        try {
+            peer.close();
+        } catch {}
+
+    });
+
+    inboundPeers.clear();
+    inboundIce.clear();
+
+
+    // Limpa os streams locais da interface
+    streams.clear();
+
+    currentMainOwner =
+        null;
+
+
+    if (socket.connected) {
+
+        try {
+            socket.emit(
+                "stream-stopped"
+            );
+        } catch {}
+
+        try {
+            socket.disconnect();
+        } catch {}
+
+    }
+
+}
+
+
+// Fechou aba, Activity ou navegou para outra pagina
+window.addEventListener(
+    "pagehide",
+    cleanupRoomBeforeExit
+);
+
+window.addEventListener(
+    "beforeunload",
+    cleanupRoomBeforeExit
+);
+
+
+// =====================================================
+// SAIR
+// =====================================================
+
+document.getElementById(
+    "leave"
+).onclick =
+    () => {
+
+        cleanupRoomBeforeExit();
+
+        window.location.href =
+            "/";
+
+    };
+
+
+// =====================================================
+// CARREGAR PERFIL
+// =====================================================
+
+loadProfile();
+
+</script>
+
+</body>
+
+</html>
+
