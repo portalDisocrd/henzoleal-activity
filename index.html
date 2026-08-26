@@ -596,12 +596,624 @@ input:focus {
 
 }
 
+
+
+/* =====================================================
+   HOME V2
+===================================================== */
+
+:root {
+    --hl-primary: #6875ff;
+    --hl-primary-soft: rgba(104,117,255,.14);
+    --hl-border: rgba(255,255,255,.085);
+    --hl-surface: rgba(17,17,23,.78);
+    --hl-muted: #9696a3;
+}
+
+.home-v2 {
+    overflow-x: hidden;
+}
+
+.home-v2::before {
+    content: "";
+    position: fixed;
+    width: 520px;
+    height: 520px;
+    left: -230px;
+    top: 10%;
+    border-radius: 50%;
+    background: rgba(88,101,242,.12);
+    filter: blur(90px);
+    pointer-events: none;
+}
+
+.home-v2::after {
+    content: "";
+    position: fixed;
+    width: 480px;
+    height: 480px;
+    right: -220px;
+    bottom: -160px;
+    border-radius: 50%;
+    background: rgba(82,91,255,.10);
+    filter: blur(100px);
+    pointer-events: none;
+}
+
+.top-brand {
+    animation:
+        homeSlideDown .65s ease both;
+}
+
+.top-brand img {
+    box-shadow:
+        0 0 35px rgba(88,101,242,.18);
+}
+
+.top-actions {
+    position: fixed;
+    right: 28px;
+    top: 27px;
+    z-index: 50;
+
+    display: flex;
+    align-items: center;
+    gap: 9px;
+
+    animation:
+        homeSlideDown .65s .08s ease both;
+}
+
+.system-status,
+.version-chip {
+    border: 1px solid var(--hl-border);
+    background: rgba(14,14,19,.72);
+    backdrop-filter: blur(14px);
+}
+
+.system-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    padding: 8px 11px;
+    border-radius: 999px;
+
+    color: #a7a7b2;
+    font-size: 11px;
+}
+
+.status-dot,
+.badge-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #43b581;
+    box-shadow:
+        0 0 12px rgba(67,181,129,.75);
+}
+
+.version-chip {
+    padding: 8px 10px;
+    border-radius: 999px;
+    color: #9fa6ff;
+    font-size: 10px;
+    font-weight: 800;
+}
+
+.app {
+    width: min(1160px, 92%);
+    grid-template-columns:
+        minmax(0, 1.15fr)
+        minmax(340px, .85fr);
+    gap: 72px;
+}
+
+.hero {
+    position: relative;
+    animation:
+        homeHeroIn .75s .08s ease both;
+}
+
+.hero-badge {
+    background:
+        rgba(104,117,255,.10);
+    backdrop-filter: blur(12px);
+}
+
+.badge-dot {
+    display: inline-block;
+    margin-right: 1px;
+}
+
+.hero h1 {
+    max-width: 720px;
+    font-size:
+        clamp(54px, 7vw, 92px);
+    letter-spacing: -6px;
+}
+
+.hero h1 span {
+    background:
+        linear-gradient(
+            90deg,
+            #7f88ff,
+            #a7acff
+        );
+
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+}
+
+.hero p {
+    max-width: 570px;
+    color: #a4a4ae;
+}
+
+.preview {
+    position: relative;
+    padding-top: 24px;
+}
+
+.preview-label {
+    position: absolute;
+    left: 0;
+    top: 0;
+
+    color: #5f5f6b;
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: 1.5px;
+}
+
+.preview-item {
+    position: relative;
+    overflow: hidden;
+
+    background:
+        rgba(20,20,27,.72);
+
+    border:
+        1px solid var(--hl-border);
+
+    backdrop-filter:
+        blur(12px);
+
+    transition:
+        transform .2s ease,
+        border-color .2s ease,
+        background .2s ease;
+}
+
+.preview-item:hover {
+    transform:
+        translateY(-3px);
+
+    border-color:
+        rgba(104,117,255,.38);
+
+    background:
+        rgba(29,29,40,.82);
+}
+
+.panel {
+    position: relative;
+    overflow: hidden;
+
+    padding: 31px;
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(21,21,29,.94),
+            rgba(12,12,17,.91)
+        );
+
+    backdrop-filter:
+        blur(20px);
+
+    box-shadow:
+        0 35px 100px rgba(0,0,0,.52),
+        inset 0 1px 0 rgba(255,255,255,.035);
+
+    animation:
+        homePanelIn .75s .15s ease both;
+}
+
+.panel::before {
+    content: "";
+    position: absolute;
+    width: 170px;
+    height: 170px;
+    right: -70px;
+    top: -80px;
+    border-radius: 50%;
+
+    background:
+        rgba(88,101,242,.13);
+
+    filter:
+        blur(45px);
+
+    pointer-events: none;
+}
+
+.panel-heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 20px;
+}
+
+.panel-heading h2 {
+    margin: 5px 0 0;
+    font-size: 25px;
+    letter-spacing: -.7px;
+}
+
+.panel-kicker {
+    color: #777783;
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: 1.5px;
+}
+
+.panel-live {
+    padding: 6px 8px;
+
+    border:
+        1px solid rgba(237,66,69,.25);
+
+    border-radius: 7px;
+
+    background:
+        rgba(237,66,69,.08);
+
+    color: #ff7376;
+
+    font-size: 9px;
+    font-weight: 900;
+    letter-spacing: 1px;
+}
+
+.panel-description {
+    margin: 10px 0 22px;
+    max-width: 330px;
+
+    color: #7f7f8b;
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+input {
+    transition:
+        border-color .2s ease,
+        box-shadow .2s ease,
+        transform .2s ease;
+}
+
+input:focus {
+    border-color:
+        rgba(104,117,255,.72);
+
+    box-shadow:
+        0 0 0 4px
+        rgba(104,117,255,.08);
+}
+
+.avatar {
+    transition:
+        transform .18s ease,
+        border-color .18s ease,
+        background .18s ease,
+        box-shadow .18s ease;
+}
+
+.avatar:hover {
+    transform:
+        translateY(-3px)
+        scale(1.04);
+}
+
+.avatar.selected {
+    transform:
+        translateY(-2px);
+
+    box-shadow:
+        0 8px 25px
+        rgba(88,101,242,.18);
+}
+
+.primary,
+.secondary {
+    position: relative;
+    overflow: hidden;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 9px;
+
+    transition:
+        transform .18s ease,
+        box-shadow .18s ease,
+        filter .18s ease;
+}
+
+.primary:hover,
+.secondary:hover {
+    transform:
+        translateY(-2px);
+}
+
+.primary:hover {
+    box-shadow:
+        0 14px 35px
+        rgba(88,101,242,.25);
+}
+
+.primary:active,
+.secondary:active {
+    transform:
+        translateY(0)
+        scale(.985);
+}
+
+.button-icon {
+    font-size: 18px;
+    line-height: 1;
+}
+
+.button-arrow {
+    margin-left: auto;
+    opacity: .65;
+
+    transition:
+        transform .18s ease,
+        opacity .18s ease;
+}
+
+.primary:hover .button-arrow,
+.secondary:hover .button-arrow {
+    transform:
+        translateX(3px);
+    opacity: 1;
+}
+
+@keyframes homeSlideDown {
+
+    from {
+        opacity: 0;
+        transform:
+            translateY(-10px);
+    }
+
+    to {
+        opacity: 1;
+        transform:
+            translateY(0);
+    }
+
+}
+
+@keyframes homeHeroIn {
+
+    from {
+        opacity: 0;
+        transform:
+            translateX(-20px);
+    }
+
+    to {
+        opacity: 1;
+        transform:
+            translateX(0);
+    }
+
+}
+
+@keyframes homePanelIn {
+
+    from {
+        opacity: 0;
+        transform:
+            translateX(20px)
+            scale(.985);
+    }
+
+    to {
+        opacity: 1;
+        transform:
+            translateX(0)
+            scale(1);
+    }
+
+}
+
+@media (
+    prefers-reduced-motion:
+    reduce
+) {
+
+    *,
+    *::before,
+    *::after {
+        animation-duration:
+            .01ms !important;
+
+        animation-iteration-count:
+            1 !important;
+
+        transition-duration:
+            .01ms !important;
+    }
+
+}
+
+@media (max-width: 760px) {
+
+    .top-actions {
+        right: 16px;
+        top: 18px;
+    }
+
+    .system-status {
+        display: none;
+    }
+
+    .top-brand {
+        left: 16px;
+        top: 14px;
+    }
+
+    .top-brand img {
+        width: 45px;
+        height: 45px;
+    }
+
+    .app {
+        gap: 34px;
+    }
+
+    .hero h1 {
+        letter-spacing: -4px;
+    }
+
+}
+
+
+
+
+/* =====================================================
+   HOME V2.1
+===================================================== */
+
+.hero-beta {
+    margin-left: 3px;
+
+    padding:
+        3px 6px;
+
+    border-radius:
+        999px;
+
+    background:
+        rgba(104,117,255,.16);
+
+    color:
+        #aeb3ff;
+
+    font-size:
+        8px;
+
+    font-weight:
+        900;
+
+    letter-spacing:
+        1px;
+}
+
+.feature-quality {
+    border-color:
+        rgba(104,117,255,.28);
+}
+
+.preview-item span {
+    opacity:
+        .9;
+}
+
+.panel-heading {
+    position:
+        relative;
+
+    z-index:
+        2;
+}
+
+.panel-description {
+    position:
+        relative;
+
+    z-index:
+        2;
+}
+
+.panel .label,
+.panel input,
+.panel .avatars,
+.panel button,
+.panel .divider {
+    position:
+        relative;
+
+    z-index:
+        2;
+}
+
+.primary {
+    min-height:
+        54px;
+}
+
+.secondary {
+    min-height:
+        50px;
+}
+
+.primary .button-arrow,
+.secondary .button-arrow {
+    position:
+        absolute;
+
+    right:
+        18px;
+}
+
+.primary .button-icon {
+    position:
+        absolute;
+
+    left:
+        18px;
+}
+
+.panel-live {
+    animation:
+        liveSoftPulse
+        2.2s
+        ease-in-out
+        infinite;
+}
+
+@keyframes liveSoftPulse {
+
+    0%,
+    100% {
+        box-shadow:
+            0 0 0
+            rgba(237,66,69,0);
+    }
+
+    50% {
+        box-shadow:
+            0 0 18px
+            rgba(237,66,69,.14);
+    }
+
+}
+
+
 </style>
 
 </head>
 
 
-<body>
+<body class="home-v2">
+
+<!-- HOME V2 -->
+<!-- HOME V2.1 CONTENT -->
 
 
 <!-- =====================================
@@ -630,6 +1242,20 @@ input:focus {
 </div>
 
 
+<div class="top-actions">
+
+    <div class="system-status">
+        <span class="status-dot"></span>
+        Sistema online
+    </div>
+
+    <div class="version-chip">
+        V2
+    </div>
+
+</div>
+
+
 <div class="page">
 
 
@@ -645,9 +1271,15 @@ input:focus {
 
     <div class="hero-badge">
 
-        🟢 HL ACTIVITY
+    <span class="badge-dot"></span>
 
-    </div>
+    HL ACTIVITY
+
+    <span class="hero-beta">
+        BETA
+    </span>
+
+</div>
 
 
     <h1>
@@ -664,47 +1296,40 @@ input:focus {
 
 
     <p>
-
-        Crie uma sala privada,
-        convide seus amigos e
-        compartilhe telas em tempo real.
-
-    </p>
+    Compartilhe sua tela,
+    assista com seus amigos e
+    mantenha todo mundo conectado
+    em tempo real.
+</p>
 
 
     <div class="preview">
 
-
-        <div class="preview-item">
-
-            🖥️ 720p
-
-        </div>
-
-
-        <div class="preview-item">
-
-            👥 Multiusuário
-
-        </div>
-
-
-        <div class="preview-item">
-
-            ⚡ WebRTC
-
-        </div>
-
-
-        <div class="preview-item">
-
-            🔒 HTTPS
-
-        </div>
-
-
+    <div class="preview-label">
+        TECNOLOGIA DA TRANSMISSÃO
     </div>
 
+    <div class="preview-item feature-quality">
+        <span>▣</span>
+        1080p • 60 FPS
+    </div>
+
+    <div class="preview-item">
+        <span>⚡</span>
+        WebRTC
+    </div>
+
+    <div class="preview-item">
+        <span>◉</span>
+        Qualidade adaptativa
+    </div>
+
+    <div class="preview-item">
+        <span>↻</span>
+        Reconexão automática
+    </div>
+
+</div>
 
 </section>
 
@@ -717,11 +1342,30 @@ input:focus {
 <section class="panel">
 
 
-    <h2>
+    <div class="panel-heading">
 
-        Seu perfil
+    <div>
 
-    </h2>
+        <span class="panel-kicker">
+            SUA SESSÃO
+        </span>
+
+        <h2>
+            Pronto para começar?
+        </h2>
+
+    </div>
+
+    <div class="panel-live">
+        LIVE
+    </div>
+
+</div>
+
+<p class="panel-description">
+    Escolha seu perfil e crie uma sala
+    privada ou entre usando um código.
+</p>
 
 
     <span class="label">
@@ -802,14 +1446,24 @@ input:focus {
         class="primary"
     >
 
-        🚀 Criar uma sala
+    <span class="button-icon">
+        ＋
+    </span>
 
-    </button>
+    <span>
+        Criar nova sala
+    </span>
+
+    <span class="button-arrow">
+        →
+    </span>
+
+</button>
 
 
     <div class="divider">
 
-        OU ENTRE EM UMA SALA
+        OU USE UM CÓDIGO
 
     </div>
 
@@ -827,9 +1481,15 @@ input:focus {
         class="secondary"
     >
 
+    <span>
         Entrar na sala
+    </span>
 
-    </button>
+    <span class="button-arrow">
+        →
+    </span>
+
+</button>
 
 
 </section>
@@ -1054,8 +1714,10 @@ document.getElementById(
                 false;
 
 
-            button.textContent =
-                "🚀 Criar uma sala";
+            button.innerHTML =
+    '<span class="button-icon">＋</span>' +
+    '<span>Criar nova sala</span>' +
+    '<span class="button-arrow">→</span>';
 
 
         }

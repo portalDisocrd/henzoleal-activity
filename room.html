@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="pt-BR">
 
 <head>
@@ -1543,6 +1543,1489 @@ input:focus {
 
 }
 
+
+
+/* =====================================================
+   MONITOR UI V2
+===================================================== */
+
+
+/* MONITOR CENTRAL */
+
+.hl-monitor {
+    position: relative;
+
+    display: block;
+
+    width: 72px;
+    height: 46px;
+
+    margin:
+        0 auto 26px;
+
+    border:
+        3px solid
+        #676978;
+
+    border-radius:
+        6px;
+
+    background:
+        linear-gradient(
+            145deg,
+            #252733,
+            #15161d
+        );
+
+    box-shadow:
+        inset 0 0 0 2px
+        rgba(255,255,255,.025),
+        0 10px 30px
+        rgba(0,0,0,.22);
+
+    animation:
+        hlMonitorFloat
+        3s ease-in-out
+        infinite;
+}
+
+
+.hl-monitor::before {
+    content: "";
+
+    position: absolute;
+
+    left: 50%;
+    bottom: -13px;
+
+    width: 7px;
+    height: 13px;
+
+    transform:
+        translateX(-50%);
+
+    border-radius:
+        0 0 2px 2px;
+
+    background:
+        #676978;
+}
+
+
+.hl-monitor::after {
+    content: "";
+
+    position: absolute;
+
+    left: 50%;
+    bottom: -17px;
+
+    width: 30px;
+    height: 4px;
+
+    transform:
+        translateX(-50%);
+
+    border-radius:
+        4px;
+
+    background:
+        #676978;
+}
+
+
+.hl-monitor {
+    background:
+        radial-gradient(
+            circle at 50% 50%,
+            rgba(104,117,255,.11),
+            transparent 60%
+        ),
+        linear-gradient(
+            145deg,
+            #20222c,
+            #121319
+        );
+}
+
+
+@keyframes hlMonitorFloat {
+
+    0%,
+    100% {
+        transform:
+            translateY(0);
+
+        filter:
+            brightness(1);
+    }
+
+    50% {
+        transform:
+            translateY(-4px);
+
+        filter:
+            brightness(1.12);
+    }
+
+}
+
+
+/* BOTÃO COMPARTILHAR */
+
+.share-monitor-icon {
+    position: relative;
+
+    display: inline-block;
+
+    width: 15px;
+    height: 10px;
+
+    margin-right:
+        2px;
+
+    border:
+        1.7px solid
+        currentColor;
+
+    border-radius:
+        2px;
+}
+
+
+.share-monitor-icon::before {
+    content: "";
+
+    position: absolute;
+
+    left: 50%;
+    bottom: -4px;
+
+    width: 2px;
+    height: 4px;
+
+    transform:
+        translateX(-50%);
+
+    background:
+        currentColor;
+}
+
+
+.share-monitor-icon::after {
+    content: "";
+
+    position: absolute;
+
+    left: 50%;
+    bottom: -5px;
+
+    width: 7px;
+    height: 1.5px;
+
+    transform:
+        translateX(-50%);
+
+    border-radius:
+        2px;
+
+    background:
+        currentColor;
+}
+
+
+/* ENGRENAGEM */
+
+.quality-icon {
+    font-family:
+        Arial,
+        sans-serif;
+
+    opacity:
+        .9;
+}
+
+
+
+
+/* =====================================================
+   ROOM UI V2 FIXED
+   HL ACTIVITY
+===================================================== */
+
+:root {
+
+    --hl-primary:
+        #6875ff;
+
+    --hl-primary-soft:
+        rgba(104,117,255,.13);
+
+    --hl-border:
+        rgba(255,255,255,.075);
+
+}
+
+
+/* =====================================================
+   HEADER
+===================================================== */
+
+.hl-room-header {
+
+    height:
+        70px;
+
+    display:
+        flex;
+
+    align-items:
+        center;
+
+    justify-content:
+        space-between;
+
+    padding:
+        0 18px;
+
+    position:
+        relative;
+
+    z-index:
+        50;
+
+    background:
+        linear-gradient(
+            180deg,
+            rgba(17,17,23,.98),
+            rgba(13,13,18,.96)
+        );
+
+    border-bottom:
+        1px solid
+        rgba(255,255,255,.07);
+
+    box-shadow:
+        0 12px 40px
+        rgba(0,0,0,.14);
+
+    backdrop-filter:
+        blur(18px);
+
+}
+
+
+/* pequena luz superior */
+
+.hl-room-header::before {
+
+    content:
+        "";
+
+    position:
+        absolute;
+
+    top:
+        0;
+
+    left:
+        40px;
+
+    width:
+        240px;
+
+    height:
+        1px;
+
+    background:
+        linear-gradient(
+            90deg,
+            transparent,
+            rgba(104,117,255,.7),
+            transparent
+        );
+
+    opacity:
+        .55;
+
+}
+
+
+/* =====================================================
+   MARCA
+===================================================== */
+
+.hl-room-brand {
+
+    display:
+        flex;
+
+    align-items:
+        center;
+
+    gap:
+        11px;
+
+}
+
+
+.hl-logo-shell {
+
+    width:
+        43px;
+
+    height:
+        43px;
+
+    position:
+        relative;
+
+    flex:
+        0 0 auto;
+
+}
+
+
+.hl-room-logo {
+
+    width:
+        43px;
+
+    height:
+        43px;
+
+    display:
+        block;
+
+    object-fit:
+        cover;
+
+    border-radius:
+        11px;
+
+    border:
+        1px solid
+        rgba(255,255,255,.055);
+
+    box-shadow:
+        0 8px 25px
+        rgba(0,0,0,.26),
+        0 0 25px
+        rgba(104,117,255,.055);
+
+    transition:
+        transform .22s ease,
+        border-color .22s ease,
+        box-shadow .22s ease;
+
+}
+
+
+.hl-room-brand:hover
+.hl-room-logo {
+
+    transform:
+        translateY(-1px)
+        rotate(-2deg)
+        scale(1.035);
+
+    border-color:
+        rgba(104,117,255,.25);
+
+    box-shadow:
+        0 10px 30px
+        rgba(0,0,0,.30),
+        0 0 28px
+        rgba(104,117,255,.12);
+
+}
+
+
+/* bolinha na logo */
+
+.hl-logo-presence {
+
+    position:
+        absolute;
+
+    right:
+        -2px;
+
+    bottom:
+        -2px;
+
+    width:
+        10px;
+
+    height:
+        10px;
+
+    border:
+        2px solid
+        #101016;
+
+    border-radius:
+        50%;
+
+    background:
+        #43b581;
+
+    box-shadow:
+        0 0 10px
+        rgba(67,181,129,.65);
+
+}
+
+
+/* textos */
+
+.hl-room-brand-text {
+
+    display:
+        flex;
+
+    flex-direction:
+        column;
+
+    gap:
+        4px;
+
+}
+
+
+.hl-room-brand-name {
+
+    color:
+        #f7f7fa;
+
+    font-size:
+        15px;
+
+    line-height:
+        1;
+
+    font-weight:
+        900;
+
+    letter-spacing:
+        1px;
+
+}
+
+
+.hl-room-brand-name span {
+
+    color:
+        #8a91ff;
+
+}
+
+
+.hl-room-brand-subtitle {
+
+    color:
+        #62636f;
+
+    font-size:
+        7px;
+
+    line-height:
+        1;
+
+    font-weight:
+        800;
+
+    letter-spacing:
+        2.4px;
+
+}
+
+
+/* =====================================================
+   ONLINE
+===================================================== */
+
+.hl-room-live-system {
+
+    display:
+        flex;
+
+    align-items:
+        center;
+
+    gap:
+        5px;
+
+    margin-left:
+        7px;
+
+    padding:
+        5px 8px;
+
+    color:
+        #79d5a3;
+
+    font-size:
+        7px;
+
+    font-weight:
+        900;
+
+    letter-spacing:
+        .8px;
+
+    border:
+        1px solid
+        rgba(67,181,129,.12);
+
+    border-radius:
+        999px;
+
+    background:
+        rgba(67,181,129,.045);
+
+}
+
+
+.hl-system-dot {
+
+    width:
+        5px;
+
+    height:
+        5px;
+
+    border-radius:
+        50%;
+
+    background:
+        #43b581;
+
+    box-shadow:
+        0 0 8px
+        rgba(67,181,129,.8);
+
+    animation:
+        hlSystemPulse
+        2.3s ease-in-out
+        infinite;
+
+}
+
+
+@keyframes hlSystemPulse {
+
+    0%,
+    100% {
+
+        opacity:
+            .55;
+
+        transform:
+            scale(.9);
+
+    }
+
+    50% {
+
+        opacity:
+            1;
+
+        transform:
+            scale(1.12);
+
+    }
+
+}
+
+
+/* =====================================================
+   SALA / CODIGO
+===================================================== */
+
+.hl-room-info {
+
+    display:
+        flex;
+
+    align-items:
+        center;
+
+    gap:
+        8px;
+
+}
+
+
+.hl-room-type {
+
+    padding:
+        6px 8px;
+
+    color:
+        #666875;
+
+    font-size:
+        7px;
+
+    font-weight:
+        900;
+
+    letter-spacing:
+        1.2px;
+
+    border:
+        1px solid
+        rgba(255,255,255,.055);
+
+    border-radius:
+        7px;
+
+    background:
+        rgba(255,255,255,.018);
+
+}
+
+
+.hl-room-code-v2 {
+
+    display:
+        flex;
+
+    align-items:
+        center;
+
+    gap:
+        8px;
+
+    min-height:
+        34px;
+
+    padding:
+        5px 10px;
+
+    border:
+        1px solid
+        rgba(104,117,255,.16);
+
+    border-radius:
+        9px;
+
+    background:
+        linear-gradient(
+            180deg,
+            rgba(104,117,255,.075),
+            rgba(104,117,255,.035)
+        );
+
+    box-shadow:
+        inset 0 1px 0
+        rgba(255,255,255,.025);
+
+    transition:
+        border-color .18s ease,
+        background .18s ease,
+        transform .18s ease;
+
+}
+
+
+.hl-room-code-v2:hover {
+
+    transform:
+        translateY(-1px);
+
+    border-color:
+        rgba(104,117,255,.32);
+
+    background:
+        rgba(104,117,255,.09);
+
+}
+
+
+.hl-room-code-label {
+
+    color:
+        #737582;
+
+    font-size:
+        7px;
+
+    font-weight:
+        900;
+
+    letter-spacing:
+        1.3px;
+
+}
+
+
+.hl-room-code-v2
+#roomCode {
+
+    color:
+        #f1f2ff;
+
+    font-size:
+        12px;
+
+    font-weight:
+        900;
+
+    letter-spacing:
+        1.1px;
+
+}
+
+
+/* =====================================================
+   STAGE - MAIS PROFUNDIDADE
+===================================================== */
+
+.stage {
+
+    background:
+        radial-gradient(
+            circle at 50% 48%,
+            rgba(104,117,255,.045),
+            transparent 26%
+        ),
+        linear-gradient(
+            145deg,
+            #181920,
+            #14151b
+        );
+
+    box-shadow:
+        inset 0 1px 0
+        rgba(255,255,255,.02),
+        inset 0 0 80px
+        rgba(0,0,0,.07);
+
+}
+
+
+/* brilho quase invisivel */
+
+.stage::after {
+
+    content:
+        "";
+
+    position:
+        absolute;
+
+    width:
+        380px;
+
+    height:
+        380px;
+
+    left:
+        50%;
+
+    top:
+        50%;
+
+    transform:
+        translate(-50%, -50%);
+
+    border-radius:
+        50%;
+
+    background:
+        rgba(104,117,255,.025);
+
+    filter:
+        blur(80px);
+
+    pointer-events:
+        none;
+
+}
+
+
+/* =====================================================
+   PARTICIPANTES
+===================================================== */
+
+.people-panel {
+
+    background:
+        linear-gradient(
+            180deg,
+            #121219,
+            #101016
+        );
+
+    box-shadow:
+        inset 0 1px 0
+        rgba(255,255,255,.02);
+
+}
+
+
+.person {
+
+    transition:
+        transform .18s ease,
+        border-color .18s ease,
+        background .18s ease;
+
+}
+
+
+.person:hover {
+
+    transform:
+        translateX(3px);
+
+    border-color:
+        rgba(104,117,255,.18);
+
+    background:
+        rgba(104,117,255,.04);
+
+}
+
+
+/* =====================================================
+   FOOTER
+===================================================== */
+
+footer {
+
+    background:
+        linear-gradient(
+            180deg,
+            rgba(17,17,23,.96),
+            rgba(13,13,18,.99)
+        );
+
+    border-top:
+        1px solid
+        rgba(255,255,255,.065);
+
+    box-shadow:
+        0 -14px 35px
+        rgba(0,0,0,.10);
+
+}
+
+
+footer button {
+
+    transition:
+        transform .17s ease,
+        box-shadow .17s ease,
+        filter .17s ease;
+
+}
+
+
+footer button:hover {
+
+    transform:
+        translateY(-2px);
+
+}
+
+
+#share {
+
+    box-shadow:
+        0 8px 24px
+        rgba(88,101,242,.14),
+        inset 0 1px 0
+        rgba(255,255,255,.08);
+
+}
+
+
+#share:hover {
+
+    box-shadow:
+        0 12px 32px
+        rgba(88,101,242,.24),
+        inset 0 1px 0
+        rgba(255,255,255,.10);
+
+}
+
+
+/* =====================================================
+   MOBILE
+===================================================== */
+
+@media (
+    max-width:
+    720px
+) {
+
+    .hl-room-live-system,
+    .hl-room-type {
+
+        display:
+            none;
+
+    }
+
+    .hl-room-header {
+
+        padding:
+            0 10px;
+
+    }
+
+    .hl-room-logo,
+    .hl-logo-shell {
+
+        width:
+            36px;
+
+        height:
+            36px;
+
+    }
+
+    .hl-room-brand-name {
+
+        font-size:
+            12px;
+
+    }
+
+    .hl-room-brand-subtitle {
+
+        font-size:
+            6px;
+
+    }
+
+}
+
+
+/* respeita configuracao do usuario */
+
+@media (
+    prefers-reduced-motion:
+    reduce
+) {
+
+    .hl-system-dot {
+
+        animation:
+            none;
+
+    }
+
+}
+
+
+
+
+/* =====================================================
+   PROFILE UI V2
+===================================================== */
+
+
+/* FUNDO */
+
+#profileOverlay {
+
+    background:
+        radial-gradient(
+            circle at 50% 45%,
+            rgba(104,117,255,.075),
+            transparent 27%
+        ),
+        rgba(5,5,9,.91);
+
+    backdrop-filter:
+        blur(9px);
+
+}
+
+
+/* CARD */
+
+#profileOverlay .profile-card {
+
+    position:
+        relative;
+
+    width:
+        min(430px, calc(100vw - 32px));
+
+    padding:
+        28px;
+
+    overflow:
+        hidden;
+
+    border:
+        1px solid
+        rgba(255,255,255,.085);
+
+    border-radius:
+        20px;
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(25,25,33,.98),
+            rgba(18,18,25,.98)
+        );
+
+    box-shadow:
+        0 30px 90px
+        rgba(0,0,0,.46),
+        inset 0 1px 0
+        rgba(255,255,255,.035);
+
+    animation:
+        hlProfileEnter
+        .32s cubic-bezier(.2,.8,.2,1);
+
+}
+
+
+#profileOverlay .profile-card::before {
+
+    content:
+        "";
+
+    position:
+        absolute;
+
+    width:
+        180px;
+
+    height:
+        180px;
+
+    right:
+        -100px;
+
+    top:
+        -110px;
+
+    border-radius:
+        50%;
+
+    background:
+        rgba(104,117,255,.12);
+
+    filter:
+        blur(45px);
+
+    pointer-events:
+        none;
+
+}
+
+
+@keyframes hlProfileEnter {
+
+    from {
+
+        opacity:
+            0;
+
+        transform:
+            translateY(10px)
+            scale(.975);
+
+    }
+
+    to {
+
+        opacity:
+            1;
+
+        transform:
+            translateY(0)
+            scale(1);
+
+    }
+
+}
+
+
+/* TITULO */
+
+#profileOverlay h2 {
+
+    position:
+        relative;
+
+    margin:
+        0 0 8px;
+
+    color:
+        #f7f7fa;
+
+    font-size:
+        25px;
+
+    letter-spacing:
+        -.6px;
+
+}
+
+
+#profileOverlay p {
+
+    position:
+        relative;
+
+    margin:
+        0 0 20px;
+
+    color:
+        #92939e;
+
+    font-size:
+        14px;
+
+}
+
+
+/* INPUT */
+
+#profileName {
+
+    width:
+        100%;
+
+    box-sizing:
+        border-box;
+
+    min-height:
+        50px;
+
+    padding:
+        0 15px;
+
+    border:
+        1px solid
+        rgba(255,255,255,.09);
+
+    border-radius:
+        11px;
+
+    background:
+        rgba(8,8,13,.72);
+
+    color:
+        #f4f4f7;
+
+    font-size:
+        14px;
+
+    transition:
+        border-color .18s ease,
+        box-shadow .18s ease,
+        background .18s ease;
+
+}
+
+
+#profileName:focus {
+
+    border-color:
+        rgba(104,117,255,.65);
+
+    background:
+        rgba(10,10,16,.92);
+
+    box-shadow:
+        0 0 0 3px
+        rgba(104,117,255,.10);
+
+}
+
+
+#profileName::placeholder {
+
+    color:
+        #60616b;
+
+}
+
+
+/* AVATARES */
+
+#profileOverlay .avatar-options {
+
+    display:
+        grid;
+
+    grid-template-columns:
+        repeat(6, 1fr);
+
+    gap:
+        8px;
+
+    margin:
+        16px 0 18px;
+
+}
+
+
+#profileOverlay .profile-avatar {
+
+    position:
+        relative;
+
+    aspect-ratio:
+        1;
+
+    display:
+        flex;
+
+    align-items:
+        center;
+
+    justify-content:
+        center;
+
+    padding:
+        0;
+
+    border:
+        1px solid
+        rgba(255,255,255,.055);
+
+    border-radius:
+        12px;
+
+    outline:
+        none;
+
+    background:
+        rgba(255,255,255,.045);
+
+    font-size:
+        23px;
+
+    cursor:
+        pointer;
+
+    box-shadow:
+        inset 0 1px 0
+        rgba(255,255,255,.025);
+
+    transition:
+        transform .17s ease,
+        border-color .17s ease,
+        background .17s ease,
+        box-shadow .17s ease;
+
+}
+
+
+#profileOverlay .profile-avatar:hover {
+
+    transform:
+        translateY(-3px);
+
+    border-color:
+        rgba(104,117,255,.28);
+
+    background:
+        rgba(104,117,255,.08);
+
+}
+
+
+#profileOverlay .profile-avatar.selected {
+
+    transform:
+        translateY(-2px);
+
+    border:
+        1px solid
+        rgba(104,117,255,.90);
+
+    outline:
+        none;
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(104,117,255,.22),
+            rgba(104,117,255,.09)
+        );
+
+    box-shadow:
+        0 0 0 2px
+        rgba(104,117,255,.10),
+        0 8px 25px
+        rgba(88,101,242,.12);
+
+}
+
+
+#profileOverlay .profile-avatar.selected::after {
+
+    content:
+        "";
+
+    position:
+        absolute;
+
+    right:
+        6px;
+
+    top:
+        6px;
+
+    width:
+        5px;
+
+    height:
+        5px;
+
+    border-radius:
+        50%;
+
+    background:
+        #7f89ff;
+
+    box-shadow:
+        0 0 8px
+        rgba(127,137,255,.85);
+
+}
+
+
+/* BOTAO */
+
+#enterRoom {
+
+    width:
+        100%;
+
+    min-height:
+        50px;
+
+    margin-top:
+        0;
+
+    border:
+        1px solid
+        rgba(255,255,255,.07);
+
+    border-radius:
+        11px;
+
+    background:
+        linear-gradient(
+            135deg,
+            #5865f2,
+            #6c63ff
+        );
+
+    color:
+        white;
+
+    font-size:
+        14px;
+
+    font-weight:
+        800;
+
+    cursor:
+        pointer;
+
+    box-shadow:
+        0 10px 28px
+        rgba(88,101,242,.18),
+        inset 0 1px 0
+        rgba(255,255,255,.12);
+
+    transition:
+        transform .17s ease,
+        box-shadow .17s ease,
+        filter .17s ease;
+
+}
+
+
+#enterRoom:hover {
+
+    transform:
+        translateY(-2px);
+
+    filter:
+        brightness(1.06);
+
+    box-shadow:
+        0 14px 34px
+        rgba(88,101,242,.28);
+
+}
+
+
+#enterRoom:active {
+
+    transform:
+        translateY(0)
+        scale(.99);
+
+}
+
+
+/* MOBILE */
+
+@media (max-width: 520px) {
+
+    #profileOverlay .profile-card {
+
+        padding:
+            22px;
+
+    }
+
+    #profileOverlay .avatar-options {
+
+        gap:
+            6px;
+
+    }
+
+    #profileOverlay .profile-avatar {
+
+        font-size:
+            20px;
+
+        border-radius:
+            10px;
+
+    }
+
+}
+
+
+/* ACESSIBILIDADE */
+
+@media (
+    prefers-reduced-motion:
+    reduce
+) {
+
+    #profileOverlay .profile-card {
+
+        animation:
+            none;
+
+    }
+
+}
+
+
 </style>
 
 </head>
@@ -1551,18 +3034,66 @@ input:focus {
 <body>
 
 
-<header>
 
-<div class="logo">
-LEAL <span>ACTIVITY</span>
-</div>
+<header class="hl-room-header">
 
-<div class="room-code">
-Sala:
-<strong id="roomCode"></strong>
-</div>
+    <div class="hl-room-brand">
+
+        <div class="hl-logo-shell">
+
+            <img
+                src="/logo-hl.png?v=3"
+                alt="HL Activity"
+                class="hl-room-logo"
+            >
+
+            <span class="hl-logo-presence"></span>
+
+        </div>
+
+        <div class="hl-room-brand-text">
+
+            <div class="hl-room-brand-name">
+                HL <span>ACTIVITY</span>
+            </div>
+
+            <div class="hl-room-brand-subtitle">
+                STREAM • CONNECT
+            </div>
+
+        </div>
+
+        <div class="hl-room-live-system">
+
+            <span class="hl-system-dot"></span>
+
+            ONLINE
+
+        </div>
+
+    </div>
+
+
+    <div class="hl-room-info">
+
+        <div class="hl-room-type">
+            PRIVATE ROOM
+        </div>
+
+        <div class="hl-room-code-v2">
+
+            <span class="hl-room-code-label">
+                SALA
+            </span>
+
+            <strong id="roomCode"></strong>
+
+        </div>
+
+    </div>
 
 </header>
+
 
 
 <div class="app">
@@ -1588,9 +3119,7 @@ Sala:
         class="stage-empty"
     >
 
-        <div class="icon">
-            🖥️
-        </div>
+        <div class="icon"><span class="hl-monitor"></span></div>
 
         <div>
             Nenhuma transmissão ativa
@@ -1678,9 +3207,7 @@ Conectando...
     class="quality-control"
     title="Qualidade da transmissão"
 >
-    <span class="quality-icon">
-        ⚙️
-    </span>
+    <span class="quality-icon">⚙</span>
 
     <select
         id="qualitySelect"
@@ -1712,11 +3239,12 @@ Conectando...
 </div>
 
 <button id="share">
-🖥️ Compartilhar
+<span class="share-monitor-icon"></span>
+<span>Compartilhar</span>
 </button>
 
 <button id="stop">
-⏹️ Parar transmissão
+⏹ Parar transmissão
 </button>
 
 <button id="copy">
@@ -1751,33 +3279,53 @@ Escolha seu próprio perfil.
     placeholder="Seu nome"
 >
 
+
 <div class="avatar-options">
 
-<button class="profile-avatar selected">
-😎
-</button>
+    <button
+        class="profile-avatar selected"
+        data-avatar="😎"
+        type="button"
+        aria-label="Avatar óculos"
+    >😎</button>
 
-<button class="profile-avatar">
-👾
-</button>
+    <button
+        class="profile-avatar"
+        data-avatar="👾"
+        type="button"
+        aria-label="Avatar alien"
+    >👾</button>
 
-<button class="profile-avatar">
-🐺
-</button>
+    <button
+        class="profile-avatar"
+        data-avatar="🐺"
+        type="button"
+        aria-label="Avatar lobo"
+    >🐺</button>
 
-<button class="profile-avatar">
-🦊
-</button>
+    <button
+        class="profile-avatar"
+        data-avatar="🦊"
+        type="button"
+        aria-label="Avatar raposa"
+    >🦊</button>
 
-<button class="profile-avatar">
-🐉
-</button>
+    <button
+        class="profile-avatar"
+        data-avatar="🐉"
+        type="button"
+        aria-label="Avatar dragão"
+    >🐉</button>
 
-<button class="profile-avatar">
-🤖
-</button>
+    <button
+        class="profile-avatar"
+        data-avatar="🤖"
+        type="button"
+        aria-label="Avatar robô"
+    >🤖</button>
 
 </div>
+
 
 <button id="enterRoom">
 Entrar
@@ -1843,9 +3391,12 @@ const qualityProfiles = {
             60,
 
         bitrate:
-            6000000,
+            8000000,
 
         auto:
+            true,
+
+        _autoQualityV2:
             true
     },
 
@@ -2216,6 +3767,747 @@ if (
 
 
 
+
+
+// =====================================================
+// AUTO QUALITY V2
+// =====================================================
+
+const autoQualityLevels = [
+
+    "720p30",
+    "720p60",
+    "1080p30",
+    "1080p60"
+
+];
+
+
+let autoQualityLevel =
+    3;
+
+
+let autoQualityBadSamples =
+    0;
+
+
+let autoQualityGoodSamples =
+    0;
+
+
+let autoQualityRunning =
+    false;
+
+
+let autoQualityTimer =
+    null;
+
+
+const autoQualityPreviousStats =
+    new Map();
+
+
+function getAutoQualityProfile() {
+
+    return qualityProfiles[
+        autoQualityLevels[
+            autoQualityLevel
+        ]
+    ];
+
+}
+
+
+function getAutoQualityLabel() {
+
+    const profile =
+        getAutoQualityProfile();
+
+    return profile?.label ||
+        "Auto";
+
+}
+
+
+function updateAutoQualityUI(
+    state = "Estável"
+) {
+
+    const control =
+        document.querySelector(
+            ".quality-control"
+        );
+
+    if (!control) {
+        return;
+    }
+
+
+    control.dataset.autoState =
+        state;
+
+
+    control.title =
+        qualitySelect?.value ===
+            "auto"
+            ? (
+                "Auto • " +
+                getAutoQualityLabel() +
+                " • " +
+                state
+            )
+            : "";
+
+}
+
+
+async function applyAutoQualityLevel() {
+
+    if (
+        qualitySelect?.value !==
+            "auto"
+    ) {
+        return;
+    }
+
+
+    const profile =
+        getAutoQualityProfile();
+
+
+    const videoTrack =
+        localStream
+            ?.getVideoTracks?.()[0];
+
+
+    if (videoTrack) {
+
+        try {
+
+            videoTrack.contentHint =
+                autoQualityLevel >= 2
+                    ? "detail"
+                    : "motion";
+
+        } catch {}
+
+
+        try {
+
+            await videoTrack
+                .applyConstraints({
+
+                    width: {
+                        ideal:
+                            profile.width,
+                        max:
+                            profile.width
+                    },
+
+                    height: {
+                        ideal:
+                            profile.height,
+                        max:
+                            profile.height
+                    },
+
+                    frameRate: {
+                        ideal:
+                            profile.fps,
+                        max:
+                            profile.fps
+                    }
+
+                });
+
+        } catch (
+            error
+        ) {
+
+            console.warn(
+                "Auto Quality: constraints:",
+                error?.message ||
+                    error
+            );
+
+        }
+
+    }
+
+
+    const jobs =
+        [];
+
+
+    outboundPeers.forEach(
+        peer => {
+
+            peer
+                .getSenders()
+                .forEach(
+                    sender => {
+
+                        if (
+                            sender.track
+                                ?.kind ===
+                                "video"
+                        ) {
+
+                            jobs.push(
+                                applyQualityToSender(
+                                    sender,
+                                    profile
+                                )
+                            );
+
+                        }
+
+                    }
+                );
+
+        }
+    );
+
+
+    await Promise.allSettled(
+        jobs
+    );
+
+
+    updateAutoQualityUI(
+        "Estável"
+    );
+
+}
+
+
+async function readAutoQualityStats() {
+
+    const samples =
+        [];
+
+
+    for (
+        const [
+            targetId,
+            peer
+        ]
+        of outboundPeers
+    ) {
+
+        if (
+            !peer ||
+            peer.connectionState !==
+                "connected"
+        ) {
+            continue;
+        }
+
+
+        try {
+
+            const report =
+                await peer.getStats();
+
+
+            let outboundVideo =
+                null;
+
+            let remoteInbound =
+                null;
+
+            let candidatePair =
+                null;
+
+
+            report.forEach(
+                stat => {
+
+                    if (
+                        stat.type ===
+                            "outbound-rtp" &&
+                        stat.kind ===
+                            "video"
+                    ) {
+
+                        outboundVideo =
+                            stat;
+
+                    }
+
+
+                    if (
+                        stat.type ===
+                            "remote-inbound-rtp" &&
+                        stat.kind ===
+                            "video"
+                    ) {
+
+                        remoteInbound =
+                            stat;
+
+                    }
+
+
+                    if (
+                        stat.type ===
+                            "candidate-pair" &&
+                        stat.state ===
+                            "succeeded" &&
+                        stat.nominated
+                    ) {
+
+                        candidatePair =
+                            stat;
+
+                    }
+
+                }
+            );
+
+
+            if (!outboundVideo) {
+                continue;
+            }
+
+
+            const key =
+                String(targetId);
+
+
+            const previous =
+                autoQualityPreviousStats
+                    .get(key);
+
+
+            const current = {
+
+                timestamp:
+                    outboundVideo
+                        .timestamp,
+
+                bytesSent:
+                    outboundVideo
+                        .bytesSent ||
+                    0
+
+            };
+
+
+            autoQualityPreviousStats
+                .set(
+                    key,
+                    current
+                );
+
+
+            let bitrate =
+                null;
+
+
+            if (
+                previous &&
+                current.timestamp >
+                    previous.timestamp
+            ) {
+
+                const seconds =
+                    (
+                        current.timestamp -
+                        previous.timestamp
+                    ) /
+                    1000;
+
+
+                bitrate =
+                    (
+                        (
+                            current.bytesSent -
+                            previous.bytesSent
+                        ) *
+                        8
+                    ) /
+                    seconds;
+
+            }
+
+
+            samples.push({
+
+                bitrate,
+
+                rtt:
+                    remoteInbound
+                        ?.roundTripTime ??
+                    candidatePair
+                        ?.currentRoundTripTime ??
+                    null,
+
+                fractionLost:
+                    remoteInbound
+                        ?.fractionLost ??
+                    null,
+
+                availableBitrate:
+                    candidatePair
+                        ?.availableOutgoingBitrate ??
+                    null
+
+            });
+
+        } catch (
+            error
+        ) {
+
+            console.warn(
+                "Auto Quality getStats:",
+                error?.message ||
+                    error
+            );
+
+        }
+
+    }
+
+
+    return samples;
+
+}
+
+
+function evaluateAutoQuality(
+    samples
+) {
+
+    if (
+        !samples.length
+    ) {
+
+        return "unknown";
+
+    }
+
+
+    const profile =
+        getAutoQualityProfile();
+
+
+    let bad =
+        false;
+
+
+    let veryGood =
+        true;
+
+
+    for (
+        const sample
+        of samples
+    ) {
+
+        const rtt =
+            sample.rtt;
+
+
+        const loss =
+            sample.fractionLost;
+
+
+        const available =
+            sample.availableBitrate;
+
+
+        const bitrate =
+            sample.bitrate;
+
+
+        if (
+            (
+                rtt !== null &&
+                rtt > 0.32
+            ) ||
+            (
+                loss !== null &&
+                loss > 0.08
+            ) ||
+            (
+                available !== null &&
+                available <
+                    profile.bitrate *
+                    0.82
+            )
+        ) {
+
+            bad =
+                true;
+
+        }
+
+
+        if (
+            (
+                rtt !== null &&
+                rtt > 0.12
+            ) ||
+            (
+                loss !== null &&
+                loss > 0.02
+            ) ||
+            (
+                available !== null &&
+                available <
+                    profile.bitrate *
+                    1.35
+            ) ||
+            (
+                bitrate !== null &&
+                bitrate <
+                    profile.bitrate *
+                    0.45
+            )
+        ) {
+
+            veryGood =
+                false;
+
+        }
+
+    }
+
+
+    if (bad) {
+        return "bad";
+    }
+
+
+    if (veryGood) {
+        return "good";
+    }
+
+
+    return "normal";
+
+}
+
+
+async function autoQualityTick() {
+
+    if (
+        autoQualityRunning ||
+        qualitySelect?.value !==
+            "auto" ||
+        !localStream
+    ) {
+        return;
+    }
+
+
+    autoQualityRunning =
+        true;
+
+
+    try {
+
+        const samples =
+            await readAutoQualityStats();
+
+
+        const state =
+            evaluateAutoQuality(
+                samples
+            );
+
+
+        if (
+            state === "bad"
+        ) {
+
+            autoQualityBadSamples++;
+
+            autoQualityGoodSamples =
+                0;
+
+
+            updateAutoQualityUI(
+                "Ajustando conexão..."
+            );
+
+
+            if (
+                autoQualityBadSamples >=
+                    2 &&
+                autoQualityLevel > 0
+            ) {
+
+                autoQualityLevel--;
+
+                autoQualityBadSamples =
+                    0;
+
+
+                await applyAutoQualityLevel();
+
+            }
+
+        } else if (
+            state === "good"
+        ) {
+
+            autoQualityGoodSamples++;
+
+            autoQualityBadSamples =
+                0;
+
+
+            updateAutoQualityUI(
+                "Estável"
+            );
+
+
+            if (
+                autoQualityGoodSamples >=
+                    5 &&
+                autoQualityLevel <
+                    autoQualityLevels
+                        .length -
+                        1
+            ) {
+
+                autoQualityLevel++;
+
+                autoQualityGoodSamples =
+                    0;
+
+
+                await applyAutoQualityLevel();
+
+            }
+
+        } else {
+
+            autoQualityBadSamples =
+                0;
+
+
+            if (
+                state === "normal"
+            ) {
+
+                autoQualityGoodSamples =
+                    Math.max(
+                        0,
+                        autoQualityGoodSamples -
+                            1
+                    );
+
+
+                updateAutoQualityUI(
+                    "Estável"
+                );
+
+            }
+
+        }
+
+    } finally {
+
+        autoQualityRunning =
+            false;
+
+    }
+
+}
+
+
+function startAutoQuality() {
+
+    clearInterval(
+        autoQualityTimer
+    );
+
+
+    autoQualityTimer =
+        setInterval(
+            autoQualityTick,
+            4000
+        );
+
+}
+
+
+function resetAutoQuality() {
+
+    autoQualityBadSamples =
+        0;
+
+    autoQualityGoodSamples =
+        0;
+
+    autoQualityPreviousStats
+        .clear();
+
+
+    if (
+        qualitySelect?.value ===
+            "auto"
+    ) {
+
+        autoQualityLevel =
+            3;
+
+
+        applyAutoQualityLevel()
+            .catch(
+                () => {}
+            );
+
+
+        updateAutoQualityUI(
+            "Estável"
+        );
+
+    }
+
+}
+
+
+qualitySelect
+    ?.addEventListener(
+        "change",
+        () => {
+
+            if (
+                qualitySelect.value ===
+                    "auto"
+            ) {
+
+                resetAutoQuality();
+
+            } else {
+
+                autoQualityBadSamples =
+                    0;
+
+                autoQualityGoodSamples =
+                    0;
+
+                autoQualityPreviousStats
+                    .clear();
+
+            }
+
+        }
+    );
+
+
+startAutoQuality();
+
+
+// =====================================================
+// FIM AUTO QUALITY V2
+// =====================================================
+
+
 const roomCode =
     location.pathname
         .split("/")
@@ -2446,8 +4738,8 @@ document
 
 
                 selectedAvatar =
-                    button.textContent
-                        .trim();
+                    button.dataset.avatar ||
+                    button.textContent.trim();
 
             };
 
@@ -3277,7 +5569,7 @@ function updateMainLabel() {
 
 
     mainLabel.textContent =
-        `${user?.avatar || "🖥️"} ${user?.name || "Usuário"}`;
+        `${user?.avatar || "🖥"} ${user?.name || "Usuário"}`;
 
 }
 
@@ -3620,7 +5912,7 @@ function renderStreamStrip() {
 
 
             name.textContent =
-                `${user?.avatar || "🖥️"} ${user?.name || "Usuário"}`;
+                `${user?.avatar || "🖥"} ${user?.name || "Usuário"}`;
 
 
             thumb.appendChild(
