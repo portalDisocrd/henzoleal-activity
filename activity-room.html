@@ -6744,6 +6744,29 @@ socket.on(
 shareButton.onclick =
     async () => {
 
+        // =====================================================
+        // ACTIVITY CAPABILITY DEBUG V1
+        // =====================================================
+
+        console.log(
+            "[ACTIVITY] Compartilhar clicado"
+        );
+
+        console.log(
+            "[ACTIVITY] mediaDevices:",
+            !!navigator.mediaDevices
+        );
+
+        console.log(
+            "[ACTIVITY] getDisplayMedia:",
+            typeof navigator.mediaDevices?.getDisplayMedia
+        );
+
+        statusElement.textContent =
+            typeof navigator.mediaDevices?.getDisplayMedia === "function"
+                ? "Solicitando compartilhamento..."
+                : "Compartilhamento de tela indisponível neste dispositivo.";
+
         if (
             localStream
         ) {
@@ -7018,6 +7041,22 @@ document.getElementById(
     "copy"
 ).onclick =
     async () => {
+
+        // =====================================================
+        // ACTIVITY INVITE DEBUG V1
+        // =====================================================
+
+        console.log(
+            "[ACTIVITY] Convite clicado"
+        );
+
+        console.log(
+            "[ACTIVITY] clipboard:",
+            !!navigator.clipboard
+        );
+
+        statusElement.textContent =
+            "Preparando convite...";
 
         const invite =
             location.origin +
