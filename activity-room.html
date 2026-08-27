@@ -7258,8 +7258,21 @@ document.getElementById(
 
         cleanupRoomBeforeExit();
 
+        const activityParams =
+            new URLSearchParams(
+                window.location.search
+            );
+
+        activityParams.delete(
+            "room"
+        );
+
+        const query =
+            activityParams.toString();
+
         window.location.href =
-            "/";
+            "/activity.html" +
+            (query ? "?" + query : "");
 
     };
 

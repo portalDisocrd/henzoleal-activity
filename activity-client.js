@@ -283,8 +283,19 @@ function openRoom(code) {
     statusElement.textContent =
         "Entrando na sala...";
 
+    const nextParams =
+        new URLSearchParams(
+            window.location.search
+        );
+
+    nextParams.set(
+        "room",
+        safeCode
+    );
+
     window.location.href =
-        `/activity-room.html?room=${encodeURIComponent(safeCode)}`;
+        "/activity-room.html?" +
+        nextParams.toString();
 
 }
 
