@@ -7035,6 +7035,7 @@ stopButton.onclick =
 
 // =====================================================
 // CONVITE
+// ACTIVITY INVITE V1 INSTALLED
 // =====================================================
 
 document.getElementById(
@@ -7042,49 +7043,85 @@ document.getElementById(
 ).onclick =
     async () => {
 
-        // =====================================================
-        // ACTIVITY INVITE DEBUG V1
-        // =====================================================
+        const copyButton =
+            document.getElementById(
+                "copy"
+            );
 
-        console.log(
-            "[ACTIVITY] Convite clicado"
-        );
-
-        console.log(
-            "[ACTIVITY] clipboard:",
-            !!navigator.clipboard
-        );
 
         statusElement.textContent =
-            "Preparando convite...";
-
-        const invite =
-            location.origin +
-            "/room/" +
-            roomCode;
+            "Abrindo convite do Discord...";
 
 
         try {
 
-            await navigator
-                .clipboard
-                .writeText(
-                    invite
+            if (
+                typeof window.hlActivityInvite !==
+                "function"
+            ) {
+
+                throw new Error(
+                    "SDK de convite ainda nao carregou"
                 );
 
+            }
 
-            /* INVITE FEEDBACK V2 */
+
+            const result =
+                await Promise.race([
+
+                    window.hlActivityInvite(
+                        roomCode
+                    ),
+
+                    new Promise(
+                        (
+                            _resolve,
+                            reject
+                        ) => {
+
+                            setTimeout(
+                                () => {
+
+                                    reject(
+                                        new Error(
+                                            "Tempo limite do Discord"
+                                        )
+                                    );
+
+                                },
+                                5000
+                            );
+
+                        }
+                    )
+
+                ]);
+
+
+            if (
+                !result ||
+                !result.success
+            ) {
+
+                throw new Error(
+                    "Discord nao confirmou o convite"
+                );
+
+            }
+
 
             statusElement.textContent =
-                "✅ Convite copiado";
+                result.didSendMessage
+                    ? "✅ Convite enviado"
+                    : result.didCopyLink
+                        ? "✅ Convite copiado"
+                        : "✅ Convite preparado";
 
-            const copyButton =
-                document.getElementById(
-                    "copy"
-                );
 
             copyButton.textContent =
-                "✅ Copiado!";
+                "✅ Pronto!";
+
 
             copyButton.classList.remove(
                 "copied"
@@ -7097,20 +7134,10 @@ document.getElementById(
             );
 
 
-            statusElement.classList.remove(
-                "status-pop"
-            );
-
-            void statusElement.offsetWidth;
-
-            statusElement.classList.add(
-                "status-pop"
-            );
-
-
             clearTimeout(
                 copyButton._copiedTimer
             );
+
 
             copyButton._copiedTimer =
                 setTimeout(
@@ -7128,12 +7155,58 @@ document.getElementById(
                 );
 
 
-        } catch {
+        } catch (error) {
 
-            prompt(
-                "Copie o convite:",
-                invite
+            console.warn(
+                "[ACTIVITY] Falha no convite Discord:",
+                error
             );
+
+
+            // =============================================
+            // FALLBACK
+            // =============================================
+
+            const invite =
+                location.origin +
+                "/room/" +
+                roomCode;
+
+
+            try {
+
+                await navigator
+                    .clipboard
+                    .writeText(
+                        invite
+                    );
+
+
+                statusElement.textContent =
+                    "✅ Link copiado";
+
+                copyButton.textContent =
+                    "✅ Copiado!";
+
+
+                setTimeout(
+                    () => {
+
+                        copyButton.textContent =
+                            "🔗 Convite";
+
+                    },
+                    1800
+                );
+
+
+            } catch {
+
+                statusElement.textContent =
+                    "Código da sala: " +
+                    roomCode;
+
+            }
 
         }
 
@@ -7302,6 +7375,11 @@ document.getElementById(
 loadProfile();
 
 </script>
+
+<script
+    type="module"
+    src="/activity-room-client.js"
+></script>
 
 </body>
 
