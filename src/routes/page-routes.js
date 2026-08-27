@@ -77,6 +77,49 @@ function registerPageRoutes({
 
 
     // =============================================
+    // SHARE BRIDGE V1
+    // =============================================
+
+    app.get(
+        "/share/:code",
+        (req, res) => {
+
+            const code =
+                sanitizeRoomCode(
+                    req.params.code
+                );
+
+
+            if (
+                !isValidRoomCode(
+                    code
+                ) ||
+                !roomService.has(
+                    code
+                )
+            ) {
+
+                return res
+                    .status(404)
+                    .send(
+                        "Sala nao encontrada."
+                    );
+
+            }
+
+
+            res.sendFile(
+                path.join(
+                    rootDir,
+                    "room.html"
+                )
+            );
+
+        }
+    );
+
+
+    // =============================================
     // ABRIR SALA
     // =============================================
 

@@ -6739,228 +6739,56 @@ socket.on(
 
 // =====================================================
 // COMPARTILHAR TELA + ÁUDIO
+// SHARE BRIDGE BUTTON V1
 // =====================================================
 
 shareButton.onclick =
-    async () => {
+    () => {
 
-        // =====================================================
-        // ACTIVITY CAPABILITY DEBUG V1
-        // =====================================================
+        const shareUrl =
+            location.origin +
+            "/share/" +
+            encodeURIComponent(
+                roomCode
+            );
 
-        console.log(
-            "[ACTIVITY] Compartilhar clicado"
-        );
-
-        console.log(
-            "[ACTIVITY] mediaDevices:",
-            !!navigator.mediaDevices
-        );
-
-        console.log(
-            "[ACTIVITY] getDisplayMedia:",
-            typeof navigator.mediaDevices?.getDisplayMedia
-        );
 
         statusElement.textContent =
-            typeof navigator.mediaDevices?.getDisplayMedia === "function"
-                ? "Solicitando compartilhamento..."
-                : "Compartilhamento de tela indisponível neste dispositivo.";
+            "Abrindo transmissor no navegador...";
+
+
+        const externalWindow =
+            window.open(
+                shareUrl,
+                "_blank",
+                "noopener,noreferrer"
+            );
+
 
         if (
-            localStream
+            externalWindow
         ) {
+
+            statusElement.textContent =
+                "🟢 Transmissor aberto no navegador";
 
             return;
 
         }
 
 
-        try {
-
-            // =====================================================
-            // ACTIVITY SCREEN CAPTURE V1
-            // =====================================================
-
-            if (
-                !navigator.mediaDevices ||
-                typeof navigator.mediaDevices.getDisplayMedia !== "function"
-            ) {
-
-                throw new Error(
-                    "SCREEN_CAPTURE_UNAVAILABLE"
-                );
-
-            }
-
-
-            console.log(
-                "[ACTIVITY] Iniciando getDisplayMedia"
-            );
-
-
-            localStream =
-                await navigator
-                    .mediaDevices
-                    .getDisplayMedia({
-
-                        video:
-                            true,
-
-                        audio:
-                            true
-
-                    });
-
-
-            console.log(
-                "[ACTIVITY] Captura autorizada",
-                {
-                    video:
-                        localStream
-                            .getVideoTracks()
-                            .length,
-
-                    audio:
-                        localStream
-                            .getAudioTracks()
-                            .length
-                }
-            );
-
-
-            /* STREAM QUALITY V1 */
-
-
-
-
-            const localVideoTrack =
-
-
-
-                localStream.getVideoTracks()[0];
-
-
-
-
-            if (localVideoTrack) {
-
-
-
-
-                try {
-
-
-
-
-                    localVideoTrack.contentHint =
-
-
-
-                        "detail";
-
-
-
-
-                } catch {}
-
-
-
-
-            }
-
-
-
-
-            addStream(
-
-
-
-                socket.id,
-
-
-
-                localStream
-
-
-
-            );
-
-
-            shareButton.style.display =
-                "none";
-
-
-            stopButton.style.display =
-                "inline-block";
-
-
-            statusElement.textContent =
-                "🟢 Você está transmitindo";
-
-
-            socket.emit(
-                "stream-started"
-            );
-
-
-            participants.forEach(
-                user => {
-
-                    if (
-                        user.id !==
-                        socket.id
-                    ) {
-
-                        startOutbound(
-                            user.id
-                        );
-
-                    }
-
-                }
-            );
-
-
-            const track =
-                localStream
-                    .getVideoTracks()[0];
-
-
-            if (track) {
-
-                track.onended =
-                    stopSharing;
-
-            }
-
-
-            if (
-                localStream
-                    .getAudioTracks()
-                    .length === 0
-            ) {
-
-                statusElement.textContent =
-                    "🟢 Transmitindo • sem áudio da tela";
-
-            }
-
-
-        } catch (error) {
-
-            console.error(
-                error
-            );
-
-
-            localStream =
-                null;
-
-        }
+        // Caso o Discord bloqueie popup,
+        // deixamos a URL disponível.
+        statusElement.textContent =
+            "Abra no navegador: " +
+            shareUrl;
 
     };
 
+
+// =====================================================
+// PARAR DA ACTIVITY
+// =====================================================
 
 // =====================================================
 // PARAR SOMENTE MINHA TRANSMISSÃO
