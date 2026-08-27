@@ -7034,8 +7034,7 @@ stopButton.onclick =
 
 
 // =====================================================
-// CONVITE
-// ACTIVITY INVITE V1 INSTALLED
+// CONVITE - CODIGO DA SALA V1
 // =====================================================
 
 document.getElementById(
@@ -7048,96 +7047,28 @@ document.getElementById(
                 "copy"
             );
 
-
-        statusElement.textContent =
-            "Abrindo convite do Discord...";
-
-
         try {
 
-            if (
-                typeof window.hlActivityInvite !==
-                "function"
-            ) {
-
-                throw new Error(
-                    "SDK de convite ainda nao carregou"
+            await navigator
+                .clipboard
+                .writeText(
+                    roomCode
                 );
-
-            }
-
-
-            const result =
-                await Promise.race([
-
-                    window.hlActivityInvite(
-                        roomCode
-                    ),
-
-                    new Promise(
-                        (
-                            _resolve,
-                            reject
-                        ) => {
-
-                            setTimeout(
-                                () => {
-
-                                    reject(
-                                        new Error(
-                                            "Tempo limite do Discord"
-                                        )
-                                    );
-
-                                },
-                                5000
-                            );
-
-                        }
-                    )
-
-                ]);
-
-
-            if (
-                !result ||
-                !result.success
-            ) {
-
-                throw new Error(
-                    "Discord nao confirmou o convite"
-                );
-
-            }
-
 
             statusElement.textContent =
-                result.didSendMessage
-                    ? "✅ Convite enviado"
-                    : result.didCopyLink
-                        ? "✅ Convite copiado"
-                        : "✅ Convite preparado";
-
+                "✅ Código copiado: " +
+                roomCode;
 
             copyButton.textContent =
-                "✅ Pronto!";
-
-
-            copyButton.classList.remove(
-                "copied"
-            );
-
-            void copyButton.offsetWidth;
+                "✅ Código copiado!";
 
             copyButton.classList.add(
                 "copied"
             );
 
-
             clearTimeout(
                 copyButton._copiedTimer
             );
-
 
             copyButton._copiedTimer =
                 setTimeout(
@@ -7154,59 +7085,11 @@ document.getElementById(
                     1800
                 );
 
+        } catch {
 
-        } catch (error) {
-
-            console.warn(
-                "[ACTIVITY] Falha no convite Discord:",
-                error
-            );
-
-
-            // =============================================
-            // FALLBACK
-            // =============================================
-
-            const invite =
-                location.origin +
-                "/room/" +
+            statusElement.textContent =
+                "Código da sala: " +
                 roomCode;
-
-
-            try {
-
-                await navigator
-                    .clipboard
-                    .writeText(
-                        invite
-                    );
-
-
-                statusElement.textContent =
-                    "✅ Link copiado";
-
-                copyButton.textContent =
-                    "✅ Copiado!";
-
-
-                setTimeout(
-                    () => {
-
-                        copyButton.textContent =
-                            "🔗 Convite";
-
-                    },
-                    1800
-                );
-
-
-            } catch {
-
-                statusElement.textContent =
-                    "Código da sala: " +
-                    roomCode;
-
-            }
 
         }
 
@@ -7375,11 +7258,6 @@ document.getElementById(
 loadProfile();
 
 </script>
-
-<script
-    type="module"
-    src="/activity-room-client.js"
-></script>
 
 </body>
 
