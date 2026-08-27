@@ -93,16 +93,13 @@ function registerPageRoutes({
             if (
                 !isValidRoomCode(
                     code
-                ) ||
-                !roomService.has(
-                    code
                 )
             ) {
 
                 return res
-                    .status(404)
+                    .status(400)
                     .send(
-                        "Sala nao encontrada."
+                        "Codigo de sala invalido."
                     );
 
             }
