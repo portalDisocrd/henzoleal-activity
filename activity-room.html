@@ -6778,43 +6778,55 @@ shareButton.onclick =
 
         try {
 
+            // =====================================================
+            // ACTIVITY SCREEN CAPTURE V1
+            // =====================================================
+
+            if (
+                !navigator.mediaDevices ||
+                typeof navigator.mediaDevices.getDisplayMedia !== "function"
+            ) {
+
+                throw new Error(
+                    "SCREEN_CAPTURE_UNAVAILABLE"
+                );
+
+            }
+
+
+            console.log(
+                "[ACTIVITY] Iniciando getDisplayMedia"
+            );
+
+
             localStream =
                 await navigator
                     .mediaDevices
                     .getDisplayMedia({
 
-                        video: {
-
-                            width: {
-                                ideal:
-                                    getQualityProfile().width,
-
-                                max:
-                                    getQualityProfile().width
-                            },
-
-                            height: {
-                                ideal:
-                                    getQualityProfile().height,
-
-                                max:
-                                    getQualityProfile().height
-                            },
-
-                            frameRate: {
-                                ideal:
-                                    getQualityProfile().fps,
-
-                                max:
-                                    getQualityProfile().fps
-                            }
-
-                        },
+                        video:
+                            true,
 
                         audio:
                             true
 
                     });
+
+
+            console.log(
+                "[ACTIVITY] Captura autorizada",
+                {
+                    video:
+                        localStream
+                            .getVideoTracks()
+                            .length,
+
+                    audio:
+                        localStream
+                            .getAudioTracks()
+                            .length
+                }
+            );
 
 
             /* STREAM QUALITY V1 */
