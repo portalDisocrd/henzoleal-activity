@@ -247,6 +247,66 @@ async function start() {
 
 start();
 
+
+// =====================================================
+// ACTIVITY REENTRY V2
+// Volta da sala sem reiniciar o Discord SDK
+// =====================================================
+
+window.addEventListener(
+    "pageshow",
+    event => {
+
+        const returning =
+            sessionStorage.getItem(
+                "hl_activity_returning"
+            );
+
+        if (
+            returning !== "1"
+        ) {
+            return;
+        }
+
+
+        sessionStorage.removeItem(
+            "hl_activity_returning"
+        );
+
+
+        const savedProfile =
+            sessionStorage.getItem(
+                "leal_profile"
+            );
+
+
+        if (!savedProfile) {
+            return;
+        }
+
+
+        createButton.disabled =
+            false;
+
+        joinButton.disabled =
+            false;
+
+
+        statusElement.textContent =
+            "Pronto para criar ou entrar em uma sala.";
+
+
+        connectionElement.textContent =
+            "🟢 Discord conectado";
+
+
+        console.log(
+            "[ACTIVITY] Sessao restaurada pelo historico"
+        );
+
+    }
+);
+
 /* =====================================================
    SALAS
 ===================================================== */

@@ -7258,6 +7258,24 @@ document.getElementById(
 
         cleanupRoomBeforeExit();
 
+        sessionStorage.setItem(
+            "hl_activity_returning",
+            "1"
+        );
+
+
+        if (
+            window.history.length > 1
+        ) {
+
+            window.history.back();
+
+            return;
+
+        }
+
+
+        // Fallback caso o historico nao esteja disponivel
         const activityParams =
             new URLSearchParams(
                 window.location.search
