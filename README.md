@@ -1,6 +1,27 @@
-# HL Activity V6
+# HL Activity V7
 
 HL Activity é um aplicativo de salas sociais em tempo real com transmissão de tela, chat, voz WebRTC, Soundboard HL e integração com Discord Activity.
+
+
+## V7 — Redesign 10/10 Desktop + Mobile
+
+A V7 é uma revisão visual estrutural em cima da V6 segura. Ela não troca o fundo nem recria o produto: corrige densidade, hierarquia, controles nativos, Soundboard mobile e integração da toolbar.
+
+Principais mudanças:
+
+- configurações administrativas do Soundboard saem da tela principal e ficam em **⚙ Configurar** apenas para host;
+- `+ Adicionar som` vira ação clara e consistente, sem botão branco nativo;
+- busca, chips, selects, slider e botões recebem aparência controlada no desktop/mobile;
+- volume mostra porcentagem e usa slider estilizado;
+- Soundboard mobile vira uma coluna com cards compactos e ações legíveis;
+- bottom sheet ocupa a largura correta no celular e mantém scroll interno;
+- Voz recebe hierarquia, controles e seletores refinados;
+- Chat recebe compose e empty state mais limpos;
+- palco vazio fica compacto e mantém Compartilhar como CTA;
+- toolbar desktop é agrupada; no mobile ficam apenas ações prioritárias;
+- configuração/convite/qualidade deixam de disputar espaço no celular;
+- nenhum fundo gamer/imagem decorativa foi adicionado;
+- segurança, host token, rate limits e upload validado da V6 foram preservados.
 
 ## V6 — Soundboard Pro + Segurança
 

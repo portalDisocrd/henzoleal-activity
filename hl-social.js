@@ -163,35 +163,45 @@
         </div>
 
         <div class="hl-social-view hl-sound-view" data-view="sounds" role="tabpanel">
-          <div class="hl-section-heading">
-            <div>
-              <div class="hl-section-title">Soundboard HL</div>
-              <div class="hl-section-subtitle">Ouça aqui ou compartilhe com a sala.</div>
+          <div class="hl-sound-hero">
+            <div class="hl-sound-hero-copy">
+              <span class="hl-sound-kicker">SOUNDBOARD HL</span>
+              <div class="hl-section-title">Sons da sala</div>
+              <div class="hl-section-subtitle">Ouça primeiro ou compartilhe com todo mundo.</div>
             </div>
-            <button class="hl-sound-add" id="hlSoundAdd" type="button" disabled><span aria-hidden="true">＋</span><span>Adicionar som</span></button>
+            <div class="hl-sound-head-actions">
+              <button class="hl-sound-config" id="hlSoundConfig" type="button" hidden aria-expanded="false" aria-controls="hlSoundPolicyWrap"><span aria-hidden="true">⚙</span><span>Configurar</span></button>
+              <button class="hl-sound-add" id="hlSoundAdd" type="button" disabled><span aria-hidden="true">＋</span><span>Adicionar som</span></button>
+            </div>
           </div>
 
-          <div class="hl-sound-policy" id="hlSoundPolicyWrap" hidden>
-            <label><span>Quem pode tocar</span>
-              <select id="hlSoundPolicy" aria-label="Permissão do soundboard">
-                <option value="everyone">Todos podem usar</option>
-                <option value="moderators">Host e moderadores</option>
-                <option value="hostOnly">Somente host</option>
-                <option value="disabled">Desativado</option>
-              </select>
-            </label>
-            <label><span>Quem pode adicionar</span>
-              <select id="hlSoundUploadPolicy" aria-label="Permissão para adicionar sons">
-                <option value="everyone">Todos podem adicionar</option>
-                <option value="moderators">Host e moderadores</option>
-                <option value="hostOnly">Somente host</option>
-                <option value="disabled">Uploads desativados</option>
-              </select>
-            </label>
+          <div class="hl-sound-policy hl-sound-settings-panel" id="hlSoundPolicyWrap" hidden>
+            <div class="hl-sound-settings-head">
+              <div><strong>Configurações do Soundboard</strong><small>Defina quem pode tocar e adicionar sons nesta sala.</small></div>
+              <button type="button" id="hlSoundSettingsClose" aria-label="Fechar configurações">×</button>
+            </div>
+            <div class="hl-sound-settings-grid">
+              <label><span>Quem pode tocar</span>
+                <select id="hlSoundPolicy" aria-label="Permissão do soundboard">
+                  <option value="everyone">Todos podem usar</option>
+                  <option value="moderators">Host e moderadores</option>
+                  <option value="hostOnly">Somente host</option>
+                  <option value="disabled">Desativado</option>
+                </select>
+              </label>
+              <label><span>Quem pode adicionar</span>
+                <select id="hlSoundUploadPolicy" aria-label="Permissão para adicionar sons">
+                  <option value="everyone">Todos podem adicionar</option>
+                  <option value="moderators">Host e moderadores</option>
+                  <option value="hostOnly">Somente host</option>
+                  <option value="disabled">Uploads desativados</option>
+                </select>
+              </label>
+            </div>
           </div>
 
           <div class="hl-sound-library-tools">
-            <label class="hl-sound-search"><span aria-hidden="true">⌕</span><input id="hlSoundSearch" type="search" maxlength="40" placeholder="Buscar som..." autocomplete="off" aria-label="Buscar sons"></label>
+            <label class="hl-sound-search"><span aria-hidden="true">⌕</span><input id="hlSoundSearch" type="search" maxlength="40" placeholder="Buscar som" autocomplete="off" aria-label="Buscar sons"></label>
             <div class="hl-sound-filters" id="hlSoundFilters" aria-label="Categorias de sons">
               <button type="button" data-sound-filter="all" class="is-active">Todos</button>
               <button type="button" data-sound-filter="favorites">★ Favoritos</button>
@@ -202,13 +212,14 @@
 
           <div class="hl-sound-toolbar">
             <label class="hl-sound-volume-wrap">
-              <span>Volume</span>
+              <span class="hl-sound-volume-label">Volume</span>
               <input id="hlSoundVolume" type="range" min="0" max="1" step="0.05" aria-label="Volume dos sons">
+              <output id="hlSoundVolumeValue">72%</output>
             </label>
-            <button class="hl-sound-stop" id="hlSoundStop" type="button">Parar</button>
+            <button class="hl-sound-stop" id="hlSoundStop" type="button"><span aria-hidden="true">■</span><span>Parar</span></button>
           </div>
           <div class="hl-sound-grid" id="hlSoundGrid"></div>
-          <p class="hl-sound-help"><strong>Ouvir aqui</strong> é privado. <strong>Tocar na sala</strong> envia o efeito aos participantes autorizados. Sons adicionados ficam disponíveis apenas enquanto esta sala estiver ativa.</p>
+          <p class="hl-sound-help"><strong>Ouvir aqui</strong> é privado. <strong>Na sala</strong> compartilha com os participantes autorizados. Sons personalizados duram enquanto a sala estiver ativa.</p>
         </div>
       </section>
 
@@ -695,7 +706,9 @@
     }
 
     function updateHostUI() {
-        soundPolicyWrap.hidden = state.role !== "host";
+        const isHost = state.role === "host";
+        if (soundConfig) soundConfig.hidden = !isHost;
+        if (soundPolicyWrap && !isHost) soundPolicyWrap.hidden = true;
         soundPolicy.value = state.soundPolicy;
         if (soundUploadPolicy) soundUploadPolicy.value = state.soundUploadPolicy;
         const canUpload = canUploadSoundLocally();
@@ -704,6 +717,16 @@
             soundAdd.title = canUpload ? "Adicionar som personalizado" : "O host restringiu novos sons";
         }
     }
+
+    function setSoundSettings(open) {
+        if (!soundPolicyWrap || state.role !== "host") return;
+        soundPolicyWrap.hidden = !open;
+        soundConfig?.classList.toggle("is-active", open);
+        soundConfig?.setAttribute("aria-expanded", open ? "true" : "false");
+    }
+
+    soundConfig?.addEventListener("click", () => setSoundSettings(soundPolicyWrap?.hidden));
+    soundSettingsClose?.addEventListener("click", () => setSoundSettings(false));
 
     soundPolicy.addEventListener("change", () => {
         socket.emit("moderation:sound-policy", { policy: soundPolicy.value }, result => {
@@ -1072,7 +1095,16 @@
         if (!items.length) {
             const empty = document.createElement("div");
             empty.className = "hl-sound-empty";
-            empty.innerHTML = '<span aria-hidden="true">♫</span><strong>Nenhum som por aqui.</strong><small>Tente outra busca ou adicione um som curto.</small>';
+            const icon = document.createElement("span"); icon.setAttribute("aria-hidden", "true"); icon.textContent = "♫";
+            const title = document.createElement("strong"); title.textContent = state.soundSearch ? "Nenhum som encontrado." : "Nenhum som por aqui.";
+            const desc = document.createElement("small"); desc.textContent = state.soundSearch ? "Tente outro termo ou limpe a busca." : "Adicione um som curto para começar.";
+            empty.append(icon, title, desc);
+            if (canUploadSoundLocally() && !state.soundSearch) {
+                const cta = document.createElement("button");
+                cta.type = "button"; cta.className = "hl-sound-empty-cta"; cta.textContent = "＋ Adicionar primeiro som";
+                cta.addEventListener("click", openSoundModal);
+                empty.appendChild(cta);
+            }
             grid.appendChild(empty);
             return;
         }
@@ -1125,11 +1157,19 @@
         }
     }
 
+    const soundVolumeValue = document.getElementById("hlSoundVolumeValue");
+    function syncSoundVolumeUI() {
+        const value = Math.round(Math.min(1, Math.max(0, state.soundVolume)) * 100);
+        if (soundVolumeValue) soundVolumeValue.textContent = `${value}%`;
+        if (soundVolume) soundVolume.style.setProperty("--hl-range-value", `${value}%`);
+    }
     soundVolume.value = String(Math.min(1, Math.max(0, state.soundVolume)));
+    syncSoundVolumeUI();
     soundVolume.addEventListener("input", () => {
         state.soundVolume = Number(soundVolume.value);
         localStorage.setItem("hl_sound_volume", String(state.soundVolume));
         state.activeSounds.forEach(audio => { audio.volume = state.soundVolume; });
+        syncSoundVolumeUI();
     });
 
     soundStop.addEventListener("click", () => {
