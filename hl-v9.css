@@ -63,3 +63,156 @@
 @media (prefers-reduced-motion: reduce) {
   .hl-floating-reaction.hl-v9-reaction { animation-duration:.8s !important; }
 }
+
+/* ======================================================================
+   V9.1 — ENQUADRAMENTO + CONFIGURAÇÕES FUNCIONAIS
+====================================================================== */
+
+/* Empty state: monitor always fits inside its frame. */
+.stage-empty .icon {
+  display: grid !important;
+  place-items: center !important;
+  overflow: visible !important;
+  padding: 0 !important;
+}
+.stage-empty .icon .hl-monitor {
+  width: 50px !important;
+  height: 32px !important;
+  margin: 0 !important;
+  border-width: 2px !important;
+  border-radius: 5px !important;
+  animation: hlV91MonitorFloat 3s ease-in-out infinite !important;
+}
+.stage-empty .icon .hl-monitor::before {
+  bottom: -9px !important;
+  width: 5px !important;
+  height: 9px !important;
+}
+.stage-empty .icon .hl-monitor::after {
+  bottom: -12px !important;
+  width: 22px !important;
+  height: 3px !important;
+}
+@keyframes hlV91MonitorFloat {
+  0%,100% { transform: translateY(0); filter: brightness(1); }
+  50% { transform: translateY(-2px); filter: brightness(1.08); }
+}
+
+/* One connection indicator only: CSS dot + clean text. */
+#status {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 7px !important;
+  white-space: nowrap !important;
+  overflow: visible !important;
+}
+#status::before {
+  margin-right: 0 !important;
+  flex: 0 0 7px !important;
+}
+
+/* Footer/dock should never crop the final action. */
+footer,
+.hl-toolbar-group,
+.hl-toolbar-social,
+.hl-social-dock {
+  overflow: visible !important;
+}
+.hl-toolbar-social { min-width: max-content !important; }
+.hl-social-dock { flex-wrap: nowrap !important; }
+
+/* Dedicated Settings button. */
+#hlSettingsQuick > span { font-size: 17px; line-height: 1; }
+
+.hl-settings-panel {
+  position: fixed;
+  right: 18px;
+  bottom: 86px;
+  z-index: 1320;
+  width: min(340px, calc(100vw - 32px));
+  max-height: min(620px, calc(100dvh - 110px));
+  overflow: auto;
+  border: 1px solid rgba(93,119,190,.24);
+  border-radius: 20px;
+  background: rgba(8,13,23,.985);
+  color: #dce5f7;
+  box-shadow: 0 24px 80px rgba(0,0,0,.48);
+  backdrop-filter: blur(20px);
+}
+.hl-settings-panel[hidden] { display:none !important; }
+.hl-settings-head {
+  min-height: 64px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  padding: 12px 14px;
+  border-bottom:1px solid rgba(255,255,255,.055);
+}
+.hl-settings-head > div { display:flex; flex-direction:column; gap:4px; }
+.hl-settings-head span { color:#7484a3; font:800 8px/1 system-ui,sans-serif; letter-spacing:.16em; }
+.hl-settings-head strong { color:#f4f7ff; font:800 16px/1.1 system-ui,sans-serif; }
+.hl-settings-head button {
+  width:34px; height:34px; border:0; border-radius:10px; background:transparent; color:#91a0ba; cursor:pointer; font-size:20px;
+}
+.hl-settings-head button:hover { background:rgba(255,255,255,.05); color:#fff; }
+.hl-settings-body { padding:14px; display:grid; gap:12px; }
+.hl-settings-field { display:grid; gap:7px; }
+.hl-settings-field > span { color:#7f8da8; font:800 9px/1 system-ui,sans-serif; text-transform:uppercase; letter-spacing:.08em; }
+.hl-settings-field select {
+  appearance:none; -webkit-appearance:none; min-height:44px; width:100%; padding:0 36px 0 12px;
+  border:1px solid rgba(91,112,170,.24); border-radius:12px; background:#0d1523; color:#edf2ff; cursor:pointer;
+}
+.hl-settings-row,
+.hl-settings-toggle,
+.hl-settings-status {
+  min-height:54px; display:flex; align-items:center; gap:11px; padding:10px 12px;
+  border:1px solid rgba(91,112,170,.16); border-radius:13px; background:rgba(255,255,255,.018); color:#dce5f7;
+}
+.hl-settings-row { width:100%; cursor:pointer; text-align:left; }
+.hl-settings-row:hover { border-color:rgba(80,112,255,.28); background:rgba(67,93,195,.08); }
+.hl-settings-row > span { width:28px; text-align:center; font-size:16px; }
+.hl-settings-row > div,
+.hl-settings-status > div { min-width:0; flex:1; display:flex; flex-direction:column; gap:3px; }
+.hl-settings-row strong,
+.hl-settings-toggle strong,
+.hl-settings-status strong { color:#e8eefc; font:750 11px/1.2 system-ui,sans-serif; }
+.hl-settings-row small,
+.hl-settings-toggle small,
+.hl-settings-status small { color:#71809a; font:500 9px/1.3 system-ui,sans-serif; }
+.hl-settings-row > b { color:#5f7cff; font-size:20px; }
+.hl-settings-toggle { justify-content:space-between; cursor:pointer; }
+.hl-settings-toggle > span { display:flex; flex-direction:column; gap:3px; }
+.hl-settings-toggle input { width:38px; height:22px; accent-color:#5272ff; }
+.hl-settings-status-dot { width:8px; height:8px; border-radius:50%; background:#48d39a; box-shadow:0 0 12px rgba(72,211,154,.55); flex:0 0 auto; }
+
+body.hl-reduce-motion *,
+body.hl-reduce-motion *::before,
+body.hl-reduce-motion *::after {
+  animation-duration: .001ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: .001ms !important;
+  scroll-behavior: auto !important;
+}
+
+@media (max-width: 760px) {
+  .hl-social-action { width:39px !important; min-width:39px !important; height:39px !important; }
+  .hl-social-dock { gap:2px !important; padding:0 2px !important; }
+}
+
+@media (max-width: 650px) {
+  .stage-empty { width:min(360px, calc(100% - 24px)) !important; padding:20px 18px !important; }
+  .stage-empty .icon { width:64px !important; height:64px !important; margin-bottom:12px !important; }
+  .hl-settings-panel {
+    left:8px; right:8px; bottom:calc(var(--hl-footer-h) + 8px); width:auto; max-height:72dvh;
+    border-radius:18px;
+  }
+  .hl-toolbar-social { min-width:0 !important; width:100% !important; }
+  .hl-social-dock { width:100% !important; justify-content:space-between !important; }
+  .hl-social-action { width:38px !important; min-width:38px !important; height:38px !important; font-size:15px !important; }
+}
+
+@media (max-width: 380px) {
+  .hl-social-action { width:35px !important; min-width:35px !important; height:35px !important; }
+  .hl-social-dock { gap:1px !important; }
+}

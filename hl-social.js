@@ -82,12 +82,27 @@
         <button type="button" data-more-action="invite"><span>🔗</span><b>Copiar convite</b></button>
       </div>
 
+      <section class="hl-settings-panel" id="hlSettingsPanel" hidden aria-label="Configurações do HL Activity">
+        <div class="hl-settings-head">
+          <div><span>HL ACTIVITY</span><strong>Configurações</strong></div>
+          <button type="button" id="hlSettingsClose" aria-label="Fechar configurações">×</button>
+        </div>
+        <div class="hl-settings-body">
+          <label class="hl-settings-field"><span>Modo da sala</span><select id="hlSettingsMode"><option value="normal">Normal</option><option value="focus">Foco</option><option value="cinema">Cinema</option><option value="social">Social</option></select></label>
+          <label class="hl-settings-field"><span>Qualidade</span><select id="hlSettingsQuality"><option value="auto">Auto</option><option value="720p30">720p • 30 FPS</option><option value="720p60">720p • 60 FPS</option><option value="1080p30">1080p • 30 FPS</option><option value="1080p60">1080p • 60 FPS</option></select></label>
+          <button type="button" class="hl-settings-row" id="hlSettingsAudio"><span>🎙</span><div><strong>Áudio e voz</strong><small>Microfone, saída e push-to-talk</small></div><b>›</b></button>
+          <label class="hl-settings-toggle"><span><strong>Reduzir animações</strong><small>Interface mais leve</small></span><input id="hlSettingsMotion" type="checkbox"></label>
+          <div class="hl-settings-status"><span class="hl-settings-status-dot"></span><div><strong id="hlSettingsStatusText">Conectando...</strong><small>Estado da conexão em tempo real</small></div></div>
+        </div>
+      </section>
+
       <div class="hl-social-dock" aria-label="Controles sociais HL">
         <button class="hl-social-action" data-open="chat" title="Chat" aria-label="Abrir chat"><span aria-hidden="true">💬</span></button>
         <button class="hl-social-action" id="hlVoiceQuick" data-open="voice" title="Voz" aria-label="Abrir voz"><span aria-hidden="true">🎙</span></button>
         <button class="hl-social-action" data-open="sounds" title="Sons" aria-label="Abrir soundboard"><span aria-hidden="true">♫</span></button>
         <button class="hl-social-action" id="hlReactionQuick" title="Reações" aria-label="Abrir reações"><span aria-hidden="true">🔥</span></button>
-        <button class="hl-social-action" id="hlModeQuick" title="Modo da sala" aria-label="Alternar modo da sala"><span aria-hidden="true">•••</span></button>
+        <button class="hl-social-action" id="hlSettingsQuick" title="Configurações" aria-label="Abrir configurações"><span aria-hidden="true">⚙</span></button>
+        <button class="hl-social-action" id="hlModeQuick" title="Mais ações" aria-label="Abrir mais ações"><span aria-hidden="true">•••</span></button>
       </div>
 
       <section class="hl-social-panel" id="hlSocialPanel" aria-label="Painel social">
@@ -1480,6 +1495,29 @@
     const reactionPicker = document.getElementById("hlReactionPicker");
     const moreQuick = document.getElementById("hlModeQuick");
     const moreMenu = document.getElementById("hlMoreMenu");
+    const settingsQuick = document.getElementById("hlSettingsQuick");
+    const settingsPanel = document.getElementById("hlSettingsPanel");
+    const settingsClose = document.getElementById("hlSettingsClose");
+    const settingsMode = document.getElementById("hlSettingsMode");
+    const settingsQuality = document.getElementById("hlSettingsQuality");
+    const settingsMotion = document.getElementById("hlSettingsMotion");
+    const settingsAudio = document.getElementById("hlSettingsAudio");
+    const settingsStatusText = document.getElementById("hlSettingsStatusText");
+
+    const applyRoomMode = mode => {
+        if (!modes.includes(mode)) mode = "normal";
+        document.body.classList.remove(...modes.map(m => `hl-mode-${m}`));
+        if (mode !== "normal") document.body.classList.add(`hl-mode-${mode}`);
+        state.modeIndex = Math.max(0, modes.indexOf(mode));
+        if (settingsMode) settingsMode.value = mode;
+    };
+
+    const closeSettingsPanel = () => {
+        if (!settingsPanel) return;
+        settingsPanel.hidden = true;
+        settingsQuick?.classList.remove("is-active");
+        settingsQuick?.setAttribute("aria-expanded", "false");
+    };
 
     const closeReactionPicker = () => {
         if (!reactionPicker) return;
@@ -1509,6 +1547,7 @@
     reactionQuick?.addEventListener("click", event => {
         event.stopPropagation();
         closeMoreMenu();
+        closeSettingsPanel();
         state.reactionPickerOpen = !state.reactionPickerOpen;
         reactionPicker.hidden = !state.reactionPickerOpen;
         reactionQuick.classList.toggle("is-active", state.reactionPickerOpen);
@@ -1528,6 +1567,7 @@
     moreQuick?.addEventListener("click", event => {
         event.stopPropagation();
         closeReactionPicker();
+        closeSettingsPanel();
         const open = moreMenu?.hidden !== false;
         if (moreMenu) moreMenu.hidden = !open;
         moreQuick.classList.toggle("is-active", open);
@@ -1538,9 +1578,7 @@
         event.stopPropagation();
         const action = button.dataset.moreAction;
         if (["normal", "focus", "cinema", "social"].includes(action)) {
-            document.body.classList.remove(...modes.map(m => `hl-mode-${m}`));
-            if (action !== "normal") document.body.classList.add(`hl-mode-${action}`);
-            state.modeIndex = Math.max(0, modes.indexOf(action));
+            applyRoomMode(action);
             toast(`Modo ${action}.`);
         } else if (action === "invite") {
             document.getElementById("copy")?.click();
@@ -1548,13 +1586,45 @@
         closeMoreMenu();
     }));
 
+    settingsQuick?.setAttribute("aria-expanded", "false");
+    settingsQuick?.addEventListener("click", event => {
+        event.stopPropagation();
+        closeReactionPicker();
+        closeMoreMenu();
+        const open = settingsPanel?.hidden !== false;
+        if (settingsPanel) settingsPanel.hidden = !open;
+        settingsQuick.classList.toggle("is-active", open);
+        settingsQuick.setAttribute("aria-expanded", open ? "true" : "false");
+        const quality = document.getElementById("qualitySelect");
+        if (settingsQuality && quality) settingsQuality.value = quality.value;
+        if (settingsMode) settingsMode.value = modes[state.modeIndex] || "normal";
+        if (settingsMotion) settingsMotion.checked = document.body.classList.contains("hl-reduce-motion");
+        if (settingsStatusText && connectionPill) settingsStatusText.textContent = connectionPill.textContent || "Conectando...";
+    });
+    settingsClose?.addEventListener("click", closeSettingsPanel);
+    settingsMode?.addEventListener("change", () => { applyRoomMode(settingsMode.value); toast(`Modo ${settingsMode.value}.`); });
+    settingsQuality?.addEventListener("change", () => {
+        const quality = document.getElementById("qualitySelect");
+        if (!quality) return;
+        quality.value = settingsQuality.value;
+        quality.dispatchEvent(new Event("change", { bubbles: true }));
+        toast(`Qualidade: ${settingsQuality.options[settingsQuality.selectedIndex]?.text || settingsQuality.value}`);
+    });
+    settingsMotion?.addEventListener("change", () => {
+        document.body.classList.toggle("hl-reduce-motion", settingsMotion.checked);
+        localStorage.setItem("hl_reduce_motion", settingsMotion.checked ? "1" : "0");
+    });
+    settingsAudio?.addEventListener("click", () => { closeSettingsPanel(); setTab("voice"); });
+    if (localStorage.getItem("hl_reduce_motion") === "1") document.body.classList.add("hl-reduce-motion");
+
     document.addEventListener("click", event => {
         if (state.reactionPickerOpen && !reactionPicker?.contains(event.target) && event.target !== reactionQuick) closeReactionPicker();
         if (!moreMenu?.hidden && !moreMenu.contains(event.target) && event.target !== moreQuick) closeMoreMenu();
+        if (!settingsPanel?.hidden && !settingsPanel.contains(event.target) && event.target !== settingsQuick) closeSettingsPanel();
     });
 
     document.addEventListener("keydown", event => {
-        if (event.key === "Escape") { closeReactionPicker(); closeMoreMenu(); }
+        if (event.key === "Escape") { closeReactionPicker(); closeMoreMenu(); closeSettingsPanel(); }
     });
 
     socket.on("reaction:show", data => {
@@ -1563,9 +1633,9 @@
     });
 
     // Connection / reconnect --------------------------------
-    socket.on("connect",()=>{ if (connectionPill) { connectionPill.textContent="Conectado"; connectionPill.dataset.state="online"; } if(state.voiceJoined && state.voiceStream){ state.voicePeers.forEach((_,id)=>closeVoicePeer(id)); socket.emit("voice:join",{},async result=>{ for(const peer of result?.peers||[]) await createVoiceOffer(peer.id); }); } });
-    socket.on("disconnect",()=>{ if (connectionPill) { connectionPill.textContent="Reconectando…"; connectionPill.dataset.state="reconnecting"; } state.bootstrapped=false; state.voicePeers.forEach((_,id)=>closeVoicePeer(id)); });
-    socket.on("connect_error",()=> { if (connectionPill) { connectionPill.textContent="Sem conexão"; connectionPill.dataset.state="offline"; } });
+    socket.on("connect",()=>{ if (connectionPill) { connectionPill.textContent="Conectado"; connectionPill.dataset.state="online"; } if (settingsStatusText) settingsStatusText.textContent="Conectado"; if(state.voiceJoined && state.voiceStream){ state.voicePeers.forEach((_,id)=>closeVoicePeer(id)); socket.emit("voice:join",{},async result=>{ for(const peer of result?.peers||[]) await createVoiceOffer(peer.id); }); } });
+    socket.on("disconnect",()=>{ if (connectionPill) { connectionPill.textContent="Reconectando…"; connectionPill.dataset.state="reconnecting"; } if (settingsStatusText) settingsStatusText.textContent="Reconectando…"; state.bootstrapped=false; state.voicePeers.forEach((_,id)=>closeVoicePeer(id)); });
+    socket.on("connect_error",()=> { if (connectionPill) { connectionPill.textContent="Sem conexão"; connectionPill.dataset.state="offline"; } if (settingsStatusText) settingsStatusText.textContent="Sem conexão"; });
     socket.on("moderation:kicked",data=>{ toast(data?.message||"Você foi removido."); leaveVoice(false); setTimeout(()=>location.href="/",800); });
 
     window.addEventListener("beforeunload",()=>{ try{ if(state.voiceJoined) socket.emit("voice:leave"); }catch{} state.voiceStream?.getTracks().forEach(t=>t.stop()); state.analysers.forEach(a=>a.context?.close().catch(()=>{})); });

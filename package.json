@@ -1,7 +1,7 @@
 {
   "name": "hl-activity",
-  "version": "7.0.0",
-  "description": "HL Activity V7 - redesign 10/10 desktop/mobile com Soundboard Pro, voz, chat e hardening de segurança.",
+  "version": "9.1.0",
+  "description": "HL Activity V9.1 - enquadramento corrigido, configurações funcionais e toolbar refinada.",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",

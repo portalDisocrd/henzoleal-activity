@@ -1874,8 +1874,8 @@ socket.on(
 
         statusElement.textContent =
             wasReconnecting
-                ? "🟡 Reconectando à sala..."
-                : "🟢 Conectado";
+                ? "Reconectando à sala..."
+                : "Conectado";
 
 
         // O Socket.IO recebe um novo socket.id
@@ -1909,8 +1909,8 @@ socket.on(
 
                     statusElement.textContent =
                         wasReconnecting
-                            ? "🟢 Reconectado"
-                            : "🟢 Conectado";
+                            ? "Reconectado"
+                            : "Conectado";
 
                 }
 
@@ -1943,7 +1943,7 @@ socket.on(
 
 
         statusElement.textContent =
-            "🟠 Conexão perdida. Reconectando...";
+            "Conexão perdida. Reconectando...";
 
 
         resetPeersForReconnect();
@@ -1976,7 +1976,7 @@ socket.on(
 
 
         statusElement.textContent =
-            "🔴 Falha de conexão. Tentando novamente...";
+            "Falha de conexão. Tentando novamente...";
 
 
         console.warn(
@@ -1999,7 +1999,7 @@ window.addEventListener(
         ) {
 
             statusElement.textContent =
-                "🟡 Internet voltou. Reconectando...";
+                "Internet voltou. Reconectando...";
 
 
             try {
@@ -2026,7 +2026,7 @@ window.addEventListener(
 
 
         statusElement.textContent =
-            "🔴 Sem internet • reconexão automática ativa";
+            "Sem internet • reconexão automática ativa";
 
     }
 );
