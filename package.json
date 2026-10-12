@@ -1,7 +1,7 @@
 {
   "name": "hl-activity",
-  "version": "9.1.0",
-  "description": "HL Activity V9.1 - enquadramento corrigido, configurações funcionais e toolbar refinada.",
+  "version": "9.2.0",
+  "description": "HL Activity V9.2 - controle central confiável, camadas corrigidas e auditoria visual.",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",

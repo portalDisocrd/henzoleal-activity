@@ -75,6 +75,8 @@
       </div>
 
       <div class="hl-more-menu" id="hlMoreMenu" hidden aria-label="Mais ações">
+        <button type="button" data-more-action="settings"><span>⚙</span><b>Configurações</b></button>
+        <div class="hl-more-separator" aria-hidden="true"></div>
         <button type="button" data-more-action="normal"><span>◉</span><b>Modo normal</b></button>
         <button type="button" data-more-action="focus"><span>⌖</span><b>Modo foco</b></button>
         <button type="button" data-more-action="cinema"><span>▣</span><b>Modo cinema</b></button>
@@ -279,6 +281,20 @@
       </div>`;
 
     document.body.insertAdjacentHTML("beforeend", html);
+
+    // Portal único para popovers. Mantém Configurações/Mais/Reações fora
+    // de qualquer stacking context do palco, footer ou painel social.
+    let overlayRoot = document.getElementById("hlUiOverlays");
+    if (!overlayRoot) {
+        overlayRoot = document.createElement("div");
+        overlayRoot.id = "hlUiOverlays";
+        overlayRoot.className = "hl-ui-overlays";
+        document.body.appendChild(overlayRoot);
+    }
+    ["hlReactionPicker", "hlMoreMenu", "hlSettingsPanel"].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) overlayRoot.appendChild(el);
+    });
 
     const panel = document.getElementById("hlSocialPanel");
     const dock = document.querySelector(".hl-social-dock");
@@ -1544,13 +1560,63 @@
         setTimeout(() => el.remove(), 1650);
     }
 
-    reactionQuick?.addEventListener("click", event => {
-        event.stopPropagation();
+    const openSettingsPanel = () => {
+        closeReactionPicker();
+        closeMoreMenu();
+        if (!settingsPanel) return;
+        settingsPanel.hidden = false;
+        settingsQuick?.classList.add("is-active");
+        settingsQuick?.setAttribute("aria-expanded", "true");
+        const quality = document.getElementById("qualitySelect");
+        if (settingsQuality && quality) settingsQuality.value = quality.value;
+        if (settingsMode) settingsMode.value = modes[state.modeIndex] || "normal";
+        if (settingsMotion) settingsMotion.checked = document.body.classList.contains("hl-reduce-motion");
+        if (settingsStatusText && connectionPill) settingsStatusText.textContent = connectionPill.textContent || "Conectando...";
+    };
+
+    const toggleSettingsPanel = () => {
+        if (!settingsPanel) return;
+        if (settingsPanel.hidden) openSettingsPanel();
+        else closeSettingsPanel();
+    };
+
+    const toggleReactionPicker = () => {
         closeMoreMenu();
         closeSettingsPanel();
-        state.reactionPickerOpen = !state.reactionPickerOpen;
+        if (!reactionPicker) return;
+        state.reactionPickerOpen = reactionPicker.hidden;
         reactionPicker.hidden = !state.reactionPickerOpen;
-        reactionQuick.classList.toggle("is-active", state.reactionPickerOpen);
+        reactionQuick?.classList.toggle("is-active", state.reactionPickerOpen);
+    };
+
+    const toggleMoreMenu = () => {
+        closeReactionPicker();
+        closeSettingsPanel();
+        if (!moreMenu) return;
+        const open = moreMenu.hidden;
+        moreMenu.hidden = !open;
+        moreQuick?.classList.toggle("is-active", open);
+        moreQuick?.setAttribute("aria-expanded", open ? "true" : "false");
+    };
+
+    // Um único controlador para toda a dock. Ele continua funcionando mesmo
+    // depois que a dock é movida/reorganizada no footer responsivo.
+    dock?.addEventListener("click", event => {
+        const button = event.target.closest("button");
+        if (!button || !dock.contains(button)) return;
+        if (button === reactionQuick) {
+            event.preventDefault();
+            event.stopPropagation();
+            toggleReactionPicker();
+        } else if (button === moreQuick) {
+            event.preventDefault();
+            event.stopPropagation();
+            toggleMoreMenu();
+        } else if (button === settingsQuick) {
+            event.preventDefault();
+            event.stopPropagation();
+            toggleSettingsPanel();
+        }
     });
 
     reactionPicker?.querySelectorAll("[data-reaction]").forEach(button => button.addEventListener("click", event => {
@@ -1564,19 +1630,15 @@
     }));
 
     moreQuick?.setAttribute("aria-expanded", "false");
-    moreQuick?.addEventListener("click", event => {
-        event.stopPropagation();
-        closeReactionPicker();
-        closeSettingsPanel();
-        const open = moreMenu?.hidden !== false;
-        if (moreMenu) moreMenu.hidden = !open;
-        moreQuick.classList.toggle("is-active", open);
-        moreQuick.setAttribute("aria-expanded", open ? "true" : "false");
-    });
+    settingsQuick?.setAttribute("aria-expanded", "false");
 
     moreMenu?.querySelectorAll("[data-more-action]").forEach(button => button.addEventListener("click", async event => {
         event.stopPropagation();
         const action = button.dataset.moreAction;
+        if (action === "settings") {
+            openSettingsPanel();
+            return;
+        }
         if (["normal", "focus", "cinema", "social"].includes(action)) {
             applyRoomMode(action);
             toast(`Modo ${action}.`);
@@ -1585,22 +1647,6 @@
         }
         closeMoreMenu();
     }));
-
-    settingsQuick?.setAttribute("aria-expanded", "false");
-    settingsQuick?.addEventListener("click", event => {
-        event.stopPropagation();
-        closeReactionPicker();
-        closeMoreMenu();
-        const open = settingsPanel?.hidden !== false;
-        if (settingsPanel) settingsPanel.hidden = !open;
-        settingsQuick.classList.toggle("is-active", open);
-        settingsQuick.setAttribute("aria-expanded", open ? "true" : "false");
-        const quality = document.getElementById("qualitySelect");
-        if (settingsQuality && quality) settingsQuality.value = quality.value;
-        if (settingsMode) settingsMode.value = modes[state.modeIndex] || "normal";
-        if (settingsMotion) settingsMotion.checked = document.body.classList.contains("hl-reduce-motion");
-        if (settingsStatusText && connectionPill) settingsStatusText.textContent = connectionPill.textContent || "Conectando...";
-    });
     settingsClose?.addEventListener("click", closeSettingsPanel);
     settingsMode?.addEventListener("change", () => { applyRoomMode(settingsMode.value); toast(`Modo ${settingsMode.value}.`); });
     settingsQuality?.addEventListener("change", () => {

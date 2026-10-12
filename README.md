@@ -1,3 +1,7 @@
+# HL Activity V9.2
+
+Base V9 com controles de Configurações/Mais reforçados, camadas responsivas corrigidas e 41 testes automatizados.
+
 # HL Activity V7
 
 HL Activity é um aplicativo de salas sociais em tempo real com transmissão de tela, chat, voz WebRTC, Soundboard HL e integração com Discord Activity.

@@ -5,14 +5,14 @@ const path = require('node:path');
 const root = path.resolve(__dirname, '..');
 const read = p => fs.readFileSync(path.join(root,p),'utf8');
 
-test('V9.1 expõe botão e painel de configurações funcionais', () => {
+test('V9.x expõe botão e painel de configurações funcionais', () => {
   const js = read('hl-social.js');
   assert.match(js, /id="hlSettingsQuick"/);
   assert.match(js, /id="hlSettingsPanel"/);
   assert.match(js, /id="hlSettingsMode"/);
   assert.match(js, /id="hlSettingsQuality"/);
   assert.match(js, /id="hlSettingsAudio"/);
-  assert.match(js, /settingsQuick\?\.addEventListener\("click"/);
+  assert.match(js, /(?:settingsQuick\?\.addEventListener\("click"|button === settingsQuick)/);
 });
 
 test('V9.1 corrige enquadramento e evita crop da toolbar', () => {
@@ -31,10 +31,10 @@ test('V9.1 remove emoji duplicado do texto de conexão', () => {
   assert.doesNotMatch(room, /🟡 Reconectando à sala/);
 });
 
-test('V9.1 usa cache bust novo', () => {
+test('V9.x usa cache bust atual', () => {
   for (const f of ['room.html','activity-room.html']) {
     const html = read(f);
-    assert.match(html, /hl-v9\.css\?v=91/);
-    assert.match(html, /hl-social\.js\?v=91/);
+    assert.match(html, /hl-v9\.css\?v=92/);
+    assert.match(html, /hl-social\.js\?v=92/);
   }
 });

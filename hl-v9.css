@@ -216,3 +216,93 @@ body.hl-reduce-motion *::after {
   .hl-social-action { width:35px !important; min-width:35px !important; height:35px !important; }
   .hl-social-dock { gap:1px !important; }
 }
+
+/* ======================================================================
+   V9.2 — CONTROL CENTER / CAMADAS / CLIQUES CONFIÁVEIS
+====================================================================== */
+
+/* Portal dos popovers: sempre acima do app, sem bloquear a tela inteira. */
+.hl-ui-overlays {
+  position: fixed;
+  inset: 0;
+  z-index: 1700;
+  pointer-events: none;
+}
+.hl-ui-overlays > * { pointer-events: auto; }
+
+/* O footer precisa continuar tocável mesmo quando há backdrop/painel aberto. */
+footer {
+  position: relative !important;
+  z-index: 1400 !important;
+  isolation: isolate;
+}
+.hl-toolbar-social,
+.hl-social-dock {
+  position: relative !important;
+  z-index: 1410 !important;
+  pointer-events: auto !important;
+}
+.hl-social-action {
+  pointer-events: auto !important;
+  touch-action: manipulation !important;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Configurações nunca desaparecem por regras antigas de nth-child. */
+#hlSettingsQuick {
+  display: grid !important;
+}
+
+/* Mais ações / Configurações usam o portal e ficam acima do backdrop. */
+.hl-more-menu,
+.hl-settings-panel,
+.hl-reaction-picker {
+  z-index: 1720 !important;
+}
+.hl-more-separator {
+  height: 1px;
+  margin: 6px 8px;
+  background: rgba(255,255,255,.055);
+}
+
+/* Feedback tátil/visual claro para os dois controles que estavam falhando. */
+#hlSettingsQuick.is-active,
+#hlModeQuick.is-active {
+  color: #f5f7ff !important;
+  border-color: rgba(91,113,255,.34) !important;
+  background: rgba(76,96,220,.16) !important;
+  box-shadow: inset 0 0 0 1px rgba(91,113,255,.05), 0 0 18px rgba(73,92,220,.08) !important;
+}
+
+/* Painel de participantes menos "vazio" no desktop sem adicionar poluição. */
+@media (min-width: 901px) {
+  .people-panel {
+    background:
+      radial-gradient(340px 220px at 50% 10%, rgba(70,91,210,.045), transparent 70%),
+      var(--hl-surface, #0b1019) !important;
+  }
+}
+
+@media (max-width: 650px) {
+  /* 5 ações prioritárias: Chat, Voz, Reações, Configurações e Mais. */
+  .hl-social-action[data-open="sounds"] { display: none !important; }
+  #hlSettingsQuick { display: grid !important; }
+  .hl-social-dock { justify-content: space-between !important; }
+
+  .hl-more-menu {
+    left: 8px !important;
+    right: 8px !important;
+    bottom: calc(var(--hl-footer-h) + 8px) !important;
+    width: auto !important;
+    max-height: 58dvh;
+    overflow-y: auto;
+    border-radius: 18px;
+  }
+  .hl-settings-panel {
+    left: 8px !important;
+    right: 8px !important;
+    bottom: calc(var(--hl-footer-h) + 8px) !important;
+    width: auto !important;
+    max-height: 72dvh !important;
+  }
+}
