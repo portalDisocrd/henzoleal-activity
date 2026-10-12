@@ -29,7 +29,10 @@
         activeSounds: new Set(),
         soundVolume: Number(localStorage.getItem("hl_sound_volume") || 0.72),
         soundBlockedToastAt: 0,
-        unreadChat: 0
+        unreadChat: 0,
+        selectedMicId: localStorage.getItem("hl_voice_mic") || "",
+        selectedOutputId: localStorage.getItem("hl_voice_output") || "",
+        reactionPickerOpen: false
     };
 
     const modes = ["normal", "focus", "social", "cinema"];
@@ -45,54 +48,120 @@
     const html = `
       <div class="hl-toast-stack" id="hlToastStack" aria-live="polite"></div>
       <button class="hl-social-backdrop" id="hlSocialBackdrop" type="button" aria-label="Fechar painel social"></button>
-      <div class="hl-social-dock" aria-label="Controles sociais HL">
-        <button class="hl-social-action" data-open="chat" title="Chat">💬</button>
-        <button class="hl-social-action" id="hlVoiceQuick" data-open="voice" title="Voz">🎙️</button>
-        <button class="hl-social-action" data-open="sounds" title="Soundboard">🎛️</button>
-        <button class="hl-social-action" id="hlReactionQuick" title="Reação">🔥</button>
-        <button class="hl-social-action" id="hlModeQuick" title="Modo da sala">◫</button>
+
+      <div class="hl-reaction-picker" id="hlReactionPicker" aria-label="Escolher reação" hidden>
+        <button type="button" data-reaction="👍" aria-label="Curtir">👍</button>
+        <button type="button" data-reaction="😂" aria-label="Rir">😂</button>
+        <button type="button" data-reaction="❤️" aria-label="Amor">❤️</button>
+        <button type="button" data-reaction="🔥" aria-label="Fogo">🔥</button>
+        <button type="button" data-reaction="👏" aria-label="Aplausos">👏</button>
       </div>
+
+      <div class="hl-social-dock" aria-label="Controles sociais HL">
+        <button class="hl-social-action" data-open="chat" title="Chat" aria-label="Abrir chat"><span aria-hidden="true">💬</span></button>
+        <button class="hl-social-action" id="hlVoiceQuick" data-open="voice" title="Voz" aria-label="Abrir voz"><span aria-hidden="true">🎙</span></button>
+        <button class="hl-social-action" data-open="sounds" title="Sons" aria-label="Abrir soundboard"><span aria-hidden="true">♫</span></button>
+        <button class="hl-social-action" id="hlReactionQuick" title="Reações" aria-label="Abrir reações"><span aria-hidden="true">🔥</span></button>
+        <button class="hl-social-action" id="hlModeQuick" title="Modo da sala" aria-label="Alternar modo da sala"><span aria-hidden="true">•••</span></button>
+      </div>
+
       <section class="hl-social-panel" id="hlSocialPanel" aria-label="Painel social">
         <div class="hl-social-head">
-          <div class="hl-social-tabs">
-            <button class="hl-social-tab is-active" data-tab="chat">Chat</button>
-            <button class="hl-social-tab" data-tab="voice">Voz</button>
-            <button class="hl-social-tab" data-tab="sounds">Sons</button>
+          <div class="hl-social-tabs" role="tablist" aria-label="Comunicação da sala">
+            <button class="hl-social-tab is-active" data-tab="chat" role="tab" aria-selected="true"><span class="hl-tab-icon" aria-hidden="true">💬</span><span>Chat</span></button>
+            <button class="hl-social-tab" data-tab="voice" role="tab" aria-selected="false"><span class="hl-tab-icon" aria-hidden="true">🎙</span><span>Voz</span></button>
+            <button class="hl-social-tab" data-tab="sounds" role="tab" aria-selected="false"><span class="hl-tab-icon" aria-hidden="true">♫</span><span>Sons</span></button>
           </div>
-          <button class="hl-social-close" id="hlSocialClose" aria-label="Fechar">×</button>
+          <button class="hl-social-close" id="hlSocialClose" aria-label="Fechar painel">×</button>
         </div>
-        <div class="hl-social-view is-active" data-view="chat">
-          <div class="hl-chat-list" id="hlChatList"><div class="hl-chat-empty">Comece a conversa da sala.</div></div>
+
+        <div class="hl-social-view is-active" data-view="chat" role="tabpanel">
+          <div class="hl-chat-list" id="hlChatList">
+            <div class="hl-chat-empty hl-empty-state"><div class="hl-empty-icon" aria-hidden="true">💬</div><strong>Comece a conversa da sala.</strong><span>As mensagens aparecem aqui em tempo real.</span></div>
+          </div>
           <div class="hl-chat-typing" id="hlTyping"></div>
           <div class="hl-chat-compose">
-            <div class="hl-chat-context" id="hlChatContext"><span></span><button type="button">×</button></div>
+            <div class="hl-chat-context" id="hlChatContext"><span></span><button type="button" aria-label="Cancelar resposta ou edição">×</button></div>
             <div class="hl-chat-compose-row">
-              <input id="hlChatInput" class="hl-chat-input" maxlength="1000" placeholder="Mensagem para a sala" autocomplete="off">
-              <button id="hlChatSend" class="hl-chat-send">Enviar</button>
+              <input id="hlChatInput" class="hl-chat-input" maxlength="1000" placeholder="Mensagem para a sala" autocomplete="off" aria-label="Mensagem para a sala">
+              <button id="hlChatSend" class="hl-chat-send" aria-label="Enviar mensagem"><span>Enviar</span><b aria-hidden="true">➜</b></button>
             </div>
           </div>
         </div>
-        <div class="hl-social-view hl-voice-view" data-view="voice">
-          <div class="hl-section-title">Voz em tempo real</div>
-          <button class="hl-primary-button" id="hlVoiceJoin">Entrar no voz</button>
-          <div class="hl-voice-controls">
-            <button class="hl-secondary-button" id="hlVoiceMute">🔈 Microfone</button>
-            <button class="hl-secondary-button" id="hlVoiceDeaf">🎧 Ouvir</button>
-            <button class="hl-secondary-button" id="hlVoicePtt">PTT desligado</button>
-            <button class="hl-secondary-button" id="hlVoiceLeave">Sair do voz</button>
+
+        <div class="hl-social-view hl-voice-view" data-view="voice" role="tabpanel">
+          <div class="hl-section-heading">
+            <div>
+              <div class="hl-section-title">Voz em tempo real</div>
+              <div class="hl-section-subtitle">Converse sem interromper a transmissão.</div>
+            </div>
+            <div class="hl-mini-wave" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
           </div>
-          <div class="hl-section-title">Participantes no voz</div>
+
+          <button class="hl-primary-button hl-voice-join" id="hlVoiceJoin">
+            <span class="hl-primary-icon" aria-hidden="true">🎙</span>
+            <span class="hl-primary-copy"><strong>Entrar no voz</strong><small>Conectar microfone e áudio</small></span>
+            <span class="hl-primary-arrow" aria-hidden="true">→</span>
+          </button>
+
+          <div class="hl-voice-controls">
+            <button class="hl-secondary-button hl-voice-control" id="hlVoiceMute">
+              <span class="hl-control-icon" aria-hidden="true">🎙</span>
+              <span class="hl-control-copy"><strong>Microfone</strong><small id="hlVoiceMuteState">Desligado</small></span>
+              <span class="hl-control-arrow" aria-hidden="true">›</span>
+            </button>
+            <button class="hl-secondary-button hl-voice-control" id="hlVoiceDeaf">
+              <span class="hl-control-icon" aria-hidden="true">🎧</span>
+              <span class="hl-control-copy"><strong>Ouvindo</strong><small id="hlVoiceDeafState">Aguardando entrada</small></span>
+              <span class="hl-control-arrow" aria-hidden="true">›</span>
+            </button>
+            <button class="hl-secondary-button hl-voice-control" id="hlVoicePtt">
+              <span class="hl-control-icon" aria-hidden="true">◉</span>
+              <span class="hl-control-copy"><strong>Push-to-talk</strong><small id="hlVoicePttState">Desligado</small></span>
+              <span class="hl-control-arrow" aria-hidden="true">›</span>
+            </button>
+            <button class="hl-secondary-button hl-voice-control is-danger" id="hlVoiceLeave">
+              <span class="hl-control-icon" aria-hidden="true">↪</span>
+              <span class="hl-control-copy"><strong>Sair do voz</strong><small>Desconectar áudio</small></span>
+              <span class="hl-control-arrow" aria-hidden="true">›</span>
+            </button>
+          </div>
+
+          <div class="hl-device-settings" id="hlVoiceDeviceSettings">
+            <label class="hl-device-field">
+              <span>Microfone</span>
+              <select id="hlMicSelect" aria-label="Selecionar microfone"><option value="">Dispositivo padrão</option></select>
+            </label>
+            <label class="hl-device-field" id="hlOutputWrap">
+              <span>Saída de áudio</span>
+              <select id="hlOutputSelect" aria-label="Selecionar saída de áudio"><option value="">Dispositivo padrão</option></select>
+            </label>
+          </div>
+
+          <div class="hl-section-heading hl-section-heading-compact">
+            <div class="hl-section-title">Participantes no voz</div>
+            <div class="hl-voice-count" id="hlVoiceCount">0</div>
+          </div>
           <div class="hl-voice-list" id="hlVoiceList"></div>
         </div>
-        <div class="hl-social-view hl-sound-view" data-view="sounds">
-          <div class="hl-section-title">Soundboard HL</div>
+
+        <div class="hl-social-view hl-sound-view" data-view="sounds" role="tabpanel">
+          <div class="hl-section-heading">
+            <div>
+              <div class="hl-section-title">Soundboard HL</div>
+              <div class="hl-section-subtitle">Ouça aqui ou compartilhe com a sala.</div>
+            </div>
+            <div class="hl-sound-pulse" aria-hidden="true"></div>
+          </div>
           <div class="hl-sound-policy" id="hlSoundPolicyWrap" hidden>
-            <select id="hlSoundPolicy" aria-label="Permissão do soundboard">
-              <option value="everyone">Todos podem usar</option>
-              <option value="moderators">Host e moderadores</option>
-              <option value="hostOnly">Somente host</option>
-              <option value="disabled">Desativado</option>
-            </select>
+            <label><span>Quem pode tocar</span>
+              <select id="hlSoundPolicy" aria-label="Permissão do soundboard">
+                <option value="everyone">Todos podem usar</option>
+                <option value="moderators">Host e moderadores</option>
+                <option value="hostOnly">Somente host</option>
+                <option value="disabled">Desativado</option>
+              </select>
+            </label>
           </div>
           <div class="hl-sound-toolbar">
             <label class="hl-sound-volume-wrap">
@@ -102,7 +171,7 @@
             <button class="hl-sound-stop" id="hlSoundStop" type="button">Parar</button>
           </div>
           <div class="hl-sound-grid" id="hlSoundGrid"></div>
-          <p class="hl-sound-help">Ouvir aqui é privado. Tocar na sala envia o efeito para os participantes autorizados.</p>
+          <p class="hl-sound-help"><strong>Ouvir aqui</strong> é privado. <strong>Tocar na sala</strong> envia o efeito aos participantes autorizados.</p>
         </div>
       </section>`;
 
@@ -118,6 +187,32 @@
         if (inviteButton) roomFooter.insertBefore(dock, inviteButton);
         else roomFooter.appendChild(dock);
     }
+
+    // Organiza a toolbar em grupos visuais sem mudar IDs nem handlers existentes.
+    if (roomFooter && !roomFooter.querySelector(".hl-toolbar-group")) {
+        const quality = roomFooter.querySelector(".quality-control");
+        const share = document.getElementById("share");
+        const stop = document.getElementById("stop");
+        const invite = document.getElementById("copy");
+        const leave = document.getElementById("leave");
+
+        const makeGroup = className => {
+            const group = document.createElement("div");
+            group.className = `hl-toolbar-group ${className}`;
+            return group;
+        };
+
+        const socialGroup = makeGroup("hl-toolbar-social");
+        const streamGroup = makeGroup("hl-toolbar-stream");
+        const roomGroup = makeGroup("hl-toolbar-room");
+        if (dock) socialGroup.appendChild(dock);
+        if (share) streamGroup.appendChild(share);
+        if (stop) streamGroup.appendChild(stop);
+        if (quality) streamGroup.appendChild(quality);
+        if (invite) roomGroup.appendChild(invite);
+        if (leave) roomGroup.appendChild(leave);
+        roomFooter.append(socialGroup, streamGroup, roomGroup);
+    }
     const chatList = document.getElementById("hlChatList");
     const chatInput = document.getElementById("hlChatInput");
     const chatContext = document.getElementById("hlChatContext");
@@ -128,6 +223,13 @@
     const voiceDeaf = document.getElementById("hlVoiceDeaf");
     const voicePtt = document.getElementById("hlVoicePtt");
     const voiceLeave = document.getElementById("hlVoiceLeave");
+    const voiceMuteState = document.getElementById("hlVoiceMuteState");
+    const voiceDeafState = document.getElementById("hlVoiceDeafState");
+    const voicePttState = document.getElementById("hlVoicePttState");
+    const voiceCount = document.getElementById("hlVoiceCount");
+    const micSelect = document.getElementById("hlMicSelect");
+    const outputSelect = document.getElementById("hlOutputSelect");
+    const outputWrap = document.getElementById("hlOutputWrap");
     const soundPolicy = document.getElementById("hlSoundPolicy");
     const soundPolicyWrap = document.getElementById("hlSoundPolicyWrap");
     const soundVolume = document.getElementById("hlSoundVolume");
@@ -140,6 +242,16 @@
         reactions.id = "hlFloatingReactions";
         reactions.className = "hl-floating-reactions";
         stageEl.appendChild(reactions);
+    }
+
+    const stageEmpty = document.getElementById("stageEmpty");
+    if (stageEmpty && !stageEmpty.querySelector(".hl-stage-share")) {
+        const cta = document.createElement("button");
+        cta.type = "button";
+        cta.className = "hl-stage-share";
+        cta.innerHTML = '<span aria-hidden="true">▣</span><span>Compartilhar tela</span>';
+        cta.addEventListener("click", () => document.getElementById("share")?.click());
+        stageEmpty.appendChild(cta);
     }
 
     function toast(text) {
@@ -168,13 +280,19 @@
     function setTab(name) {
         panel.classList.add("is-open");
         document.body.classList.add("hl-social-panel-open");
-        document.querySelectorAll(".hl-social-tab").forEach(btn => btn.classList.toggle("is-active", btn.dataset.tab === name));
+        document.querySelectorAll(".hl-social-tab").forEach(btn => {
+            const active = btn.dataset.tab === name;
+            btn.classList.toggle("is-active", active);
+            btn.setAttribute("aria-selected", active ? "true" : "false");
+        });
         document.querySelectorAll(".hl-social-view").forEach(view => view.classList.toggle("is-active", view.dataset.view === name));
+        document.querySelectorAll(".hl-social-action[data-open]").forEach(btn => btn.classList.toggle("is-active", btn.dataset.open === name));
         if (name === "chat") {
             state.unreadChat = 0;
             updateUnread();
             setTimeout(() => chatInput.focus(), 80);
         }
+        if (name === "voice") refreshAudioDevices();
     }
 
     document.querySelectorAll("[data-open]").forEach(btn => btn.addEventListener("click", () => setTab(btn.dataset.open)));
@@ -182,9 +300,41 @@
     function closeSocialPanel() {
         panel.classList.remove("is-open");
         document.body.classList.remove("hl-social-panel-open");
+        document.querySelectorAll(".hl-social-action[data-open]").forEach(btn => btn.classList.remove("is-active"));
     }
     document.getElementById("hlSocialClose").addEventListener("click", closeSocialPanel);
     document.getElementById("hlSocialBackdrop")?.addEventListener("click", closeSocialPanel);
+
+    // Gesto simples de arrastar para baixo no mobile. Não interfere no scroll interno.
+    let sheetStartY = null;
+    let sheetDragging = false;
+    panel.addEventListener("touchstart", event => {
+        if (window.innerWidth > 650 || !panel.classList.contains("is-open")) return;
+        const touch = event.touches?.[0];
+        if (!touch) return;
+        const head = event.target.closest?.(".hl-social-head");
+        if (!head) return;
+        sheetStartY = touch.clientY;
+        sheetDragging = true;
+        panel.style.transition = "none";
+    }, { passive: true });
+    panel.addEventListener("touchmove", event => {
+        if (!sheetDragging || sheetStartY == null) return;
+        const touch = event.touches?.[0];
+        if (!touch) return;
+        const delta = Math.max(0, touch.clientY - sheetStartY);
+        panel.style.transform = `translateY(${Math.min(delta, 140)}px)`;
+    }, { passive: true });
+    panel.addEventListener("touchend", event => {
+        if (!sheetDragging || sheetStartY == null) return;
+        const touch = event.changedTouches?.[0];
+        const delta = touch ? Math.max(0, touch.clientY - sheetStartY) : 0;
+        panel.style.transition = "";
+        panel.style.transform = "";
+        sheetDragging = false;
+        sheetStartY = null;
+        if (delta > 86) closeSocialPanel();
+    }, { passive: true });
 
     function currentUser() { return state.participants.get(socket.id); }
     function currentName() { return currentUser()?.name || "Você"; }
@@ -200,8 +350,8 @@
         const ordered = Array.from(state.messages.values()).sort((a,b) => a.createdAt - b.createdAt);
         if (!ordered.length) {
             const empty = document.createElement("div");
-            empty.className = "hl-chat-empty";
-            empty.textContent = "Comece a conversa da sala.";
+            empty.className = "hl-chat-empty hl-empty-state";
+            empty.innerHTML = '<div class="hl-empty-icon" aria-hidden="true">💬</div><strong>Comece a conversa da sala.</strong><span>As mensagens aparecem aqui em tempo real.</span>';
             chatList.appendChild(empty);
             return;
         }
@@ -420,15 +570,26 @@
 
     function updateParticipantsCount() {
         const title = document.querySelector(".people-title");
-        if (!title) return;
-        let count = title.querySelector(".v4-people-count");
-        if (!count) {
-            count = document.createElement("span");
-            count.className = "v4-people-count";
-            title.appendChild(count);
+        if (title) {
+            let count = title.querySelector(".v4-people-count");
+            if (!count) {
+                count = document.createElement("span");
+                count.className = "v4-people-count";
+                title.appendChild(count);
+            }
+            count.textContent = String(state.participants.size);
+            count.title = `${state.participants.size} participante${state.participants.size === 1 ? "" : "s"}`;
         }
-        count.textContent = String(state.participants.size);
-        count.title = `${state.participants.size} participante${state.participants.size === 1 ? "" : "s"}`;
+        const info = document.querySelector(".hl-room-info");
+        if (info) {
+            let chip = info.querySelector(".hl-v5-participant-chip");
+            if (!chip) {
+                chip = document.createElement("div");
+                chip.className = "hl-v5-participant-chip";
+                info.insertBefore(chip, info.firstChild);
+            }
+            chip.innerHTML = `<span aria-hidden="true">●</span><strong>${state.participants.size}</strong><em>${state.participants.size === 1 ? "participante" : "participantes"}</em>`;
+        }
     }
 
     const roomCodeChip = document.querySelector(".hl-room-code-v2");
@@ -465,15 +626,81 @@
     // Voice -------------------------------------------------
     const voiceRtcConfig = { iceServers: [{ urls: "stun:stun.l.google.com:19302" }, { urls: "stun:stun1.l.google.com:19302" }] };
 
+    async function refreshAudioDevices() {
+        if (!navigator.mediaDevices?.enumerateDevices) return;
+        try {
+            const devices = await navigator.mediaDevices.enumerateDevices();
+            const microphones = devices.filter(device => device.kind === "audioinput");
+            const outputs = devices.filter(device => device.kind === "audiooutput");
+
+            const fill = (select, list, selected, fallback) => {
+                if (!select) return;
+                select.textContent = "";
+                const base = document.createElement("option");
+                base.value = "";
+                base.textContent = fallback;
+                select.appendChild(base);
+                list.forEach((device, index) => {
+                    const option = document.createElement("option");
+                    option.value = device.deviceId;
+                    option.textContent = device.label || `${fallback} ${index + 1}`;
+                    select.appendChild(option);
+                });
+                select.value = list.some(device => device.deviceId === selected) ? selected : "";
+            };
+            fill(micSelect, microphones, state.selectedMicId, "Dispositivo padrão");
+            fill(outputSelect, outputs, state.selectedOutputId, "Dispositivo padrão");
+            if (outputWrap) outputWrap.hidden = !("setSinkId" in HTMLMediaElement.prototype) || outputs.length === 0;
+        } catch {}
+    }
+
+    micSelect?.addEventListener("change", async () => {
+        state.selectedMicId = micSelect.value;
+        localStorage.setItem("hl_voice_mic", state.selectedMicId);
+        if (state.voiceJoined) {
+            const wasMuted = state.muted;
+            const oldStream = state.voiceStream;
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: { deviceId: state.selectedMicId ? { exact: state.selectedMicId } : undefined, echoCancellation: true, noiseSuppression: true, autoGainControl: true }, video: false });
+                const newTrack = stream.getAudioTracks()[0];
+                state.voicePeers.forEach(peer => {
+                    const sender = peer.getSenders().find(item => item.track?.kind === "audio");
+                    if (sender && newTrack) sender.replaceTrack(newTrack).catch(() => {});
+                });
+                oldStream?.getTracks().forEach(track => track.stop());
+                state.voiceStream = stream;
+                state.muted = wasMuted;
+                applyMicState();
+                toast("Microfone atualizado.");
+            } catch { toast("Não foi possível trocar o microfone."); }
+        }
+    });
+
+    outputSelect?.addEventListener("change", async () => {
+        state.selectedOutputId = outputSelect.value;
+        localStorage.setItem("hl_voice_output", state.selectedOutputId);
+        await Promise.all(Array.from(state.voiceAudio.values()).map(async audio => {
+            if (typeof audio.setSinkId === "function") {
+                try { await audio.setSinkId(state.selectedOutputId); } catch {}
+            }
+        }));
+        toast("Saída de áudio atualizada.");
+    });
+
+    navigator.mediaDevices?.addEventListener?.("devicechange", refreshAudioDevices);
+
     async function joinVoice() {
         if (state.voiceJoined) return;
         try {
-            state.voiceStream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true }, video: false });
+            state.voiceStream = await navigator.mediaDevices.getUserMedia({ audio: { deviceId: state.selectedMicId ? { exact: state.selectedMicId } : undefined, echoCancellation: true, noiseSuppression: true, autoGainControl: true }, video: false });
             state.voiceJoined = true;
             state.muted = false;
             applyMicState();
-            voiceJoin.textContent = "No voz";
+            voiceJoin.classList.add("is-connected");
+            voiceJoin.querySelector("strong").textContent = "Conectado ao voz";
+            voiceJoin.querySelector("small").textContent = "Você está ouvindo a sala";
             voiceJoin.disabled = true;
+            await refreshAudioDevices();
             document.getElementById("hlVoiceQuick").classList.add("is-active");
             socket.emit("voice:join", {}, async result => {
                 if (!result?.success) { leaveVoice(false); return toast("Não foi possível entrar no voz."); }
@@ -505,7 +732,9 @@
         state.muted = false;
         state.deaf = false;
         voiceJoin.disabled = false;
-        voiceJoin.textContent = "Entrar no voz";
+        voiceJoin.classList.remove("is-connected");
+        voiceJoin.querySelector("strong").textContent = "Entrar no voz";
+        voiceJoin.querySelector("small").textContent = "Conectar microfone e áudio";
         document.getElementById("hlVoiceQuick").classList.remove("is-active");
         updateVoiceButtons();
     }
@@ -582,6 +811,7 @@
         }
         audio.srcObject = stream;
         audio.muted = state.deaf;
+        if (state.selectedOutputId && typeof audio.setSinkId === "function") audio.setSinkId(state.selectedOutputId).catch(() => {});
         audio.play().catch(() => toast("Clique na página para liberar o áudio do voz."));
         startSpeakingMeter(id, stream);
     }
@@ -618,14 +848,24 @@
     function renderVoiceList() {
         voiceList.textContent = "";
         const users = Array.from(state.participants.values()).filter(user => user.voiceJoined || (user.id === socket.id && state.voiceJoined));
-        if (!users.length) { const empty=document.createElement("div"); empty.className="hl-chat-empty"; empty.textContent="Ninguém entrou no voz ainda."; voiceList.appendChild(empty); return; }
+        if (voiceCount) voiceCount.textContent = String(users.length);
+        if (!users.length) {
+            const empty=document.createElement("div");
+            empty.className="hl-voice-empty hl-empty-state";
+            empty.innerHTML='<div class="hl-voice-empty-orbit"><span aria-hidden="true">♙+</span></div><strong>Ninguém entrou no voz ainda.</strong><span>Seja o primeiro a entrar e começar a conversa.</span>';
+            voiceList.appendChild(empty);
+            return;
+        }
         users.forEach(user => {
             const row=document.createElement("div"); row.className="hl-voice-user";
             if (state.analysers.get(user.id)?.speaking) row.classList.add("is-speaking");
             const avatar=document.createElement("div"); avatar.className="hl-voice-avatar"; renderAvatar(avatar,user.avatar);
+            const info=document.createElement("div"); info.className="hl-voice-user-copy";
             const name=document.createElement("div"); name.className="hl-voice-name"; name.textContent=user.name + (user.id===socket.id?" (você)":"");
-            const st=document.createElement("div"); st.className="hl-voice-state"; st.textContent=user.muted?"🔇":(user.deaf?"🎧×":"🎙️");
-            row.append(avatar,name,st);
+            const sub=document.createElement("small"); sub.textContent=state.analysers.get(user.id)?.speaking?"Falando":(user.muted?"Microfone mutado":"No voz");
+            info.append(name,sub);
+            const st=document.createElement("div"); st.className="hl-voice-state"; st.textContent=user.muted?"🔇":(user.deaf?"🎧×":"🎙");
+            row.append(avatar,info,st);
             if (user.id !== socket.id) {
                 const slider=document.createElement("input"); slider.type="range"; slider.min="0"; slider.max="1"; slider.step="0.05"; slider.value=localStorage.getItem(`hl_volume_${user.id}`)||"1"; slider.className="hl-volume";
                 slider.addEventListener("input",()=>{ const audio=state.voiceAudio.get(user.id); if(audio) audio.volume=Number(slider.value); localStorage.setItem(`hl_volume_${user.id}`,slider.value); });
@@ -643,12 +883,13 @@
     }
 
     function updateVoiceButtons() {
-        voiceMute.textContent = state.muted ? "🔇 Mutado" : "🎙️ Microfone";
         voiceMute.classList.toggle("is-on", !state.muted && state.voiceJoined);
-        voiceDeaf.textContent = state.deaf ? "🎧 Surdo" : "🎧 Ouvindo";
+        voiceMute.classList.toggle("is-muted", state.muted);
+        if (voiceMuteState) voiceMuteState.textContent = !state.voiceJoined ? "Desligado" : (state.muted ? "Mutado" : "Ativo");
         voiceDeaf.classList.toggle("is-on", state.voiceJoined && !state.deaf);
-        voicePtt.textContent = state.ptt ? "PTT ligado" : "PTT desligado";
+        if (voiceDeafState) voiceDeafState.textContent = !state.voiceJoined ? "Aguardando entrada" : (state.deaf ? "Áudio silenciado" : "Áudio ativo");
         voicePtt.classList.toggle("is-on", state.ptt);
+        if (voicePttState) voicePttState.textContent = state.ptt ? "Ativo • segure Espaço" : "Desligado";
     }
 
     voiceJoin.addEventListener("click", joinVoice);
@@ -687,6 +928,7 @@
     soundCatalog.forEach(([id, label, desc, icon]) => {
         const card = document.createElement("div");
         card.className = "hl-sound-card";
+        card.dataset.soundId = id;
 
         const top = document.createElement("div");
         top.className = "hl-sound-top";
@@ -704,9 +946,9 @@
 
         const actions = document.createElement("div");
         actions.className = "hl-sound-actions";
-        const preview = tool("▶", () => playSound(id, true));
+        const preview = tool("Ouvir aqui", () => playSound(id, true));
         preview.title = "Ouvir só aqui";
-        const all = tool("Tocar na sala", () => sendSharedSound(id));
+        const all = tool("Na sala", () => sendSharedSound(id));
         actions.append(preview, all);
         card.append(top, actions);
         grid.appendChild(card);
@@ -732,6 +974,9 @@
         audio.addEventListener("error", cleanup, { once: true });
         try {
             await audio.play();
+            const card = document.querySelector(`.hl-sound-card[data-sound-id="${CSS.escape(id)}"]`);
+            card?.classList.add("is-playing");
+            setTimeout(() => card?.classList.remove("is-playing"), 520);
             return true;
         } catch (error) {
             cleanup();
@@ -772,7 +1017,27 @@
     });
 
     // Reactions / modes -------------------------------------
-    document.getElementById("hlReactionQuick").addEventListener("click",()=>socket.emit("reaction:send",{emoji:"🔥"}));
+    const reactionQuick = document.getElementById("hlReactionQuick");
+    const reactionPicker = document.getElementById("hlReactionPicker");
+    const closeReactionPicker = () => {
+        if (!reactionPicker) return;
+        reactionPicker.hidden = true;
+        state.reactionPickerOpen = false;
+        reactionQuick?.classList.remove("is-active");
+    };
+    reactionQuick?.addEventListener("click", event => {
+        event.stopPropagation();
+        state.reactionPickerOpen = !state.reactionPickerOpen;
+        reactionPicker.hidden = !state.reactionPickerOpen;
+        reactionQuick.classList.toggle("is-active", state.reactionPickerOpen);
+    });
+    reactionPicker?.querySelectorAll("[data-reaction]").forEach(button => button.addEventListener("click", () => {
+        socket.emit("reaction:send", { emoji: button.dataset.reaction });
+        closeReactionPicker();
+    }));
+    document.addEventListener("click", event => {
+        if (state.reactionPickerOpen && !reactionPicker?.contains(event.target) && event.target !== reactionQuick) closeReactionPicker();
+    });
     socket.on("reaction:show",data=>{
         const host=document.getElementById("hlFloatingReactions"); if(!host)return;
         const el=document.createElement("div"); el.className="hl-floating-reaction"; el.textContent=data.emoji; el.style.right=`${Math.floor(Math.random()*70)}px`; host.appendChild(el); setTimeout(()=>el.remove(),1900);

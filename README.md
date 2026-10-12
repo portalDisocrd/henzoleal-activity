@@ -134,3 +134,10 @@ A interface principal foi reorganizada para evitar sobreposição de painéis:
 - o selo BETA e indicadores duplicados de ONLINE/conectado foram removidos;
 - no mobile, participantes viram uma faixa horizontal e Chat/Voz/Sons abre como bottom sheet acima da toolbar;
 - a home mantém a identidade preto/azul, mas com menos chips, menos ruído e hierarquia mais clara.
+
+
+## V5 — Visual, voz e interação
+
+A V5 mantém o fundo e a essência do HL Activity e concentra a evolução nos elementos da interface. Principais mudanças: painel social refinado, aba Voz com estados e dispositivos, seleção de microfone/saída quando suportada pelo navegador, feedback de participante falando, soundboard com feedback visual, seletor de reações, toolbar agrupada, CTA de compartilhamento no palco vazio, contador de participantes no cabeçalho e bottom sheet com gesto de fechar no mobile.
+
+A V5 também respeita `prefers-reduced-motion` e evita animações decorativas pesadas para não competir com WebRTC.

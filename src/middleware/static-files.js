@@ -5,6 +5,7 @@ function registerStaticFiles({ app, express, rootDir }) {
         ["/logo-hl.png", "logo-hl.png"],
         ["/hl-social.css", "hl-social.css"],
         ["/hl-v4.css", "hl-v4.css"],
+        ["/hl-v5.css", "hl-v5.css"],
         ["/hl-social.js", "hl-social.js"],
         ["/activity-client.js", "activity-client.js"]
     ]);
