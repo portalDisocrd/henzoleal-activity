@@ -1,7 +1,7 @@
 {
   "name": "hl-activity",
-  "version": "10.0.0",
-  "description": "HL Activity V10 - salas privadas, PWA, pre-entrada, lobby seletivo, mixer, moderacao e UX unificada.",
+  "version": "10.3.0",
+  "description": "HL Activity V10.3 - painel social reestruturado, Soundboard estável e reações ancoradas ao palco.",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",

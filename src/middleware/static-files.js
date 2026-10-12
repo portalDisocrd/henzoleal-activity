@@ -19,6 +19,8 @@ function registerStaticFiles({ app, express, rootDir }) {
         ["/activity-room.css", "activity-room.css"],
         ["/activity-room-core.js", "activity-room-core.js"],
         ["/hl-v10.css", "hl-v10.css"],
+        ["/hl-v102.css", "hl-v102.css"],
+        ["/hl-v103.css", "hl-v103.css"],
         ["/hl-v10.js", "hl-v10.js"],
         ["/hl-pwa.js", "hl-pwa.js"],
         ["/home-v10.js", "home-v10.js"],

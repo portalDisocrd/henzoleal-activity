@@ -371,11 +371,27 @@
     const connectionPill = document.getElementById("status");
 
     const stageEl = document.getElementById("stage");
+    let reactionLayer = null;
+    const syncReactionLayer = () => {
+        if (!stageEl || !reactionLayer) return;
+        const rect = stageEl.getBoundingClientRect();
+        reactionLayer.style.left = `${Math.max(0, rect.left)}px`;
+        reactionLayer.style.top = `${Math.max(0, rect.top)}px`;
+        reactionLayer.style.width = `${Math.max(0, rect.width)}px`;
+        reactionLayer.style.height = `${Math.max(0, rect.height)}px`;
+    };
     if (stageEl) {
-        const reactions = document.createElement("div");
-        reactions.id = "hlFloatingReactions";
-        reactions.className = "hl-floating-reactions";
-        stageEl.appendChild(reactions);
+        reactionLayer = document.createElement("div");
+        reactionLayer.id = "hlFloatingReactions";
+        reactionLayer.className = "hl-floating-reactions";
+        document.body.appendChild(reactionLayer);
+        requestAnimationFrame(syncReactionLayer);
+        window.addEventListener("resize", syncReactionLayer, { passive: true });
+        document.addEventListener("scroll", syncReactionLayer, true);
+        if (typeof ResizeObserver === "function") {
+            const observer = new ResizeObserver(syncReactionLayer);
+            observer.observe(stageEl);
+        }
     }
 
     const stageEmpty = document.getElementById("stageEmpty");
@@ -1635,6 +1651,7 @@
 
     function showFloatingReaction(emoji, reactionId = "") {
         if (!emoji) return;
+        syncReactionLayer();
         if (reactionId) {
             if (state.seenReactionIds.has(reactionId)) return;
             state.seenReactionIds.add(reactionId);
