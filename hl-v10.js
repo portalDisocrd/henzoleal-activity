@@ -324,7 +324,13 @@
   window.addEventListener("hl:pwa-state",syncInstall);setTimeout(syncInstall,120);
   $("hlV10Install").addEventListener("click",async()=>{const result=await window.HLPWA?.install?.();toast(result?.success?"HL Activity instalado.":"Instalação cancelada ou indisponível.");syncInstall();});
 
-  if(!localStorage.getItem("hl_onboarding_done")){const banner=document.createElement("div");banner.className="hl-v10-onboarding";banner.innerHTML='<strong>HL Activity pronto.</strong><span>1. Convide amigos · 2. Entre no voz · 3. Compartilhe sua tela · 4. Use Chat e Sons</span><button>Entendi</button>';document.body.appendChild(banner);banner.querySelector("button").addEventListener("click",()=>{localStorage.setItem("hl_onboarding_done","1");banner.remove();});}
+  if(!localStorage.getItem("hl_onboarding_done") && !document.querySelector(".hl-v10-onboarding")){
+    const banner=document.createElement("div");
+    banner.className="hl-v10-onboarding";
+    banner.innerHTML='<strong>HL Activity pronto.</strong><span>1. Convide amigos · 2. Entre no voz · 3. Compartilhe sua tela · 4. Use Chat e Sons</span><button>Entendi</button>';
+    document.body.appendChild(banner);
+    banner.querySelector("button").addEventListener("click",()=>{localStorage.setItem("hl_onboarding_done","1");banner.remove();});
+  }
 
   // Activity quick access in header when there is room ---------------------
   const headerInfo=document.querySelector(".hl-room-info");if(headerInfo){const b=document.createElement("button");b.className="hl-v10-activity-trigger";b.type="button";b.textContent="Atividade";b.addEventListener("click",()=>{$("hlV10Activity").hidden=!$("hlV10Activity").hidden;renderActivity();});headerInfo.prepend(b);}

@@ -1649,7 +1649,7 @@
         const el = document.createElement("div");
         el.className = "hl-floating-reaction hl-v10-reaction";
         el.textContent = emoji;
-        el.style.setProperty("--hl-reaction-x", `${Math.floor(Math.random() * 36) - 18}px`);
+        el.style.setProperty("--hl-reaction-x", `${Math.floor(Math.random() * 22) - 6}px`);
         host.appendChild(el);
         setTimeout(() => el.remove(), 1450);
     }

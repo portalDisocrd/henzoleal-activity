@@ -576,7 +576,7 @@ body.hl-social-panel-open .app { grid-template-columns: minmax(0,1fr) minmax(320
     cursor:pointer;
     font-size:10px;
 }
-.hl-sound-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
+.hl-sound-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
 .hl-sound-card {
     min-width:0;
     padding:10px;
@@ -601,9 +601,9 @@ body.hl-social-panel-open .app { grid-template-columns: minmax(0,1fr) minmax(320
 .hl-sound-meta { min-width:0; }
 .hl-sound-card strong { display:block; font-size:12px; line-height:1.1; }
 .hl-sound-card small { display:block; margin-top:3px; color:#80899c; font-size:9px; }
-.hl-sound-actions { display:grid; grid-template-columns:38px minmax(0,1fr); gap:6px; margin-top:9px; }
+.hl-sound-actions { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; margin-top:0; }
 .hl-sound-actions button {
-    min-height:34px;
+    min-height:36px;
     border:0;
     border-radius:9px;
     padding:0 8px;
@@ -616,6 +616,8 @@ body.hl-social-panel-open .app { grid-template-columns: minmax(0,1fr) minmax(320
     background:rgba(111,124,255,.12);
     color:#d9ddff;
 }
+.hl-sound-actions button.is-secondary { background:#101726; color:#c8d1e2; }
+.hl-sound-actions button.is-danger { background:rgba(239,91,103,.1); color:#ffb8c0; }
 .hl-sound-help { margin:0; color:#697387; font-size:9px; line-height:1.4; }
 
 /* misc */

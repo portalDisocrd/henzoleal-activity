@@ -143,17 +143,8 @@ function createChatEvents({ io, roomService, allowSocketEvent, normalizeText, up
             });
         });
 
-        socket.on("reaction:send", (payload) => {
-            if (!allowSocketEvent(socket, "reaction:send")) return;
-            const ctx = getContext(socket);
-            if (!ctx) return;
-            const emoji = normalizeText(payload?.emoji, 8);
-            if (!ALLOWED_REACTIONS.has(emoji)) return;
-            const now = Date.now();
-            if (now - (socket.data.lastReactionAt || 0) < 500) return;
-            socket.data.lastReactionAt = now;
-            io.to(ctx.roomCode).emit("reaction:show", { userId: socket.id, name: ctx.user.name, emoji, at: now });
-        });
+        // reaction:send agora é tratado exclusivamente por social-events.js.
+        // Isso evita reações duplicadas (local + eco do socket em dois handlers).
     }
 
     return { register };
