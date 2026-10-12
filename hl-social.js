@@ -28,7 +28,8 @@
         soundCooldownUntil: 0,
         activeSounds: new Set(),
         soundVolume: Number(localStorage.getItem("hl_sound_volume") || 0.72),
-        soundBlockedToastAt: 0
+        soundBlockedToastAt: 0,
+        unreadChat: 0
     };
 
     const modes = ["normal", "focus", "social", "cinema"];
@@ -43,6 +44,7 @@
 
     const html = `
       <div class="hl-toast-stack" id="hlToastStack" aria-live="polite"></div>
+      <button class="hl-social-backdrop" id="hlSocialBackdrop" type="button" aria-label="Fechar painel social"></button>
       <div class="hl-social-dock" aria-label="Controles sociais HL">
         <button class="hl-social-action" data-open="chat" title="Chat">💬</button>
         <button class="hl-social-action" id="hlVoiceQuick" data-open="voice" title="Voz">🎙️</button>
@@ -149,20 +151,40 @@
         setTimeout(() => item.remove(), 2800);
     }
 
+    function updateUnread() {
+        const chatButton = document.querySelector('.hl-social-action[data-open="chat"]');
+        if (!chatButton) return;
+        let badge = chatButton.querySelector(".v4-unread-badge");
+        if (state.unreadChat > 0) {
+            if (!badge) {
+                badge = document.createElement("span");
+                badge.className = "v4-unread-badge";
+                chatButton.appendChild(badge);
+            }
+            badge.textContent = state.unreadChat > 9 ? "9+" : String(state.unreadChat);
+        } else if (badge) badge.remove();
+    }
+
     function setTab(name) {
         panel.classList.add("is-open");
         document.body.classList.add("hl-social-panel-open");
         document.querySelectorAll(".hl-social-tab").forEach(btn => btn.classList.toggle("is-active", btn.dataset.tab === name));
         document.querySelectorAll(".hl-social-view").forEach(view => view.classList.toggle("is-active", view.dataset.view === name));
-        if (name === "chat") setTimeout(() => chatInput.focus(), 80);
+        if (name === "chat") {
+            state.unreadChat = 0;
+            updateUnread();
+            setTimeout(() => chatInput.focus(), 80);
+        }
     }
 
     document.querySelectorAll("[data-open]").forEach(btn => btn.addEventListener("click", () => setTab(btn.dataset.open)));
     document.querySelectorAll(".hl-social-tab").forEach(btn => btn.addEventListener("click", () => setTab(btn.dataset.tab)));
-    document.getElementById("hlSocialClose").addEventListener("click", () => {
+    function closeSocialPanel() {
         panel.classList.remove("is-open");
         document.body.classList.remove("hl-social-panel-open");
-    });
+    }
+    document.getElementById("hlSocialClose").addEventListener("click", closeSocialPanel);
+    document.getElementById("hlSocialBackdrop")?.addEventListener("click", closeSocialPanel);
 
     function currentUser() { return state.participants.get(socket.id); }
     function currentName() { return currentUser()?.name || "Você"; }
@@ -316,7 +338,16 @@
         typingEl.textContent = names.length ? `${names.slice(0,2).join(", ")} ${names.length === 1 ? "está" : "estão"} digitando…` : "";
     }
 
-    socket.on("chat:message", message => { state.messages.set(message.id, message); renderChat(); if (!panel.classList.contains("is-open")) toast(`${message.authorName}: ${message.text.slice(0,55)}`); });
+    socket.on("chat:message", message => {
+        state.messages.set(message.id, message);
+        renderChat();
+        const chatVisible = panel.classList.contains("is-open") && document.querySelector('.hl-social-tab[data-tab="chat"]')?.classList.contains("is-active");
+        if (!chatVisible && message.authorId !== socket.id) {
+            state.unreadChat += 1;
+            updateUnread();
+            toast(`${message.authorName}: ${message.text.slice(0,55)}`);
+        }
+    });
     socket.on("chat:updated", message => { state.messages.set(message.id, message); renderChat(); });
     socket.on("chat:deleted", data => { state.messages.delete(data.id); renderChat(); });
 
@@ -353,6 +384,7 @@
         if (self?.role) state.role = self.role;
         renderVoiceList();
         decorateParticipants();
+        updateParticipantsCount();
         updateHostUI();
         bootstrapSocial();
     });
@@ -383,6 +415,39 @@
                 card.appendChild(kick);
             }
         });
+    }
+
+
+    function updateParticipantsCount() {
+        const title = document.querySelector(".people-title");
+        if (!title) return;
+        let count = title.querySelector(".v4-people-count");
+        if (!count) {
+            count = document.createElement("span");
+            count.className = "v4-people-count";
+            title.appendChild(count);
+        }
+        count.textContent = String(state.participants.size);
+        count.title = `${state.participants.size} participante${state.participants.size === 1 ? "" : "s"}`;
+    }
+
+    const roomCodeChip = document.querySelector(".hl-room-code-v2");
+    if (roomCodeChip) {
+        roomCodeChip.setAttribute("role", "button");
+        roomCodeChip.setAttribute("tabindex", "0");
+        roomCodeChip.title = "Copiar código da sala";
+        const copyRoomCode = async () => {
+            const code = document.getElementById("roomCode")?.textContent?.trim();
+            if (!code) return;
+            try {
+                await navigator.clipboard.writeText(code);
+                toast("Código da sala copiado.");
+            } catch {
+                toast("Não foi possível copiar o código.");
+            }
+        };
+        roomCodeChip.addEventListener("click", copyRoomCode);
+        roomCodeChip.addEventListener("keydown", event => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); copyRoomCode(); } });
     }
 
     function updateHostUI() {
@@ -722,9 +787,9 @@
     });
 
     // Connection / reconnect --------------------------------
-    socket.on("connect",()=>{ if (connectionPill) connectionPill.textContent="🟢 Conectado"; if(state.voiceJoined && state.voiceStream){ state.voicePeers.forEach((_,id)=>closeVoicePeer(id)); socket.emit("voice:join",{},async result=>{ for(const peer of result?.peers||[]) await createVoiceOffer(peer.id); }); } });
-    socket.on("disconnect",()=>{ if (connectionPill) connectionPill.textContent="🟠 Reconectando…"; state.bootstrapped=false; state.voicePeers.forEach((_,id)=>closeVoicePeer(id)); });
-    socket.on("connect_error",()=> { if (connectionPill) connectionPill.textContent="🔴 Sem conexão"; });
+    socket.on("connect",()=>{ if (connectionPill) { connectionPill.textContent="Conectado"; connectionPill.dataset.state="online"; } if(state.voiceJoined && state.voiceStream){ state.voicePeers.forEach((_,id)=>closeVoicePeer(id)); socket.emit("voice:join",{},async result=>{ for(const peer of result?.peers||[]) await createVoiceOffer(peer.id); }); } });
+    socket.on("disconnect",()=>{ if (connectionPill) { connectionPill.textContent="Reconectando…"; connectionPill.dataset.state="reconnecting"; } state.bootstrapped=false; state.voicePeers.forEach((_,id)=>closeVoicePeer(id)); });
+    socket.on("connect_error",()=> { if (connectionPill) { connectionPill.textContent="Sem conexão"; connectionPill.dataset.state="offline"; } });
     socket.on("moderation:kicked",data=>{ toast(data?.message||"Você foi removido."); leaveVoice(false); setTimeout(()=>location.href="/",800); });
 
     window.addEventListener("beforeunload",()=>{ try{ if(state.voiceJoined) socket.emit("voice:leave"); }catch{} state.voiceStream?.getTracks().forEach(t=>t.stop()); state.analysers.forEach(a=>a.context?.close().catch(()=>{})); });
