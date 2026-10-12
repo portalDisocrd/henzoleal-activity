@@ -66,6 +66,7 @@ test("soundboard respeita politica da sala", () => {
     let play;
     member.handlers.get("sound:play")({ soundId: "bonk" }, value => { play = value; });
     assert.equal(play.success, true);
+    assert.equal(member.emitted[0][0], "to:sound:play");
 
     let policy;
     host.handlers.get("moderation:sound-policy")({ policy: "disabled" }, value => { policy = value; });

@@ -49,7 +49,7 @@ function createSocialEvents({ io, roomService, allowSocketEvent, getSafeTargetSo
             const now = Date.now();
             if (now - (socket.data.lastSoundAt || 0) < 900) return typeof ack === "function" && ack({ success: false, message: "Aguarde o cooldown." });
             socket.data.lastSoundAt = now;
-            io.to(c.roomCode).emit("sound:play", { soundId, userId: socket.id, name: c.user.name, at: now });
+            socket.to(c.roomCode).emit("sound:play", { soundId, userId: socket.id, name: c.user.name, at: now });
             if (typeof ack === "function") ack({ success: true });
         });
 

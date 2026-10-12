@@ -13,6 +13,16 @@ function registerStaticFiles({ app, express, rootDir }) {
     }
 
     app.use(
+        "/sounds",
+        express.static(path.join(rootDir, "sounds"), {
+            dotfiles: "deny",
+            index: false,
+            immutable: process.env.NODE_ENV === "production",
+            maxAge: process.env.NODE_ENV === "production" ? "1d" : 0
+        })
+    );
+
+    app.use(
         "/assets",
         express.static(path.join(rootDir, "dist", "assets"), {
             dotfiles: "deny",

@@ -15,7 +15,7 @@ Esta revisão preserva o streaming existente e adiciona uma camada social modula
 - voz WebRTC separada da transmissão;
 - mute, deaf, push-to-talk e volume local por participante;
 - indicador local de fala no painel de voz;
-- Soundboard HL com efeitos sintetizados originais e reprodução compartilhada via evento autorizado pelo servidor;
+- Soundboard HL com seis efeitos originais em WAV, volume local, stop e reprodução compartilhada autorizada pelo servidor;
 - política de soundboard controlada pelo host;
 - reações flutuantes;
 - modos Normal, Foco, Social e Cinema;
@@ -116,9 +116,21 @@ O cliente ainda possui STUN público como fallback. Em redes/NATs restritivos, P
 - DMs persistentes e upload de soundboard não foram ativados porque exigem uma estratégia real de identidade/storage/retention;
 - ban persistente depende de identidade estável/autenticada;
 - lock de sala existe no servidor, mas não é destacado na UI até existir um token de reconexão seguro para não bloquear o próprio host após refresh;
-- os efeitos de soundboard são sintetizados no navegador para evitar dependência de arquivos de terceiros/licenciamento;
+- os efeitos do soundboard são assets WAV originais do próprio pacote, sem mídia de terceiros;
 - TURN precisa ser configurado para maior confiabilidade entre redes diferentes.
 
 ## Segurança
 
 Não envie `.env`, tokens ou secrets junto do projeto. O `.gitignore` deve manter esses arquivos fora do Git.
+
+
+## Interface V3
+
+A interface principal foi reorganizada para evitar sobreposição de painéis:
+
+- no desktop, Participantes e Chat/Voz/Sons usam o mesmo trilho lateral e alternam entre si;
+- os controles sociais ficam integrados à barra inferior;
+- somente o status inferior esquerdo comunica conexão/reconexão;
+- o selo BETA e indicadores duplicados de ONLINE/conectado foram removidos;
+- no mobile, participantes viram uma faixa horizontal e Chat/Voz/Sons abre como bottom sheet acima da toolbar;
+- a home mantém a identidade preto/azul, mas com menos chips, menos ruído e hierarquia mais clara.

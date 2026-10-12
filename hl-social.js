@@ -25,21 +25,23 @@
         modeIndex: 0,
         typingTimer: null,
         soundContext: null,
-        soundCooldownUntil: 0
+        soundCooldownUntil: 0,
+        activeSounds: new Set(),
+        soundVolume: Number(localStorage.getItem("hl_sound_volume") || 0.72),
+        soundBlockedToastAt: 0
     };
 
     const modes = ["normal", "focus", "social", "cinema"];
     const soundCatalog = [
-        ["airhorn", "Air Horn", "Impacto"],
-        ["victory", "Vitória", "Comemoração"],
-        ["fail", "Falha", "Derrota"],
-        ["bonk", "Bonk", "Reação"],
-        ["pop", "Pop", "Reação rápida"],
-        ["suspense", "Suspense", "Tensão"]
+        ["airhorn", "Air Horn", "Impacto", "📣", "/sounds/airhorn.wav"],
+        ["victory", "Vitória", "Comemoração", "🏆", "/sounds/victory.wav"],
+        ["fail", "Falha", "Derrota", "📉", "/sounds/fail.wav"],
+        ["bonk", "Bonk", "Reação", "🔨", "/sounds/bonk.wav"],
+        ["pop", "Pop", "Reação rápida", "🫧", "/sounds/pop.wav"],
+        ["suspense", "Suspense", "Tensão", "🎬", "/sounds/suspense.wav"]
     ];
 
     const html = `
-      <div class="hl-connection-pill" id="hlConnectionPill">🟢 conectado</div>
       <div class="hl-toast-stack" id="hlToastStack" aria-live="polite"></div>
       <div class="hl-social-dock" aria-label="Controles sociais HL">
         <button class="hl-social-action" data-open="chat" title="Chat">💬</button>
@@ -90,14 +92,30 @@
               <option value="disabled">Desativado</option>
             </select>
           </div>
+          <div class="hl-sound-toolbar">
+            <label class="hl-sound-volume-wrap">
+              <span>Volume</span>
+              <input id="hlSoundVolume" type="range" min="0" max="1" step="0.05" aria-label="Volume dos sons">
+            </label>
+            <button class="hl-sound-stop" id="hlSoundStop" type="button">Parar</button>
+          </div>
           <div class="hl-sound-grid" id="hlSoundGrid"></div>
-          <small style="color:var(--hl-social-muted)">Prévia toca só para você. “Todos” passa pelo servidor e respeita cooldown/permissões.</small>
+          <p class="hl-sound-help">Ouvir aqui é privado. Tocar na sala envia o efeito para os participantes autorizados.</p>
         </div>
       </section>`;
 
     document.body.insertAdjacentHTML("beforeend", html);
 
     const panel = document.getElementById("hlSocialPanel");
+    const dock = document.querySelector(".hl-social-dock");
+    const appShell = document.querySelector(".app");
+    const roomFooter = document.querySelector("footer");
+    if (appShell && panel) appShell.appendChild(panel);
+    if (roomFooter && dock) {
+        const inviteButton = document.getElementById("copy");
+        if (inviteButton) roomFooter.insertBefore(dock, inviteButton);
+        else roomFooter.appendChild(dock);
+    }
     const chatList = document.getElementById("hlChatList");
     const chatInput = document.getElementById("hlChatInput");
     const chatContext = document.getElementById("hlChatContext");
@@ -110,7 +128,9 @@
     const voiceLeave = document.getElementById("hlVoiceLeave");
     const soundPolicy = document.getElementById("hlSoundPolicy");
     const soundPolicyWrap = document.getElementById("hlSoundPolicyWrap");
-    const connectionPill = document.getElementById("hlConnectionPill");
+    const soundVolume = document.getElementById("hlSoundVolume");
+    const soundStop = document.getElementById("hlSoundStop");
+    const connectionPill = document.getElementById("status");
 
     const stageEl = document.getElementById("stage");
     if (stageEl) {
@@ -131,6 +151,7 @@
 
     function setTab(name) {
         panel.classList.add("is-open");
+        document.body.classList.add("hl-social-panel-open");
         document.querySelectorAll(".hl-social-tab").forEach(btn => btn.classList.toggle("is-active", btn.dataset.tab === name));
         document.querySelectorAll(".hl-social-view").forEach(view => view.classList.toggle("is-active", view.dataset.view === name));
         if (name === "chat") setTimeout(() => chatInput.focus(), 80);
@@ -138,7 +159,10 @@
 
     document.querySelectorAll("[data-open]").forEach(btn => btn.addEventListener("click", () => setTab(btn.dataset.open)));
     document.querySelectorAll(".hl-social-tab").forEach(btn => btn.addEventListener("click", () => setTab(btn.dataset.tab)));
-    document.getElementById("hlSocialClose").addEventListener("click", () => panel.classList.remove("is-open"));
+    document.getElementById("hlSocialClose").addEventListener("click", () => {
+        panel.classList.remove("is-open");
+        document.body.classList.remove("hl-social-panel-open");
+    });
 
     function currentUser() { return state.participants.get(socket.id); }
     function currentName() { return currentUser()?.name || "Você"; }
@@ -578,45 +602,109 @@
 
     // Soundboard --------------------------------------------
     const grid = document.getElementById("hlSoundGrid");
-    soundCatalog.forEach(([id,label,desc]) => {
-        const card=document.createElement("div"); card.className="hl-sound-card";
-        const strong=document.createElement("strong"); strong.textContent=label;
-        const small=document.createElement("small"); small.textContent=desc;
-        const actions=document.createElement("div"); actions.className="hl-sound-actions";
-        const preview=tool("Prévia",()=>playSound(id));
-        const all=tool("Todos",()=>sendSharedSound(id));
-        actions.append(preview,all); card.append(strong,small,actions); grid.appendChild(card);
+    const soundById = new Map(soundCatalog.map(item => [item[0], item]));
+
+    for (const [, , , , file] of soundCatalog) {
+        const preload = new Audio();
+        preload.preload = "auto";
+        preload.src = file;
+    }
+
+    soundVolume.value = String(Math.min(1, Math.max(0, state.soundVolume)));
+    soundVolume.addEventListener("input", () => {
+        state.soundVolume = Number(soundVolume.value);
+        localStorage.setItem("hl_sound_volume", String(state.soundVolume));
+        state.activeSounds.forEach(audio => { audio.volume = state.soundVolume; });
     });
 
-    function audioContext() {
-        if (!state.soundContext) state.soundContext = new (window.AudioContext || window.webkitAudioContext)();
-        if (state.soundContext.state === "suspended") state.soundContext.resume().catch(()=>{});
-        return state.soundContext;
+    soundStop.addEventListener("click", () => stopAllSounds());
+
+    soundCatalog.forEach(([id, label, desc, icon]) => {
+        const card = document.createElement("div");
+        card.className = "hl-sound-card";
+
+        const top = document.createElement("div");
+        top.className = "hl-sound-top";
+        const iconEl = document.createElement("div");
+        iconEl.className = "hl-sound-icon";
+        iconEl.textContent = icon;
+        const meta = document.createElement("div");
+        meta.className = "hl-sound-meta";
+        const strong = document.createElement("strong");
+        strong.textContent = label;
+        const small = document.createElement("small");
+        small.textContent = desc;
+        meta.append(strong, small);
+        top.append(iconEl, meta);
+
+        const actions = document.createElement("div");
+        actions.className = "hl-sound-actions";
+        const preview = tool("▶", () => playSound(id, true));
+        preview.title = "Ouvir só aqui";
+        const all = tool("Tocar na sala", () => sendSharedSound(id));
+        actions.append(preview, all);
+        card.append(top, actions);
+        grid.appendChild(card);
+    });
+
+    function stopAllSounds() {
+        state.activeSounds.forEach(audio => {
+            try { audio.pause(); audio.currentTime = 0; } catch {}
+        });
+        state.activeSounds.clear();
     }
 
-    function tone(ctx, freq, start, duration, gain=.08, type="sine", endFreq=null) {
-        const osc=ctx.createOscillator(); const g=ctx.createGain(); osc.type=type; osc.frequency.setValueAtTime(freq,start); if(endFreq) osc.frequency.exponentialRampToValueAtTime(Math.max(20,endFreq),start+duration); g.gain.setValueAtTime(.0001,start); g.gain.exponentialRampToValueAtTime(Math.max(.001,gain),start+.015); g.gain.exponentialRampToValueAtTime(.0001,start+duration); osc.connect(g).connect(ctx.destination); osc.start(start); osc.stop(start+duration+.02);
+    async function playSound(id, userInitiated = false) {
+        const item = soundById.get(id);
+        if (!item) return false;
+        const file = item[4];
+        const audio = new Audio(file);
+        audio.preload = "auto";
+        audio.volume = Math.min(1, Math.max(0, state.soundVolume));
+        state.activeSounds.add(audio);
+        const cleanup = () => state.activeSounds.delete(audio);
+        audio.addEventListener("ended", cleanup, { once: true });
+        audio.addEventListener("error", cleanup, { once: true });
+        try {
+            await audio.play();
+            return true;
+        } catch (error) {
+            cleanup();
+            const now = Date.now();
+            if (now - state.soundBlockedToastAt > 3500) {
+                state.soundBlockedToastAt = now;
+                toast(userInitiated ? "Não foi possível reproduzir esse som." : "O navegador bloqueou o áudio. Clique na página e tente novamente.");
+            }
+            return false;
+        }
     }
 
-    function playSound(id) {
-        const ctx=audioContext(); const t=ctx.currentTime+.01;
-        if(id==="airhorn"){ tone(ctx,220,t,.42,.09,"sawtooth",170); tone(ctx,330,t,.38,.05,"square",260); }
-        else if(id==="victory"){ [523,659,784,1047].forEach((f,i)=>tone(ctx,f,t+i*.11,.18,.055,"triangle")); }
-        else if(id==="fail"){ [440,370,311,220].forEach((f,i)=>tone(ctx,f,t+i*.13,.2,.05,"sawtooth")); }
-        else if(id==="bonk"){ tone(ctx,150,t,.16,.13,"square",70); }
-        else if(id==="pop"){ tone(ctx,680,t,.08,.07,"sine",220); }
-        else if(id==="suspense"){ tone(ctx,95,t,.8,.045,"sawtooth",125); tone(ctx,142,t+.08,.72,.035,"sine",175); }
+    function canUseSoundLocally() {
+        if (state.soundPolicy === "disabled") return false;
+        if (state.soundPolicy === "everyone") return true;
+        if (state.soundPolicy === "hostOnly") return state.role === "host";
+        if (state.soundPolicy === "moderators") return state.role === "host" || state.role === "moderator";
+        return false;
     }
 
-    function sendSharedSound(soundId) {
-        const now=Date.now();
-        if(now<state.soundCooldownUntil) return toast("Soundboard em cooldown.");
-        socket.emit("sound:play",{soundId},result=>{
-            if(!result?.success) return toast(result?.message||"Som não permitido.");
-            state.soundCooldownUntil=Date.now()+900;
+    async function sendSharedSound(soundId) {
+        const now = Date.now();
+        if (now < state.soundCooldownUntil) return toast("Aguarde um instante para tocar outro som.");
+        if (!canUseSoundLocally()) return toast("Você não tem permissão para usar o soundboard.");
+
+        // O emissor escuta imediatamente dentro do gesto do clique; os demais recebem pelo servidor.
+        await playSound(soundId, true);
+        socket.emit("sound:play", { soundId }, result => {
+            if (!result?.success) return toast(result?.message || "Som não permitido.");
+            state.soundCooldownUntil = Date.now() + 900;
         });
     }
-    socket.on("sound:play",data=>{ playSound(data.soundId); if(data.userId!==socket.id) toast(`${data.name||"Alguém"} tocou um efeito.`); });
+
+    socket.on("sound:play", data => {
+        if (!data?.soundId) return;
+        playSound(data.soundId, false);
+        if (data.userId !== socket.id) toast(`${data.name || "Alguém"} tocou um efeito.`);
+    });
 
     // Reactions / modes -------------------------------------
     document.getElementById("hlReactionQuick").addEventListener("click",()=>socket.emit("reaction:send",{emoji:"🔥"}));
@@ -634,9 +722,9 @@
     });
 
     // Connection / reconnect --------------------------------
-    socket.on("connect",()=>{ connectionPill.textContent="🟢 conectado"; if(state.voiceJoined && state.voiceStream){ state.voicePeers.forEach((_,id)=>closeVoicePeer(id)); socket.emit("voice:join",{},async result=>{ for(const peer of result?.peers||[]) await createVoiceOffer(peer.id); }); } });
-    socket.on("disconnect",()=>{ connectionPill.textContent="🟠 reconectando"; state.bootstrapped=false; state.voicePeers.forEach((_,id)=>closeVoicePeer(id)); });
-    socket.on("connect_error",()=> connectionPill.textContent="🔴 sem conexão");
+    socket.on("connect",()=>{ if (connectionPill) connectionPill.textContent="🟢 Conectado"; if(state.voiceJoined && state.voiceStream){ state.voicePeers.forEach((_,id)=>closeVoicePeer(id)); socket.emit("voice:join",{},async result=>{ for(const peer of result?.peers||[]) await createVoiceOffer(peer.id); }); } });
+    socket.on("disconnect",()=>{ if (connectionPill) connectionPill.textContent="🟠 Reconectando…"; state.bootstrapped=false; state.voicePeers.forEach((_,id)=>closeVoicePeer(id)); });
+    socket.on("connect_error",()=> { if (connectionPill) connectionPill.textContent="🔴 Sem conexão"; });
     socket.on("moderation:kicked",data=>{ toast(data?.message||"Você foi removido."); leaveVoice(false); setTimeout(()=>location.href="/",800); });
 
     window.addEventListener("beforeunload",()=>{ try{ if(state.voiceJoined) socket.emit("voice:leave"); }catch{} state.voiceStream?.getTracks().forEach(t=>t.stop()); state.analysers.forEach(a=>a.context?.close().catch(()=>{})); });
