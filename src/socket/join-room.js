@@ -1,4 +1,4 @@
-﻿function registerJoinRoom({
+function registerJoinRoom({
     socket,
     roomService,
     sanitizeRoomCode,
@@ -9,181 +9,62 @@
     maxUsersPerRoom,
     updateParticipants
 }) {
+    socket.on("join-room", data => {
+        if (!allowSocketEvent(socket)) return;
+        if (!isPlainObject(data)) return socket.emit("room-error", "Dados inválidos.");
 
-    socket.on(
-        "join-room",
-        data => {
+        const roomCode = sanitizeRoomCode(data.roomCode);
+        if (!isValidRoomCode(roomCode)) return socket.emit("room-error", "Código de sala inválido.");
 
-            if (
-                !allowSocketEvent(
-                    socket
-                )
-            ) {
-                return;
-            }
+        const room = roomService.get(roomCode);
+        if (!room) return socket.emit("room-error", "Sala não encontrada.");
+        if (socket.data.roomCode === roomCode) return updateParticipants(roomCode);
+        if (socket.data.roomCode) return socket.emit("room-error", "Você já está em outra sala.");
+        if (room.locked && room.users.size > 0) return socket.emit("room-error", "A sala está bloqueada pelo host.");
+        if (room.users.size >= maxUsersPerRoom) return socket.emit("room-error", "Sala cheia.");
 
+        const profile = sanitizeProfile(data.profile);
+        socket.join(roomCode);
+        socket.data.roomCode = roomCode;
+        socket.data.profile = profile;
 
-            if (
-                !isPlainObject(
-                    data
-                )
-            ) {
+        const role = room.hostId ? "member" : "host";
+        if (!room.hostId) room.hostId = socket.id;
 
-                socket.emit(
-                    "room-error",
-                    "Dados invalidos."
-                );
+        room.users.set(socket.id, {
+            name: profile.name,
+            avatar: profile.avatar,
+            role,
+            streaming: false,
+            voiceJoined: false,
+            muted: false,
+            deaf: false,
+            joinedAt: Date.now()
+        });
 
-                return;
-            }
+        room.lastActivity = Date.now();
+        room.emptySince = null;
 
+        console.log(`[ROOM] ${profile.name} entrou em ${roomCode} como ${role}`);
 
-            const roomCode =
-                sanitizeRoomCode(
-                    data.roomCode
-                );
+        socket.emit("room:joined", {
+            roomCode,
+            role,
+            hostId: room.hostId,
+            soundboardPolicy: room.soundboardPolicy,
+            locked: room.locked
+        });
 
+        socket.to(roomCode).emit("user-joined", {
+            id: socket.id,
+            name: profile.name,
+            avatar: profile.avatar,
+            role,
+            streaming: false
+        });
 
-            if (
-                !isValidRoomCode(
-                    roomCode
-                )
-            ) {
-
-                socket.emit(
-                    "room-error",
-                    "Codigo de sala invalido."
-                );
-
-                return;
-            }
-
-
-            const room =
-                roomService.get(
-                    roomCode
-                );
-
-
-            if (!room) {
-
-                socket.emit(
-                    "room-error",
-                    "Sala nao encontrada."
-                );
-
-                return;
-            }
-
-
-            if (
-                socket.data.roomCode ===
-                roomCode
-            ) {
-
-                updateParticipants(
-                    roomCode
-                );
-
-                return;
-            }
-
-
-            if (
-                socket.data.roomCode
-            ) {
-
-                socket.emit(
-                    "room-error",
-                    "Voce ja esta em outra sala."
-                );
-
-                return;
-            }
-
-
-            if (
-                room.users.size >=
-                maxUsersPerRoom
-            ) {
-
-                socket.emit(
-                    "room-error",
-                    "Sala cheia."
-                );
-
-                return;
-            }
-
-
-            const profile =
-                sanitizeProfile(
-                    data.profile
-                );
-
-
-            socket.join(
-                roomCode
-            );
-
-
-            socket.data.roomCode =
-                roomCode;
-
-
-            room.users.set(
-                socket.id,
-                {
-                    name:
-                        profile.name,
-
-                    avatar:
-                        profile.avatar,
-
-                    streaming:
-                        false
-                }
-            );
-
-
-            console.log(
-                `${profile.name} entrou em ${roomCode}`
-            );
-
-
-            // Avisa quem ja estava na sala.
-            // Se alguem estiver transmitindo,
-            // o cliente inicia WebRTC para o novo usuario.
-            socket.to(
-                roomCode
-            ).emit(
-                "user-joined",
-                {
-                    id:
-                        socket.id,
-
-                    name:
-                        profile.name,
-
-                    avatar:
-                        profile.avatar,
-
-                    streaming:
-                        false
-                }
-            );
-
-
-            updateParticipants(
-                roomCode
-            );
-
-        }
-    );
-
+        updateParticipants(roomCode);
+    });
 }
 
-
-module.exports = {
-    registerJoinRoom
-};
+module.exports = { registerJoinRoom };

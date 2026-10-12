@@ -1,4 +1,4 @@
-﻿const {
+const {
     ALLOWED_AVATARS
 } = require("../config/constants");
 
@@ -64,18 +64,12 @@ function sanitizeProfile(profile) {
             24
         );
 
-    const requestedAvatar =
-        normalizeText(
-            profile?.avatar || "😎",
-            8
-        );
-
-    const avatar =
-        ALLOWED_AVATARS.has(
-            requestedAvatar
-        )
-            ? requestedAvatar
-            : "😎";
+    const rawAvatar = String(profile?.avatar || "😎").trim();
+    const isDiscordAvatar = /^https:\/\/(?:cdn|media)\.discordapp\.(?:com|net)\/avatars\/[0-9]+\/[A-Za-z0-9_\-.]+(?:\?[^\s]*)?$/i.test(rawAvatar);
+    const requestedAvatar = normalizeText(rawAvatar, isDiscordAvatar ? 300 : 8);
+    const avatar = isDiscordAvatar || ALLOWED_AVATARS.has(requestedAvatar)
+        ? requestedAvatar
+        : "😎";
 
     return {
         name: name || "Usuário",

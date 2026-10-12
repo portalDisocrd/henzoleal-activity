@@ -1,4 +1,4 @@
-﻿const path =
+const path =
     require("path");
 
 
@@ -75,6 +75,23 @@ function registerPageRoutes({
         }
     );
 
+
+    // =============================================
+    // ACTIVITY ROOM (Discord Activity)
+    // =============================================
+
+    app.get(
+        "/activity-room.html",
+        (req, res) => {
+            const code = sanitizeRoomCode(req.query.room);
+            if (!isValidRoomCode(code) || !roomService.has(code)) {
+                return res.status(404).send("Sala nao encontrada.");
+            }
+            res.sendFile(path.join(rootDir, "activity-room.html"));
+        }
+    );
+
+    app.get("/activity.html", (req, res) => res.redirect("/activity"));
 
     // =============================================
     // SHARE BRIDGE V1
