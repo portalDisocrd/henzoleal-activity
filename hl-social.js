@@ -49,10 +49,11 @@
         soundFavorites: new Set(storedArray("hl_sound_favorites")),
         recentSounds: storedArray("hl_sound_recent"),
         soundSearch: "",
-        soundCategory: "all"
+        soundCategory: "all",
+        ducking: 1
     };
 
-    const modes = ["normal", "focus", "social", "cinema"];
+    const modes = ["normal", "cinema", "gaming", "study"];
     const soundCatalog = [
         ["airhorn", "Air Horn", "Impacto", "📣", "/sounds/airhorn.wav"],
         ["victory", "Vitória", "Comemoração", "🏆", "/sounds/victory.wav"],
@@ -600,6 +601,10 @@
             state.hostId = result.hostId || null;
             state.soundPolicy = result.soundboardPolicy || "everyone";
             state.soundUploadPolicy = result.soundUploadPolicy || "everyone";
+            const roomMode = result.roomMode || "normal";
+            state.modeIndex = Math.max(0, modes.indexOf(roomMode));
+            document.body.classList.remove(...modes.map(m => `hl-mode-${m}`));
+            if (roomMode !== "normal") document.body.classList.add(`hl-mode-${roomMode}`);
             syncCustomSounds(result.customSounds || []);
             updateHostUI();
         });
@@ -617,6 +622,10 @@
         state.hostId = data.hostId || state.hostId;
         state.soundPolicy = data.soundboardPolicy || state.soundPolicy;
         state.soundUploadPolicy = data.soundUploadPolicy || state.soundUploadPolicy;
+        const roomMode = data.roomMode || "normal";
+        state.modeIndex = Math.max(0, modes.indexOf(roomMode));
+        document.body.classList.remove(...modes.map(m => `hl-mode-${m}`));
+        if (roomMode !== "normal") document.body.classList.add(`hl-mode-${roomMode}`);
         state.apiToken = data.apiToken || state.apiToken;
         updateHostUI();
     });
@@ -813,7 +822,7 @@
         try {
             state.voiceStream = await navigator.mediaDevices.getUserMedia({ audio: { deviceId: state.selectedMicId ? { exact: state.selectedMicId } : undefined, echoCancellation: true, noiseSuppression: true, autoGainControl: true }, video: false });
             state.voiceJoined = true;
-            state.muted = false;
+            state.muted = sessionStorage.getItem("hl_prejoin_muted") === "1";
             applyMicState();
             voiceJoin.classList.add("is-connected");
             voiceJoin.querySelector("strong").textContent = "Conectado ao voz";
@@ -930,6 +939,8 @@
         }
         audio.srcObject = stream;
         audio.muted = state.deaf;
+        const baseVolume = Number(localStorage.getItem(`hl_volume_${id}`) || "1");
+        audio.volume = Math.min(1, Math.max(0, baseVolume * Number(window.HLV8VoiceMaster || 1)));
         if (state.selectedOutputId && typeof audio.setSinkId === "function") audio.setSinkId(state.selectedOutputId).catch(() => {});
         audio.play().catch(() => toast("Clique na página para liberar o áudio do voz."));
         startSpeakingMeter(id, stream);
@@ -950,7 +961,14 @@
                 analyser.getByteFrequencyData(data);
                 const avg = data.reduce((a,b) => a+b,0) / data.length;
                 const speaking = avg > 18;
-                if (speaking !== record.speaking) { record.speaking = speaking; renderVoiceList(); }
+                if (speaking !== record.speaking) {
+                    record.speaking = speaking;
+                    renderVoiceList();
+                    const anySpeaking = Array.from(state.analysers.values()).some(item => item.speaking);
+                    state.ducking = localStorage.getItem("hl_smart_ducking") === "off" ? 1 : (anySpeaking ? 0.55 : 1);
+                    state.activeSounds.forEach(audio => { audio.volume = Math.min(1, Math.max(0, state.soundVolume * state.ducking)); });
+                    document.dispatchEvent(new CustomEvent("hl:voice-speaking", { detail: { speaking: anySpeaking } }));
+                }
                 setTimeout(tick, 180);
             };
             tick();
@@ -987,7 +1005,7 @@
             row.append(avatar,info,st);
             if (user.id !== socket.id) {
                 const slider=document.createElement("input"); slider.type="range"; slider.min="0"; slider.max="1"; slider.step="0.05"; slider.value=localStorage.getItem(`hl_volume_${user.id}`)||"1"; slider.className="hl-volume";
-                slider.addEventListener("input",()=>{ const audio=state.voiceAudio.get(user.id); if(audio) audio.volume=Number(slider.value); localStorage.setItem(`hl_volume_${user.id}`,slider.value); });
+                slider.addEventListener("input",()=>{ const audio=state.voiceAudio.get(user.id); if(audio) audio.volume=Math.min(1, Number(slider.value) * Number(window.HLV8VoiceMaster || 1)); localStorage.setItem(`hl_volume_${user.id}`,slider.value); });
                 row.appendChild(slider);
             }
             voiceList.appendChild(row);
@@ -1168,7 +1186,7 @@
     soundVolume.addEventListener("input", () => {
         state.soundVolume = Number(soundVolume.value);
         localStorage.setItem("hl_sound_volume", String(state.soundVolume));
-        state.activeSounds.forEach(audio => { audio.volume = state.soundVolume; });
+        state.activeSounds.forEach(audio => { audio.volume = Math.min(1, state.soundVolume * state.ducking); });
         syncSoundVolumeUI();
     });
 
@@ -1199,7 +1217,7 @@
         if (!item) return false;
         const audio = new Audio(item.url);
         audio.preload = "auto";
-        audio.volume = Math.min(1, Math.max(0, state.soundVolume));
+        audio.volume = Math.min(1, Math.max(0, state.soundVolume * state.ducking));
         state.activeSounds.add(audio);
         rememberRecentSound(id);
         const cleanup = () => state.activeSounds.delete(audio);
@@ -1492,13 +1510,28 @@
         const el=document.createElement("div"); el.className="hl-floating-reaction"; el.textContent=data.emoji; el.style.right=`${Math.floor(Math.random()*70)}px`; host.appendChild(el); setTimeout(()=>el.remove(),1900);
     });
 
+    function applyRoomMode(mode, quiet = false) {
+        if (!modes.includes(mode)) mode = "normal";
+        document.body.classList.remove(...modes.map(m => `hl-mode-${m}`));
+        if (mode !== "normal") document.body.classList.add(`hl-mode-${mode}`);
+        state.modeIndex = Math.max(0, modes.indexOf(mode));
+        if (!quiet) toast(`Modo ${mode}.`);
+    }
+
     document.getElementById("hlModeQuick").addEventListener("click",()=>{
-        document.body.classList.remove(...modes.map(m=>`hl-mode-${m}`));
-        state.modeIndex=(state.modeIndex+1)%modes.length;
-        const mode=modes[state.modeIndex];
-        if(mode!=="normal") document.body.classList.add(`hl-mode-${mode}`);
-        toast(`Modo ${mode}.`);
+        const nextIndex=(state.modeIndex+1)%modes.length;
+        const mode=modes[nextIndex];
+        if (state.role === "host" || state.role === "moderator") {
+            socket.emit("room:mode", { mode }, result => {
+                if (!result?.success) return toast(result?.message || "Não foi possível alterar o modo.");
+                applyRoomMode(mode);
+            });
+        } else {
+            applyRoomMode(mode);
+        }
     });
+
+    socket.on("room:mode", data => applyRoomMode(data?.mode || "normal", true));
 
     // Connection / reconnect --------------------------------
     socket.on("connect",()=>{ if (connectionPill) { connectionPill.textContent="Conectado"; connectionPill.dataset.state="online"; } if(state.voiceJoined && state.voiceStream){ state.voicePeers.forEach((_,id)=>closeVoicePeer(id)); socket.emit("voice:join",{},async result=>{ for(const peer of result?.peers||[]) await createVoiceOffer(peer.id); }); } });

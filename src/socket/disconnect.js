@@ -1,5 +1,14 @@
 function registerDisconnect({ socket, roomService, updateParticipants }) {
     socket.on("disconnect", reason => {
+        const pendingRoomCode = socket.data.pendingRoomCode;
+        if (pendingRoomCode) {
+            const pendingRoom = roomService.get(pendingRoomCode);
+            if (pendingRoom?.pendingGuests) {
+                pendingRoom.pendingGuests.delete(socket.id);
+                if (pendingRoom.hostId) socket.nsp.to(pendingRoom.hostId).emit("room:join-request-removed", { id: socket.id });
+            }
+        }
+
         const roomCode = socket.data.roomCode;
         if (!roomCode) return;
 

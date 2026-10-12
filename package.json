@@ -1,7 +1,7 @@
 {
   "name": "hl-activity",
-  "version": "7.0.0",
-  "description": "HL Activity V7 - redesign 10/10 desktop/mobile com Soundboard Pro, voz, chat e hardening de segurança.",
+  "version": "8.0.0",
+  "description": "HL Activity V8 - app instalavel, lobby seletivo, convite confiavel, mixer, modos de sala, diagnostico, voz, streaming e Soundboard Pro.",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
