@@ -1,4 +1,4 @@
-const CACHE = "hl-activity-v8-shell";
+const CACHE = "hl-activity-v82-shell";
 const SHELL = [
   "/",
   "/home.css",

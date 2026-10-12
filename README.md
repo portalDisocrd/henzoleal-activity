@@ -1,3 +1,8 @@
+
+## V8.2 — Hotfix de interação mobile
+
+Corrige uma regressão em que o backdrop do painel social podia interceptar os toques de Voz e Soundboard em telas menores. O painel social agora usa a camada correta no mobile, os seis sons padrão continuam disponíveis e `Adicionar som` não nasce travado.
+
 # HL Activity V7
 
 HL Activity é um aplicativo de salas sociais em tempo real com transmissão de tela, chat, voz WebRTC, Soundboard HL e integração com Discord Activity.

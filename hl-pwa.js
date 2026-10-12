@@ -9,7 +9,7 @@
   }
 
   if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost")) {
-    window.addEventListener("load", () => navigator.serviceWorker.register("/sw.js", { scope: "/" }).catch(error => console.warn("[PWA] Service worker:", error)));
+    window.addEventListener("load", () => navigator.serviceWorker.register("/sw.js?v=81", { scope: "/" }).catch(error => console.warn("[PWA] Service worker:", error)));
   }
 
   window.addEventListener("beforeinstallprompt", event => {

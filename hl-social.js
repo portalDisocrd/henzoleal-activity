@@ -172,7 +172,7 @@
             </div>
             <div class="hl-sound-head-actions">
               <button class="hl-sound-config" id="hlSoundConfig" type="button" hidden aria-expanded="false" aria-controls="hlSoundPolicyWrap"><span aria-hidden="true">⚙</span><span>Configurar</span></button>
-              <button class="hl-sound-add" id="hlSoundAdd" type="button" disabled><span aria-hidden="true">＋</span><span>Adicionar som</span></button>
+              <button class="hl-sound-add" id="hlSoundAdd" type="button"><span aria-hidden="true">＋</span><span>Adicionar som</span></button>
             </div>
           </div>
 
@@ -260,9 +260,27 @@
 
     const panel = document.getElementById("hlSocialPanel");
     const dock = document.querySelector(".hl-social-dock");
+    const socialBackdrop = document.getElementById("hlSocialBackdrop");
     const appShell = document.querySelector(".app");
     const roomFooter = document.querySelector("footer");
-    if (appShell && panel) appShell.appendChild(panel);
+
+    // No desktop o painel participa do grid da sala. Em telas menores ele vira
+    // uma camada de topo e precisa ficar diretamente no body, acima do header
+    // e do backdrop. Isso evita que elementos de outros stacking contexts
+    // capturem os toques do Voice/Soundboard.
+    const socialLayerQuery = window.matchMedia("(max-width: 920px)");
+    function syncSocialLayerParent() {
+        if (!panel) return;
+        if (socialLayerQuery.matches) {
+            if (socialBackdrop && socialBackdrop.parentElement !== document.body) document.body.appendChild(socialBackdrop);
+            if (panel.parentElement !== document.body) document.body.appendChild(panel);
+        } else {
+            if (socialBackdrop && socialBackdrop.parentElement !== document.body) document.body.appendChild(socialBackdrop);
+            if (appShell && panel.parentElement !== appShell) appShell.appendChild(panel);
+        }
+    }
+    syncSocialLayerParent();
+    socialLayerQuery.addEventListener?.("change", syncSocialLayerParent);
     if (roomFooter && dock) {
         const inviteButton = document.getElementById("copy");
         if (inviteButton) roomFooter.insertBefore(dock, inviteButton);
@@ -317,6 +335,8 @@
     const soundStop = document.getElementById("hlSoundStop");
     const soundUploadPolicy = document.getElementById("hlSoundUploadPolicy");
     const soundAdd = document.getElementById("hlSoundAdd");
+    const soundConfig = document.getElementById("hlSoundConfig");
+    const soundSettingsClose = document.getElementById("hlSoundSettingsClose");
     const soundSearch = document.getElementById("hlSoundSearch");
     const soundFilters = document.getElementById("hlSoundFilters");
     const soundModal = document.getElementById("hlSoundModal");
@@ -718,7 +738,7 @@
         const isHost = state.role === "host";
         if (soundConfig) soundConfig.hidden = !isHost;
         if (soundPolicyWrap && !isHost) soundPolicyWrap.hidden = true;
-        soundPolicy.value = state.soundPolicy;
+        if (soundPolicy) soundPolicy.value = state.soundPolicy;
         if (soundUploadPolicy) soundUploadPolicy.value = state.soundUploadPolicy;
         const canUpload = canUploadSoundLocally();
         if (soundAdd) {
@@ -737,7 +757,7 @@
     soundConfig?.addEventListener("click", () => setSoundSettings(soundPolicyWrap?.hidden));
     soundSettingsClose?.addEventListener("click", () => setSoundSettings(false));
 
-    soundPolicy.addEventListener("change", () => {
+    soundPolicy?.addEventListener("change", () => {
         socket.emit("moderation:sound-policy", { policy: soundPolicy.value }, result => {
             if (!result?.success) toast(result?.message || "Não foi possível alterar.");
         });

@@ -43,3 +43,9 @@ body.hl-mode-study .hl-reaction-picker,body.hl-mode-study #hlReactionQuick,body.
   .hl-v8-settings{right:0;left:0;top:auto;bottom:0;width:100%;height:min(86vh,760px);border-radius:24px 24px 0 0;animation:v8Sheet .22s ease}.hl-v8-settings-backdrop{background:rgba(2,5,11,.64)}@keyframes v8Sheet{from{transform:translateY(32px);opacity:0}to{transform:none;opacity:1}}.hl-v8-settings-scroll{padding:12px}.hl-v8-mode-grid{grid-template-columns:1fr 1fr}.hl-v8-invite-actions{grid-template-columns:1fr}.hl-v8-waiting-row{grid-template-columns:auto 1fr}.hl-v8-waiting-row>div:last-child{grid-column:1/-1}.hl-v8-waiting-row button{flex:1}.hl-v8-shortcuts{grid-template-columns:1fr}.hl-v8-settings-trigger{width:44px!important;height:44px!important}.hl-v8-command{padding-top:80px}.hl-v8-command section{width:calc(100vw - 20px)}
 }
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important}}
+
+/* V8.2 HOTFIX — camada social mobile realmente acima do app */
+@media (max-width: 920px) {
+  body > .hl-social-backdrop { z-index: 1080 !important; }
+  body > .hl-social-panel { z-index: 1100 !important; }
+}

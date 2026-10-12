@@ -1,7 +1,7 @@
 {
   "name": "hl-activity",
-  "version": "8.0.0",
-  "description": "HL Activity V8 - app instalavel, lobby seletivo, convite confiavel, mixer, modos de sala, diagnostico, voz, streaming e Soundboard Pro.",
+  "version": "8.2.0",
+  "description": "HL Activity V8.2 - hotfix de interação mobile para voz e Soundboard, mantendo PWA e segurança.",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
