@@ -31,5 +31,5 @@ test('Configurações fica visível no mobile e footer fica acima do backdrop', 
 
 test('V9.2 usa cache bust novo', () => {
   assert.match(room, /hl-v9\.css\?v=92/);
-  assert.match(room, /hl-social\.js\?v=92/);
+  assert.match(room, /hl-social\.js\?v=(?:92|10)/);
 });

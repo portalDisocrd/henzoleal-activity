@@ -1,106 +1,41 @@
-# HL Activity V9.2
+# HL Activity V10 — Unified Product
 
-Base V9 com controles de Configurações/Mais reforçados, camadas responsivas corrigidas e 41 testes automatizados.
+HL Activity é uma plataforma privada de salas sociais em tempo real para **compartilhar tela, conversar, usar voz, soundboard e permanecer junto com amigos**.
 
-# HL Activity V7
+A V10 consolida a base visual/segura anterior e adiciona uma camada de produto mais completa sem transformar o HL em uma cópia do Discord/Twitch/Meet.
 
-HL Activity é um aplicativo de salas sociais em tempo real com transmissão de tela, chat, voz WebRTC, Soundboard HL e integração com Discord Activity.
+## Destaques V10
 
+- pré-entrada com teste de microfone, seleção de entrada/saída, medidor, entrar mutado e preview de quem já está na sala;
+- lobby seletivo: entrada automática, aprovar desconhecidos ou aprovar todos;
+- convites normais, confiáveis, temporários (15 min / 1h / 24h / 7 dias) e de uso único;
+- senha opcional e sala trancada;
+- perfis/participantes com status, atividade, volume local, fixar/spotlight e moderação contextual;
+- presença: online, ausente, no voz, falando e transmitindo;
+- modos Normal, Cinema, Jogatina e Estudo;
+- modo Estudo com Pomodoro;
+- Soundboard com sons padrão + upload temporário, busca, favoritos, recentes, meus sons, edição e duplicação;
+- mixer local de transmissão/voz + smart ducking do soundboard;
+- diagnóstico de Socket/WebRTC com ping, ICE, rota direta/STUN/TURN, bitrate estimado e perda/jitter quando disponíveis;
+- reconexão e transferência automática/manual de host;
+- moderação server-side, ban temporário por identificador local, bloqueios de som/stream e histórico de auditoria do host;
+- feed de atividade separado do chat;
+- comandos `/help`, `/invite`, `/ping`, `/users`, `/quality`, `/sound`, `/lock`;
+- atalhos M/C/V/F/Espaço/1–6/Ctrl+K;
+- PWA instalável no PC/celular;
+- central de configurações: Sala, Áudio, Visual, Privacidade, Atalhos e Diagnóstico;
+- temas HL (azul, roxo, gelo, preto), modo desempenho e redução de animações;
+- onboarding, salas recentes/favoritas, AFK, Picture-in-Picture e Screen Wake Lock;
+- página de sala inexistente própria;
+- segurança preservada: Helmet/CSP, origin guard, rate limits, host token, tokens efêmeros de sala, validações e uploads WAV validados.
 
-## V7 — Redesign 10/10 Desktop + Mobile
+## Limitações honestas
 
-A V7 é uma revisão visual estrutural em cima da V6 segura. Ela não troca o fundo nem recria o produto: corrige densidade, hierarquia, controles nativos, Soundboard mobile e integração da toolbar.
-
-Principais mudanças:
-
-- configurações administrativas do Soundboard saem da tela principal e ficam em **⚙ Configurar** apenas para host;
-- `+ Adicionar som` vira ação clara e consistente, sem botão branco nativo;
-- busca, chips, selects, slider e botões recebem aparência controlada no desktop/mobile;
-- volume mostra porcentagem e usa slider estilizado;
-- Soundboard mobile vira uma coluna com cards compactos e ações legíveis;
-- bottom sheet ocupa a largura correta no celular e mantém scroll interno;
-- Voz recebe hierarquia, controles e seletores refinados;
-- Chat recebe compose e empty state mais limpos;
-- palco vazio fica compacto e mantém Compartilhar como CTA;
-- toolbar desktop é agrupada; no mobile ficam apenas ações prioritárias;
-- configuração/convite/qualidade deixam de disputar espaço no celular;
-- nenhum fundo gamer/imagem decorativa foi adicionado;
-- segurança, host token, rate limits e upload validado da V6 foram preservados.
-
-## V6 — Soundboard Pro + Segurança
-
-A V6 preserva a essência e o streaming existente, mas endurece a arquitetura de segurança e transforma o Soundboard em uma função completa.
-
-### Soundboard Pro
-
-- sons originais do HL continuam disponíveis;
-- botão **Adicionar som** dentro da aba Sons;
-- aceita arquivo local que o navegador consiga decodificar (MP3/WAV/OGG/WebM/M4A quando suportado pelo navegador);
-- recorte de início e duração de até 15 segundos;
-- prévia antes de enviar;
-- nome, categoria e emoji;
-- conversão no navegador para WAV PCM mono 16-bit/22.05 kHz;
-- servidor valida novamente estrutura WAV, duração e tamanho;
-- busca;
-- Favoritos;
-- Recentes;
-- Meus sons;
-- Ouvir aqui / Na sala;
-- exclusão pelo dono, host ou moderador;
-- política do host para quem pode tocar;
-- política separada para quem pode adicionar;
-- cooldown e limite por sala;
-- host/mod pode parar os sons compartilhados.
-
-Os sons personalizados ficam apenas **na memória da sala** nesta versão. Reiniciar o serviço apaga esses uploads. Isso evita fingir persistência usando o filesystem efêmero do Render. A arquitetura pode receber R2/S3 depois sem refazer a UI.
-
-## Segurança V6
-
-- token criptograficamente aleatório para o criador reivindicar o papel de host;
-- hash do token de host no servidor, nunca o valor puro no estado da sala;
-- token efêmero de API ligado ao socket atual para ações HTTP da sala;
-- comparação de tokens com `timingSafeEqual`;
-- verificação de origem em requisições `/api`;
-- verificação de origem no handshake Socket.IO em produção;
-- limite de sockets simultâneos por IP;
-- rate limit HTTP geral, criação de sala, OAuth e upload;
-- rate limits Socket.IO separados para chat, reação, soundboard, moderação, voz e sinalização WebRTC;
-- limite de payload Socket.IO;
-- `Helmet` e CSP endurecida;
-- JavaScript inline removido das páginas principais para eliminar `unsafe-inline` de `script-src`;
-- `script-src-attr 'none'`;
-- `object-src 'none'`, `base-uri 'self'`, `form-action 'self'`;
-- Permissions Policy para câmera, microfone, captura de tela, geolocalização e clipboard;
-- arquivos internos não são publicados como estáticos;
-- API usa `no-store`;
-- Request ID por requisição;
-- erros de API não expõem stack interno;
-- OAuth tem limite, timeout e não registra token/response sensível;
-- upload de som não grava arquivo no disco;
-- áudio customizado recebe URL com token aleatório de acesso;
-- logs de auditoria temporários para ações de sala/moderação/soundboard;
-- timeouts HTTP e compressão WebSocket desabilitada para reduzir superfície de abuso.
-
-### Limite importante de identidade
-
-Usuários convidados continuam sendo identidades temporárias da sala. Sem login obrigatório/banco de dados, não existe ban persistente confiável entre sessões. A V6 não finge que existe.
-
-## Recursos existentes preservados
-
-- criar/entrar em sala;
-- stream WebRTC;
-- Auto, 720p30, 720p60, 1080p30, 1080p60;
-- chat temporário;
-- voz WebRTC separada da stream;
-- mute/deaf/PTT;
-- seleção de microfone/saída quando suportada;
-- participantes e roles;
-- host/moderação básica;
-- reações;
-- interface desktop/mobile;
-- Discord Activity;
-- `/health`;
-- graceful shutdown.
+- **Amizade permanente** ainda não existe porque convidados não têm uma conta persistente. A V10 usa **convites confiáveis** para dar acesso direto sem fingir um sistema de amigos.
+- **QR Code** não foi incluído nesta versão para não enviar convites privados a um serviço externo nem adicionar uma biblioteca nova sem validar o build. O link de convite está pronto para receber QR local depois.
+- Sons personalizados continuam na memória da sala. Para persistência real, conectar Cloudflare R2/S3 ou storage equivalente.
+- Banimentos persistentes reais exigem conta/banco; o ban atual é temporário e baseado em identificador local do navegador.
+- TURN não é provisionado automaticamente. O diagnóstico informa quando uma rota `relay` está sendo usada, mas infraestrutura TURN precisa ser configurada separadamente.
 
 ## Instalar
 
@@ -148,17 +83,14 @@ Health check:
 
 ## Variáveis
 
-Copie `.env.example`. Nunca envie `.env` ao Git.
+Copie `.env.example` para `.env` localmente. Nunca envie `.env` ao Git.
 
 ```text
 NODE_ENV=production
+PORT=3000
 DISCORD_CLIENT_ID=
 DISCORD_CLIENT_SECRET=
 HL_ALLOWED_ORIGINS=
 ```
 
-`HL_ALLOWED_ORIGINS` é opcional para origens extras. O próprio host atual do Render/custom domain é validado dinamicamente.
-
-## TURN
-
-A base continua com STUN público. Para maior confiabilidade entre NATs/redes restritivas, configure TURN em uma próxima etapa e conecte as credenciais ao RTC antes de anunciar o recurso como ativo.
+`HL_ALLOWED_ORIGINS` é opcional para origens extras. O host atual do serviço é validado dinamicamente.

@@ -1726,13 +1726,54 @@ function joinRoom() {
 
             profile,
 
-            hostToken: sessionStorage.getItem(`hl_host_token_${roomCode}`) || ""
+            hostToken: sessionStorage.getItem(`hl_host_token_${roomCode}`) || "",
+
+            trustToken: new URLSearchParams(location.search).get("trust") || "",
+
+            inviteToken: new URLSearchParams(location.search).get("invite") || "",
+
+            password: sessionStorage.getItem(`hl_room_password_${roomCode}`) || "",
+
+            clientId: (() => {
+                let id = localStorage.getItem("hl_client_id");
+                if (!id) {
+                    id = (crypto?.randomUUID?.() || Math.random().toString(36).slice(2) + Date.now().toString(36)).replace(/[^a-zA-Z0-9_-]/g, "");
+                    localStorage.setItem("hl_client_id", id);
+                }
+                return id;
+            })()
 
         }
     );
 
 }
 
+
+// Lobby / senha V10 -------------------------------------------------------
+socket.on("room:waiting", data => {
+    joined = false;
+    window.HLRoomWaitingState = data || {};
+    window.dispatchEvent(new CustomEvent("hl:room-waiting", { detail: data || {} }));
+});
+
+socket.on("room:approval", data => {
+    window.HLRoomWaitingState = null;
+    window.dispatchEvent(new CustomEvent("hl:room-approval", { detail: data || {} }));
+    if (data?.approved) { joined = false; setTimeout(() => joinRoom(), 60); }
+});
+
+socket.on("room:password-required", data => {
+    joined = false;
+    window.dispatchEvent(new CustomEvent("hl:room-password-required", { detail: data || {} }));
+});
+
+socket.on("stream:blocked", data => {
+    try { localStream?.getTracks?.().forEach(track => track.stop()); } catch {}
+    localStream = null;
+    stopButton.style.display = "none";
+    shareButton.style.display = "inline-flex";
+    window.dispatchEvent(new CustomEvent("hl:stream-blocked", { detail: data || {} }));
+});
 
 // =====================================================
 // SOCKET
@@ -2047,10 +2088,15 @@ function renderParticipants() {
                 "person-status";
 
 
-            personStatus.textContent =
-                user.streaming
-                    ? "● AO VIVO"
-                    : "● Online";
+            const activityLabel = user.streaming
+                ? "AO VIVO"
+                : (user.activity || (user.voiceJoined ? "No voz" : (user.status === "afk" ? "Ausente" : "Online")));
+
+            personStatus.textContent = `● ${activityLabel}`;
+            personStatus.dataset.state = user.status === "afk" ? "afk" : (user.streaming ? "live" : "online");
+            card.dataset.userId = user.id;
+            card.dataset.role = user.role || "member";
+            if (user.spotlighted) card.classList.add("spotlighted");
 
 
             info.appendChild(
@@ -3766,3 +3812,15 @@ document.getElementById(
 // =====================================================
 
 loadProfile();
+
+// Integração V10 ----------------------------------------------------------
+window.HLRoomCore = {
+    selectMainStream: ownerId => { try { selectMainStream(ownerId); return true; } catch { return false; } },
+    getStreams: () => streams,
+    getParticipants: () => participants,
+    getCurrentMainOwner: () => currentMainOwner,
+    getLocalStream: () => localStream,
+    getInboundPeers: () => inboundPeers,
+    getOutboundPeers: () => outboundPeers
+};
+

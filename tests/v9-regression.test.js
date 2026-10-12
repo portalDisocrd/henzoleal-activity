@@ -10,7 +10,7 @@ const root = path.join(__dirname, "..");
 test("V9 carrega CSS novo e JS com cache bust", () => {
   const room = fs.readFileSync(path.join(root,"room.html"),"utf8");
   assert.match(room,/hl-v9\.css\?v=9/);
-  assert.match(room,/hl-social\.js\?v=9/);
+  assert.match(room,/hl-social\.js\?v=(?:9|10)/);
 });
 
 test("V9 mantém soundboard mobile em uma coluna", () => {

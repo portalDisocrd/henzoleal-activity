@@ -8,6 +8,7 @@ function registerStaticFiles({ app, express, rootDir }) {
         ["/hl-v5.css", "hl-v5.css"],
         ["/hl-v6.css", "hl-v6.css"],
         ["/hl-v7.css", "hl-v7.css"],
+        ["/hl-v9.css", "hl-v9.css"],
         ["/hl-social.js", "hl-social.js"],
         ["/activity-client.js", "activity-client.js"],
         ["/home.css", "home.css"],
@@ -17,6 +18,14 @@ function registerStaticFiles({ app, express, rootDir }) {
         ["/activity.css", "activity.css"],
         ["/activity-room.css", "activity-room.css"],
         ["/activity-room-core.js", "activity-room-core.js"],
+        ["/hl-v10.css", "hl-v10.css"],
+        ["/hl-v10.js", "hl-v10.js"],
+        ["/hl-pwa.js", "hl-pwa.js"],
+        ["/home-v10.js", "home-v10.js"],
+        ["/manifest.webmanifest", "manifest.webmanifest"],
+        ["/sw.js", "sw.js"],
+        ["/icon-192.png", "icon-192.png"],
+        ["/icon-512.png", "icon-512.png"],
         ["/not-found.css", "not-found.css"]
     ]);
 

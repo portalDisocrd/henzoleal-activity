@@ -1,7 +1,7 @@
 {
   "name": "hl-activity",
-  "version": "9.2.0",
-  "description": "HL Activity V9.2 - controle central confiável, camadas corrigidas e auditoria visual.",
+  "version": "10.0.0",
+  "description": "HL Activity V10 - salas privadas, PWA, pre-entrada, lobby seletivo, mixer, moderacao e UX unificada.",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",

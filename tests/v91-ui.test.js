@@ -35,6 +35,6 @@ test('V9.x usa cache bust atual', () => {
   for (const f of ['room.html','activity-room.html']) {
     const html = read(f);
     assert.match(html, /hl-v9\.css\?v=92/);
-    assert.match(html, /hl-social\.js\?v=92/);
+    assert.match(html, /hl-social\.js\?v=(?:92|10)/);
   }
 });
