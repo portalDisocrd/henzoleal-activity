@@ -1726,33 +1726,13 @@ function joinRoom() {
 
             profile,
 
-            hostToken: sessionStorage.getItem(`hl_host_token_${roomCode}`) || "",
-
-            trustToken: new URLSearchParams(location.search).get("trust") || ""
+            hostToken: sessionStorage.getItem(`hl_host_token_${roomCode}`) || ""
 
         }
     );
 
 }
 
-
-// Lobby seletivo V8: captura o estado antes da camada visual carregar.
-socket.on("room:waiting", data => {
-    joined = false;
-    window.HLRoomWaitingState = data || {};
-    window.dispatchEvent(new CustomEvent("hl:room-waiting", { detail: data || {} }));
-});
-
-socket.on("room:approval", data => {
-    window.HLRoomWaitingState = null;
-    window.dispatchEvent(new CustomEvent("hl:room-approval", { detail: data || {} }));
-    if (data?.approved) {
-        joined = false;
-        setTimeout(() => joinRoom(), 40);
-    } else {
-        joined = false;
-    }
-});
 
 // =====================================================
 // SOCKET

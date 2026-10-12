@@ -2,8 +2,7 @@ const { publicSound } = require("../routes/custom-sound-routes");
 
 const SOUND_IDS = new Set(["airhorn", "victory", "fail", "bonk", "pop", "suspense"]);
 const SOUND_POLICIES = new Set(["disabled", "hostOnly", "moderators", "everyone"]);
-const ENTRY_POLICIES = new Set(["auto", "approveUnknown", "approveAll"]);
-const ROOM_MODES = new Set(["normal", "cinema", "gaming", "study"]);
+const REACTION_EMOJIS = new Set(["👍", "😂", "❤️", "🔥", "👏"]);
 
 function createSocialEvents({ io, roomService, allowSocketEvent, getSafeTargetSocket, normalizeText }) {
     function ctx(socket) {
@@ -41,11 +40,20 @@ function createSocialEvents({ io, roomService, allowSocketEvent, getSafeTargetSo
                 locked: Boolean(c.room.locked),
                 soundboardPolicy: c.room.soundboardPolicy,
                 soundUploadPolicy: c.room.soundUploadPolicy,
-                entryPolicy: c.room.entryPolicy || "auto",
-                roomMode: c.room.roomMode || "normal",
-                waiting: c.user.role === "host" ? Array.from(c.room.pendingGuests?.values?.() || []) : [],
                 customSounds: Array.from(c.room.customSounds?.values?.() || []).map(sound => publicSound(sound, c.roomCode))
             });
+        });
+
+        socket.on("reaction:send", (payload, ack) => {
+            if (!allowSocketEvent(socket, "reaction:send")) return typeof ack === "function" && ack({ success: false, message: "Muitas reações em pouco tempo." });
+            const c = ctx(socket);
+            if (!c) return typeof ack === "function" && ack({ success: false });
+            const emoji = normalizeText(payload?.emoji, 8);
+            if (!REACTION_EMOJIS.has(emoji)) return typeof ack === "function" && ack({ success: false, message: "Reação inválida." });
+            const now = Date.now();
+            c.room.lastActivity = now;
+            socket.to(c.roomCode).emit("reaction:show", { emoji, senderId: socket.id, name: c.user.name, at: now });
+            if (typeof ack === "function") ack({ success: true });
         });
 
         socket.on("sound:play", (payload, ack) => {
@@ -99,71 +107,6 @@ function createSocialEvents({ io, roomService, allowSocketEvent, getSafeTargetSo
             if (typeof ack === "function") ack({ success: true });
         });
 
-        socket.on("room:entry-policy", (payload, ack) => {
-            if (!allowSocketEvent(socket, "moderation")) return typeof ack === "function" && ack({ success: false });
-            const c = ctx(socket);
-            if (!c || c.user.role !== "host") return typeof ack === "function" && ack({ success: false, message: "Somente o host pode alterar a entrada." });
-            const policy = normalizeText(payload?.policy, 24);
-            if (!ENTRY_POLICIES.has(policy)) return typeof ack === "function" && ack({ success: false, message: "Política inválida." });
-            c.room.entryPolicy = policy;
-            roomService.audit(c.roomCode, { type: "entry-policy", actorId: socket.id, actorName: c.user.name, policy });
-            io.to(c.roomCode).emit("room:entry-policy", { policy });
-            if (typeof ack === "function") ack({ success: true, policy });
-        });
-
-        socket.on("room:create-trusted-invite", (ack) => {
-            if (!allowSocketEvent(socket, "moderation")) return typeof ack === "function" && ack({ success: false });
-            const c = ctx(socket);
-            if (!c || c.user.role !== "host") return typeof ack === "function" && ack({ success: false, message: "Somente o host pode criar convite confiável." });
-            const token = roomService.createTrustedInvite(c.roomCode);
-            roomService.audit(c.roomCode, { type: "trusted-invite-rotate", actorId: socket.id, actorName: c.user.name });
-            if (typeof ack === "function") ack({ success: Boolean(token), token });
-        });
-
-        socket.on("room:approve-join", (payload, ack) => {
-            if (!allowSocketEvent(socket, "moderation")) return typeof ack === "function" && ack({ success: false });
-            const c = ctx(socket);
-            if (!c || c.user.role !== "host") return typeof ack === "function" && ack({ success: false, message: "Somente o host pode aprovar entradas." });
-            const targetId = normalizeText(payload?.target, 120);
-            const pending = c.room.pendingGuests?.get(targetId);
-            const targetSocket = io.sockets.sockets.get(targetId);
-            if (!pending || !targetSocket || targetSocket.data.pendingRoomCode !== c.roomCode) return typeof ack === "function" && ack({ success: false, message: "Solicitação não encontrada." });
-            c.room.pendingGuests.delete(targetId);
-            targetSocket.data.entryApprovedFor = c.roomCode;
-            targetSocket.emit("room:approval", { approved: true, roomCode: c.roomCode });
-            roomService.audit(c.roomCode, { type: "join-approved", actorId: socket.id, actorName: c.user.name, targetId, targetName: pending.name });
-            if (typeof ack === "function") ack({ success: true });
-        });
-
-        socket.on("room:reject-join", (payload, ack) => {
-            if (!allowSocketEvent(socket, "moderation")) return typeof ack === "function" && ack({ success: false });
-            const c = ctx(socket);
-            if (!c || c.user.role !== "host") return typeof ack === "function" && ack({ success: false, message: "Somente o host pode recusar entradas." });
-            const targetId = normalizeText(payload?.target, 120);
-            const pending = c.room.pendingGuests?.get(targetId);
-            const targetSocket = io.sockets.sockets.get(targetId);
-            if (!pending) return typeof ack === "function" && ack({ success: false, message: "Solicitação não encontrada." });
-            c.room.pendingGuests.delete(targetId);
-            if (targetSocket) {
-                targetSocket.data.pendingRoomCode = null;
-                targetSocket.emit("room:approval", { approved: false, roomCode: c.roomCode, message: "Entrada recusada pelo host." });
-            }
-            roomService.audit(c.roomCode, { type: "join-rejected", actorId: socket.id, actorName: c.user.name, targetId, targetName: pending.name });
-            if (typeof ack === "function") ack({ success: true });
-        });
-
-        socket.on("room:mode", (payload, ack) => {
-            if (!allowSocketEvent(socket, "moderation")) return typeof ack === "function" && ack({ success: false });
-            const c = ctx(socket);
-            if (!c || (c.user.role !== "host" && c.user.role !== "moderator")) return typeof ack === "function" && ack({ success: false, message: "Sem permissão." });
-            const mode = normalizeText(payload?.mode, 20);
-            if (!ROOM_MODES.has(mode)) return typeof ack === "function" && ack({ success: false, message: "Modo inválido." });
-            c.room.roomMode = mode;
-            roomService.audit(c.roomCode, { type: "room-mode", actorId: socket.id, actorName: c.user.name, mode });
-            io.to(c.roomCode).emit("room:mode", { mode, by: socket.id });
-            if (typeof ack === "function") ack({ success: true, mode });
-        });
-
         socket.on("moderation:lock", (payload, ack) => {
             if (!allowSocketEvent(socket, "moderation")) return typeof ack === "function" && ack({ success: false });
             const c = ctx(socket);
@@ -205,4 +148,4 @@ function createSocialEvents({ io, roomService, allowSocketEvent, getSafeTargetSo
     return { register };
 }
 
-module.exports = { createSocialEvents, SOUND_IDS, SOUND_POLICIES, ENTRY_POLICIES, ROOM_MODES };
+module.exports = { createSocialEvents, SOUND_IDS, SOUND_POLICIES, REACTION_EMOJIS };

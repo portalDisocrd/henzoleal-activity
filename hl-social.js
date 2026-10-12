@@ -49,11 +49,10 @@
         soundFavorites: new Set(storedArray("hl_sound_favorites")),
         recentSounds: storedArray("hl_sound_recent"),
         soundSearch: "",
-        soundCategory: "all",
-        ducking: 1
+        soundCategory: "all"
     };
 
-    const modes = ["normal", "cinema", "gaming", "study"];
+    const modes = ["normal", "focus", "social", "cinema"];
     const soundCatalog = [
         ["airhorn", "Air Horn", "Impacto", "📣", "/sounds/airhorn.wav"],
         ["victory", "Vitória", "Comemoração", "🏆", "/sounds/victory.wav"],
@@ -73,6 +72,14 @@
         <button type="button" data-reaction="❤️" aria-label="Amor">❤️</button>
         <button type="button" data-reaction="🔥" aria-label="Fogo">🔥</button>
         <button type="button" data-reaction="👏" aria-label="Aplausos">👏</button>
+      </div>
+
+      <div class="hl-more-menu" id="hlMoreMenu" hidden aria-label="Mais ações">
+        <button type="button" data-more-action="normal"><span>◉</span><b>Modo normal</b></button>
+        <button type="button" data-more-action="focus"><span>⌖</span><b>Modo foco</b></button>
+        <button type="button" data-more-action="cinema"><span>▣</span><b>Modo cinema</b></button>
+        <button type="button" data-more-action="social"><span>◎</span><b>Modo social</b></button>
+        <button type="button" data-more-action="invite"><span>🔗</span><b>Copiar convite</b></button>
       </div>
 
       <div class="hl-social-dock" aria-label="Controles sociais HL">
@@ -172,7 +179,7 @@
             </div>
             <div class="hl-sound-head-actions">
               <button class="hl-sound-config" id="hlSoundConfig" type="button" hidden aria-expanded="false" aria-controls="hlSoundPolicyWrap"><span aria-hidden="true">⚙</span><span>Configurar</span></button>
-              <button class="hl-sound-add" id="hlSoundAdd" type="button"><span aria-hidden="true">＋</span><span>Adicionar som</span></button>
+              <button class="hl-sound-add" id="hlSoundAdd" type="button" disabled><span aria-hidden="true">＋</span><span>Adicionar som</span></button>
             </div>
           </div>
 
@@ -260,27 +267,9 @@
 
     const panel = document.getElementById("hlSocialPanel");
     const dock = document.querySelector(".hl-social-dock");
-    const socialBackdrop = document.getElementById("hlSocialBackdrop");
     const appShell = document.querySelector(".app");
     const roomFooter = document.querySelector("footer");
-
-    // No desktop o painel participa do grid da sala. Em telas menores ele vira
-    // uma camada de topo e precisa ficar diretamente no body, acima do header
-    // e do backdrop. Isso evita que elementos de outros stacking contexts
-    // capturem os toques do Voice/Soundboard.
-    const socialLayerQuery = window.matchMedia("(max-width: 920px)");
-    function syncSocialLayerParent() {
-        if (!panel) return;
-        if (socialLayerQuery.matches) {
-            if (socialBackdrop && socialBackdrop.parentElement !== document.body) document.body.appendChild(socialBackdrop);
-            if (panel.parentElement !== document.body) document.body.appendChild(panel);
-        } else {
-            if (socialBackdrop && socialBackdrop.parentElement !== document.body) document.body.appendChild(socialBackdrop);
-            if (appShell && panel.parentElement !== appShell) appShell.appendChild(panel);
-        }
-    }
-    syncSocialLayerParent();
-    socialLayerQuery.addEventListener?.("change", syncSocialLayerParent);
+    if (appShell && panel) appShell.appendChild(panel);
     if (roomFooter && dock) {
         const inviteButton = document.getElementById("copy");
         if (inviteButton) roomFooter.insertBefore(dock, inviteButton);
@@ -334,9 +323,9 @@
     const soundVolume = document.getElementById("hlSoundVolume");
     const soundStop = document.getElementById("hlSoundStop");
     const soundUploadPolicy = document.getElementById("hlSoundUploadPolicy");
-    const soundAdd = document.getElementById("hlSoundAdd");
     const soundConfig = document.getElementById("hlSoundConfig");
     const soundSettingsClose = document.getElementById("hlSoundSettingsClose");
+    const soundAdd = document.getElementById("hlSoundAdd");
     const soundSearch = document.getElementById("hlSoundSearch");
     const soundFilters = document.getElementById("hlSoundFilters");
     const soundModal = document.getElementById("hlSoundModal");
@@ -621,10 +610,6 @@
             state.hostId = result.hostId || null;
             state.soundPolicy = result.soundboardPolicy || "everyone";
             state.soundUploadPolicy = result.soundUploadPolicy || "everyone";
-            const roomMode = result.roomMode || "normal";
-            state.modeIndex = Math.max(0, modes.indexOf(roomMode));
-            document.body.classList.remove(...modes.map(m => `hl-mode-${m}`));
-            if (roomMode !== "normal") document.body.classList.add(`hl-mode-${roomMode}`);
             syncCustomSounds(result.customSounds || []);
             updateHostUI();
         });
@@ -642,10 +627,6 @@
         state.hostId = data.hostId || state.hostId;
         state.soundPolicy = data.soundboardPolicy || state.soundPolicy;
         state.soundUploadPolicy = data.soundUploadPolicy || state.soundUploadPolicy;
-        const roomMode = data.roomMode || "normal";
-        state.modeIndex = Math.max(0, modes.indexOf(roomMode));
-        document.body.classList.remove(...modes.map(m => `hl-mode-${m}`));
-        if (roomMode !== "normal") document.body.classList.add(`hl-mode-${roomMode}`);
         state.apiToken = data.apiToken || state.apiToken;
         updateHostUI();
     });
@@ -738,7 +719,7 @@
         const isHost = state.role === "host";
         if (soundConfig) soundConfig.hidden = !isHost;
         if (soundPolicyWrap && !isHost) soundPolicyWrap.hidden = true;
-        if (soundPolicy) soundPolicy.value = state.soundPolicy;
+        soundPolicy.value = state.soundPolicy;
         if (soundUploadPolicy) soundUploadPolicy.value = state.soundUploadPolicy;
         const canUpload = canUploadSoundLocally();
         if (soundAdd) {
@@ -757,7 +738,7 @@
     soundConfig?.addEventListener("click", () => setSoundSettings(soundPolicyWrap?.hidden));
     soundSettingsClose?.addEventListener("click", () => setSoundSettings(false));
 
-    soundPolicy?.addEventListener("change", () => {
+    soundPolicy.addEventListener("change", () => {
         socket.emit("moderation:sound-policy", { policy: soundPolicy.value }, result => {
             if (!result?.success) toast(result?.message || "Não foi possível alterar.");
         });
@@ -842,7 +823,7 @@
         try {
             state.voiceStream = await navigator.mediaDevices.getUserMedia({ audio: { deviceId: state.selectedMicId ? { exact: state.selectedMicId } : undefined, echoCancellation: true, noiseSuppression: true, autoGainControl: true }, video: false });
             state.voiceJoined = true;
-            state.muted = sessionStorage.getItem("hl_prejoin_muted") === "1";
+            state.muted = false;
             applyMicState();
             voiceJoin.classList.add("is-connected");
             voiceJoin.querySelector("strong").textContent = "Conectado ao voz";
@@ -959,8 +940,6 @@
         }
         audio.srcObject = stream;
         audio.muted = state.deaf;
-        const baseVolume = Number(localStorage.getItem(`hl_volume_${id}`) || "1");
-        audio.volume = Math.min(1, Math.max(0, baseVolume * Number(window.HLV8VoiceMaster || 1)));
         if (state.selectedOutputId && typeof audio.setSinkId === "function") audio.setSinkId(state.selectedOutputId).catch(() => {});
         audio.play().catch(() => toast("Clique na página para liberar o áudio do voz."));
         startSpeakingMeter(id, stream);
@@ -981,14 +960,7 @@
                 analyser.getByteFrequencyData(data);
                 const avg = data.reduce((a,b) => a+b,0) / data.length;
                 const speaking = avg > 18;
-                if (speaking !== record.speaking) {
-                    record.speaking = speaking;
-                    renderVoiceList();
-                    const anySpeaking = Array.from(state.analysers.values()).some(item => item.speaking);
-                    state.ducking = localStorage.getItem("hl_smart_ducking") === "off" ? 1 : (anySpeaking ? 0.55 : 1);
-                    state.activeSounds.forEach(audio => { audio.volume = Math.min(1, Math.max(0, state.soundVolume * state.ducking)); });
-                    document.dispatchEvent(new CustomEvent("hl:voice-speaking", { detail: { speaking: anySpeaking } }));
-                }
+                if (speaking !== record.speaking) { record.speaking = speaking; renderVoiceList(); }
                 setTimeout(tick, 180);
             };
             tick();
@@ -1025,7 +997,7 @@
             row.append(avatar,info,st);
             if (user.id !== socket.id) {
                 const slider=document.createElement("input"); slider.type="range"; slider.min="0"; slider.max="1"; slider.step="0.05"; slider.value=localStorage.getItem(`hl_volume_${user.id}`)||"1"; slider.className="hl-volume";
-                slider.addEventListener("input",()=>{ const audio=state.voiceAudio.get(user.id); if(audio) audio.volume=Math.min(1, Number(slider.value) * Number(window.HLV8VoiceMaster || 1)); localStorage.setItem(`hl_volume_${user.id}`,slider.value); });
+                slider.addEventListener("input",()=>{ const audio=state.voiceAudio.get(user.id); if(audio) audio.volume=Number(slider.value); localStorage.setItem(`hl_volume_${user.id}`,slider.value); });
                 row.appendChild(slider);
             }
             voiceList.appendChild(row);
@@ -1206,7 +1178,7 @@
     soundVolume.addEventListener("input", () => {
         state.soundVolume = Number(soundVolume.value);
         localStorage.setItem("hl_sound_volume", String(state.soundVolume));
-        state.activeSounds.forEach(audio => { audio.volume = Math.min(1, state.soundVolume * state.ducking); });
+        state.activeSounds.forEach(audio => { audio.volume = state.soundVolume; });
         syncSoundVolumeUI();
     });
 
@@ -1237,7 +1209,7 @@
         if (!item) return false;
         const audio = new Audio(item.url);
         audio.preload = "auto";
-        audio.volume = Math.min(1, Math.max(0, state.soundVolume * state.ducking));
+        audio.volume = Math.min(1, Math.max(0, state.soundVolume));
         state.activeSounds.add(audio);
         rememberRecentSound(id);
         const cleanup = () => state.activeSounds.delete(audio);
@@ -1503,55 +1475,92 @@
 
     renderSoundGrid();
 
-    // Reactions / modes -------------------------------------
+    // Reactions / more -------------------------------------
     const reactionQuick = document.getElementById("hlReactionQuick");
     const reactionPicker = document.getElementById("hlReactionPicker");
+    const moreQuick = document.getElementById("hlModeQuick");
+    const moreMenu = document.getElementById("hlMoreMenu");
+
     const closeReactionPicker = () => {
         if (!reactionPicker) return;
         reactionPicker.hidden = true;
         state.reactionPickerOpen = false;
         reactionQuick?.classList.remove("is-active");
     };
+
+    const closeMoreMenu = () => {
+        if (!moreMenu) return;
+        moreMenu.hidden = true;
+        moreQuick?.classList.remove("is-active");
+        moreQuick?.setAttribute("aria-expanded", "false");
+    };
+
+    function showFloatingReaction(emoji) {
+        const host = document.getElementById("hlFloatingReactions");
+        if (!host || !emoji) return;
+        const el = document.createElement("div");
+        el.className = "hl-floating-reaction hl-v9-reaction";
+        el.textContent = emoji;
+        el.style.setProperty("--hl-reaction-x", `${Math.floor(Math.random() * 56) - 28}px`);
+        host.appendChild(el);
+        setTimeout(() => el.remove(), 1650);
+    }
+
     reactionQuick?.addEventListener("click", event => {
         event.stopPropagation();
+        closeMoreMenu();
         state.reactionPickerOpen = !state.reactionPickerOpen;
         reactionPicker.hidden = !state.reactionPickerOpen;
         reactionQuick.classList.toggle("is-active", state.reactionPickerOpen);
     });
-    reactionPicker?.querySelectorAll("[data-reaction]").forEach(button => button.addEventListener("click", () => {
-        socket.emit("reaction:send", { emoji: button.dataset.reaction });
+
+    reactionPicker?.querySelectorAll("[data-reaction]").forEach(button => button.addEventListener("click", event => {
+        event.stopPropagation();
+        const emoji = button.dataset.reaction;
+        showFloatingReaction(emoji);
+        socket.emit("reaction:send", { emoji }, result => {
+            if (result && result.success === false) toast(result.message || "Não foi possível enviar a reação.");
+        });
         closeReactionPicker();
     }));
+
+    moreQuick?.setAttribute("aria-expanded", "false");
+    moreQuick?.addEventListener("click", event => {
+        event.stopPropagation();
+        closeReactionPicker();
+        const open = moreMenu?.hidden !== false;
+        if (moreMenu) moreMenu.hidden = !open;
+        moreQuick.classList.toggle("is-active", open);
+        moreQuick.setAttribute("aria-expanded", open ? "true" : "false");
+    });
+
+    moreMenu?.querySelectorAll("[data-more-action]").forEach(button => button.addEventListener("click", async event => {
+        event.stopPropagation();
+        const action = button.dataset.moreAction;
+        if (["normal", "focus", "cinema", "social"].includes(action)) {
+            document.body.classList.remove(...modes.map(m => `hl-mode-${m}`));
+            if (action !== "normal") document.body.classList.add(`hl-mode-${action}`);
+            state.modeIndex = Math.max(0, modes.indexOf(action));
+            toast(`Modo ${action}.`);
+        } else if (action === "invite") {
+            document.getElementById("copy")?.click();
+        }
+        closeMoreMenu();
+    }));
+
     document.addEventListener("click", event => {
         if (state.reactionPickerOpen && !reactionPicker?.contains(event.target) && event.target !== reactionQuick) closeReactionPicker();
-    });
-    socket.on("reaction:show",data=>{
-        const host=document.getElementById("hlFloatingReactions"); if(!host)return;
-        const el=document.createElement("div"); el.className="hl-floating-reaction"; el.textContent=data.emoji; el.style.right=`${Math.floor(Math.random()*70)}px`; host.appendChild(el); setTimeout(()=>el.remove(),1900);
+        if (!moreMenu?.hidden && !moreMenu.contains(event.target) && event.target !== moreQuick) closeMoreMenu();
     });
 
-    function applyRoomMode(mode, quiet = false) {
-        if (!modes.includes(mode)) mode = "normal";
-        document.body.classList.remove(...modes.map(m => `hl-mode-${m}`));
-        if (mode !== "normal") document.body.classList.add(`hl-mode-${mode}`);
-        state.modeIndex = Math.max(0, modes.indexOf(mode));
-        if (!quiet) toast(`Modo ${mode}.`);
-    }
-
-    document.getElementById("hlModeQuick").addEventListener("click",()=>{
-        const nextIndex=(state.modeIndex+1)%modes.length;
-        const mode=modes[nextIndex];
-        if (state.role === "host" || state.role === "moderator") {
-            socket.emit("room:mode", { mode }, result => {
-                if (!result?.success) return toast(result?.message || "Não foi possível alterar o modo.");
-                applyRoomMode(mode);
-            });
-        } else {
-            applyRoomMode(mode);
-        }
+    document.addEventListener("keydown", event => {
+        if (event.key === "Escape") { closeReactionPicker(); closeMoreMenu(); }
     });
 
-    socket.on("room:mode", data => applyRoomMode(data?.mode || "normal", true));
+    socket.on("reaction:show", data => {
+        if (data?.senderId === socket.id) return;
+        showFloatingReaction(data?.emoji);
+    });
 
     // Connection / reconnect --------------------------------
     socket.on("connect",()=>{ if (connectionPill) { connectionPill.textContent="Conectado"; connectionPill.dataset.state="online"; } if(state.voiceJoined && state.voiceStream){ state.voicePeers.forEach((_,id)=>closeVoicePeer(id)); socket.emit("voice:join",{},async result=>{ for(const peer of result?.peers||[]) await createVoiceOffer(peer.id); }); } });

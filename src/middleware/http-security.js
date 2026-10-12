@@ -35,7 +35,7 @@ function registerHttpSecurity({ app, express }) {
     app.use((req, res, next) => {
         res.setHeader(
             "Permissions-Policy",
-            "camera=(), microphone=(self), display-capture=(self), fullscreen=(self), autoplay=(self), clipboard-write=(self), screen-wake-lock=(self), picture-in-picture=(self), geolocation=()"
+            "camera=(), microphone=(self), display-capture=(self), fullscreen=(self), autoplay=(self), clipboard-write=(self), geolocation=()"
         );
         res.setHeader("X-Permitted-Cross-Domain-Policies", "none");
         next();

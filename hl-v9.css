@@ -1,0 +1,65 @@
+/* HL Activity V9 — stable polish built from V7 */
+
+/* Reações pequenas, visíveis e sem bloquear o palco. */
+#stage { position: relative; }
+.hl-floating-reactions {
+  position: absolute !important;
+  inset: auto 18px 18px auto !important;
+  width: 140px !important;
+  height: 180px !important;
+  z-index: 80 !important;
+  pointer-events: none !important;
+  overflow: visible !important;
+}
+.hl-floating-reaction.hl-v9-reaction {
+  right: 18px !important;
+  bottom: 8px !important;
+  font-size: clamp(22px, 2.3vw, 30px) !important;
+  line-height: 1 !important;
+  filter: drop-shadow(0 5px 12px rgba(0,0,0,.35));
+  animation: hlV9Reaction 1.55s cubic-bezier(.2,.7,.25,1) forwards !important;
+}
+@keyframes hlV9Reaction {
+  0% { opacity:0; transform:translate3d(0,10px,0) scale(.72); }
+  14% { opacity:1; transform:translate3d(0,0,0) scale(1); }
+  72% { opacity:1; }
+  100% { opacity:0; transform:translate3d(var(--hl-reaction-x,0),-92px,0) scale(1.08); }
+}
+
+/* Mais agora é um menu real, não um botão decorativo. */
+.hl-more-menu {
+  position: fixed;
+  z-index: 1300;
+  left: 18px;
+  bottom: 84px;
+  width: min(240px, calc(100vw - 32px));
+  padding: 8px;
+  border: 1px solid rgba(93,119,190,.24);
+  border-radius: 16px;
+  background: rgba(8,13,23,.98);
+  box-shadow: 0 18px 55px rgba(0,0,0,.46);
+  backdrop-filter: blur(18px);
+}
+.hl-more-menu[hidden] { display:none !important; }
+.hl-more-menu button {
+  width:100%; min-height:42px; display:flex; align-items:center; gap:10px;
+  border:0; border-radius:11px; padding:0 12px; background:transparent; color:#cdd7eb; cursor:pointer; text-align:left;
+}
+.hl-more-menu button:hover { background:rgba(75,103,213,.12); color:#fff; }
+.hl-more-menu button span { width:22px; text-align:center; }
+.hl-more-menu button b { font:700 11px/1 system-ui,sans-serif; }
+
+/* Mobile: soundboard realmente em uma coluna, sem rodapé cobrindo card. */
+@media (max-width: 650px) {
+  .hl-sound-view { overflow-y:auto !important; overflow-x:hidden !important; overscroll-behavior:contain; padding-bottom:18px !important; }
+  .hl-sound-grid { display:grid !important; grid-template-columns:1fr !important; gap:10px !important; overflow:visible !important; max-height:none !important; padding:0 12px 14px !important; }
+  .hl-sound-card { width:100% !important; min-width:0 !important; margin:0 !important; }
+  .hl-sound-help { position:static !important; display:block !important; margin:0 12px 8px !important; padding:10px 2px 0 !important; background:transparent !important; border-top:1px solid rgba(255,255,255,.045) !important; }
+  .hl-sound-actions { gap:7px !important; }
+  .hl-sound-actions button { min-height:38px !important; }
+  .hl-more-menu { left:12px; bottom:74px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hl-floating-reaction.hl-v9-reaction { animation-duration:.8s !important; }
+}

@@ -1,8 +1,3 @@
-
-## V8.2 — Hotfix de interação mobile
-
-Corrige uma regressão em que o backdrop do painel social podia interceptar os toques de Voz e Soundboard em telas menores. O painel social agora usa a camada correta no mobile, os seis sons padrão continuam disponíveis e `Adicionar som` não nasce travado.
-
 # HL Activity V7
 
 HL Activity é um aplicativo de salas sociais em tempo real com transmissão de tela, chat, voz WebRTC, Soundboard HL e integração com Discord Activity.
@@ -163,40 +158,3 @@ HL_ALLOWED_ORIGINS=
 ## TURN
 
 A base continua com STUN público. Para maior confiabilidade entre NATs/redes restritivas, configure TURN em uma próxima etapa e conecte as credenciais ao RTC antes de anunciar o recurso como ativo.
-
----
-
-## HL Activity V8 — App, confiança e sala inteligente
-
-A V8 mantém a base visual/segurança da V7 e adiciona uma camada de produto focada em uso real com amigos:
-
-- PWA instalável no PC/celular;
-- pré-entrada com teste de microfone;
-- sala de espera seletiva;
-- convite confiável para amigos/convidados que podem entrar direto;
-- modos Normal, Cinema, Jogatina e Estudo;
-- mixer local de transmissão e voz;
-- smart ducking do Soundboard enquanto alguém fala;
-- painel de diagnóstico;
-- Picture-in-Picture e Screen Wake Lock quando suportados;
-- atalhos e command palette (`Ctrl+K`);
-- salas recentes locais;
-- preservação de toda a segurança, voz, streaming, chat e Soundboard Pro anteriores.
-
-### Entrada seletiva
-
-O HL não finge possuir um sistema de amizade sem identidade persistente. O host pode escolher:
-
-- `Automática para todos`;
-- `Aprovar desconhecidos`;
-- `Aprovar todos`.
-
-No modo `Aprovar desconhecidos`, um **convite confiável** gerado pelo host contém um token aleatório validado no servidor. Quem recebe esse link entra direto; código/link comum vai para aprovação.
-
-### PWA
-
-A instalação usa `manifest.webmanifest` + service worker próprio. API, Socket.IO e dados dinâmicos de sala não são servidos pelo cache offline. O service worker é voltado apenas ao shell/arquivos estáticos.
-
-### Limitações honestas
-
-A V8 não cria uma lista permanente de amigos, porque isso exigiria uma identidade persistente real (conta/Discord/banco). Também não persiste sons personalizados após reinício do Render sem storage externo. Esses recursos devem ser ligados a banco/storage quando a infraestrutura for definida.

@@ -1,7 +1,7 @@
 {
   "name": "hl-activity",
-  "version": "8.2.0",
-  "description": "HL Activity V8.2 - hotfix de interação mobile para voz e Soundboard, mantendo PWA e segurança.",
+  "version": "7.0.0",
+  "description": "HL Activity V7 - redesign 10/10 desktop/mobile com Soundboard Pro, voz, chat e hardening de segurança.",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",

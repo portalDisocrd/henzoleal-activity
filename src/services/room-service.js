@@ -21,10 +21,6 @@ function createRoomService({ maxRooms, emptyRoomTtl }) {
             hostTokenHash: hashToken(hostToken),
             hostClaimedAt: null,
             locked: false,
-            entryPolicy: "auto",
-            roomMode: "normal",
-            trustedInviteHash: null,
-            pendingGuests: new Map(),
             soundboardPolicy: "everyone",
             soundUploadPolicy: "everyone",
             customSounds: new Map(),
@@ -40,21 +36,6 @@ function createRoomService({ maxRooms, emptyRoomTtl }) {
     function verifyHostToken(code, token) {
         const room = rooms.get(code);
         return Boolean(room && safeTokenMatch(token, room.hostTokenHash));
-    }
-
-
-    function createTrustedInvite(code) {
-        const room = rooms.get(code);
-        if (!room) return null;
-        const token = randomToken(24);
-        room.trustedInviteHash = hashToken(token);
-        room.lastActivity = Date.now();
-        return token;
-    }
-
-    function verifyTrustedInvite(code, token) {
-        const room = rooms.get(code);
-        return Boolean(room && room.trustedInviteHash && safeTokenMatch(token, room.trustedInviteHash));
     }
 
     function audit(code, entry) {
@@ -98,7 +79,7 @@ function createRoomService({ maxRooms, emptyRoomTtl }) {
     }
 
     return {
-        size, has, get, create, verifyHostToken, createTrustedInvite, verifyTrustedInvite, audit,
+        size, has, get, create, verifyHostToken, audit,
         remove, entries, markActivity, removeIfEmpty, cleanupExpired
     };
 }
