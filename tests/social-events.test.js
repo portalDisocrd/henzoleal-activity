@@ -31,7 +31,7 @@ test("chat envia mensagem com id e historico limitado", () => {
     const io = fakeIo();
     const socket = fakeSocket("s1");
     const room = { users: new Map([["s1", { name: "Lucas", avatar: "😎", role: "host" }]]), messages: [], lastActivity: 0 };
-    const roomService = { get: () => room };
+    const roomService = { get: () => room, audit: () => true };
     const chat = createChatEvents({ io, roomService, allowSocketEvent: () => true, normalizeText, updateParticipants: () => {} });
     chat.register(socket);
     let result;
@@ -56,7 +56,7 @@ test("soundboard respeita politica da sala", () => {
             ["member", { name: "Membro", role: "member" }]
         ])
     };
-    const roomService = { get: () => room };
+    const roomService = { get: () => room, audit: () => true };
     const sockets = new Map([["host", host], ["member", member]]);
     const getSafeTargetSocket = (source, target) => target !== source.id ? sockets.get(target) : null;
     const factory = createSocialEvents({ io, roomService, allowSocketEvent: () => true, getSafeTargetSocket, normalizeText });

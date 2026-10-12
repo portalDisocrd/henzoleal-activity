@@ -17,7 +17,7 @@
         "offer",
         data => {
 
-            if (!allowSocketEvent(socket)) {
+            if (!allowSocketEvent(socket, "stream:signal")) {
                 return;
             }
 
@@ -95,7 +95,7 @@
         "answer",
         data => {
 
-            if (!allowSocketEvent(socket)) {
+            if (!allowSocketEvent(socket, "stream:signal")) {
                 return;
             }
 
@@ -170,7 +170,7 @@
         "ice-candidate",
         data => {
 
-            if (!allowSocketEvent(socket)) {
+            if (!allowSocketEvent(socket, "stream:signal")) {
                 return;
             }
 

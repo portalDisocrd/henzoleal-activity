@@ -158,75 +158,7 @@ function registerPageRoutes({
 
                 return res
                     .status(404)
-                    .send(`
-<!DOCTYPE html>
-
-<html lang="pt-BR">
-
-<head>
-
-<meta charset="UTF-8">
-
-<meta
-    name="viewport"
-    content="width=device-width, initial-scale=1.0"
->
-
-<title>Sala não encontrada</title>
-
-<style>
-
-body {
-    margin: 0;
-    min-height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: #08080b;
-    color: white;
-    font-family: Arial, sans-serif;
-}
-
-.box {
-    text-align: center;
-}
-
-a {
-    display: inline-block;
-    margin-top: 20px;
-    padding: 13px 20px;
-    background: #5865f2;
-    color: white;
-    border-radius: 10px;
-    text-decoration: none;
-}
-
-</style>
-
-</head>
-
-<body>
-
-<div class="box">
-
-<h1>
-Sala não encontrada
-</h1>
-
-<p>
-Essa sala não existe ou já foi encerrada.
-</p>
-
-<a href="/">
-Voltar
-</a>
-
-</div>
-
-</body>
-
-</html>
-                `);
+                    .sendFile(path.join(rootDir, "not-found.html"));
 
             }
 

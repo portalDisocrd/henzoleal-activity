@@ -1,7 +1,7 @@
 {
   "name": "hl-activity",
-  "version": "5.0.0",
-  "description": "HL Activity - salas sociais em tempo real com streaming, voz, chat, soundboard e interface V5 responsiva.",
+  "version": "6.0.0",
+  "description": "HL Activity V6 - salas sociais em tempo real com streaming, voz, chat, Soundboard Pro e hardening de segurança.",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",

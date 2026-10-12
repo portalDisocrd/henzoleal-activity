@@ -39,30 +39,47 @@ const { createSocialEvents } = require("./src/socket/social-events");
 const { registerRoomRoutes } = require("./src/routes/room-routes");
 const { registerPageRoutes } = require("./src/routes/page-routes");
 const { registerAuthRoutes } = require("./src/routes/auth-routes");
+const { registerCustomSoundRoutes } = require("./src/routes/custom-sound-routes");
 const { createRateLimiters } = require("./src/middleware/rate-limiters");
 const { registerHttpSecurity } = require("./src/middleware/http-security");
 const { registerStaticFiles } = require("./src/middleware/static-files");
 const { registerFinalHandlers } = require("./src/middleware/final-handlers");
+const { registerRequestContext } = require("./src/security/request-context");
+const { createOriginGuard, isTrustedSocketOrigin } = require("./src/security/origin-guard");
+const { createSocketConnectionGuard } = require("./src/security/socket-security");
 
 const app = express();
 const server = http.createServer(app);
+server.headersTimeout = 12000;
+server.requestTimeout = 20000;
+server.keepAliveTimeout = 5000;
+server.maxRequestsPerSocket = 500;
+
 const io = new Server(server, {
     path: "/api/socket.io",
     maxHttpBufferSize: MAX_SOCKET_PAYLOAD,
     pingTimeout: 20000,
-    pingInterval: 25000
+    pingInterval: 25000,
+    perMessageDeflate: false,
+    allowRequest: (req, callback) => callback(null, isTrustedSocketOrigin(req))
 });
 
 app.set("trust proxy", 1);
+registerRequestContext(app);
 registerHttpSecurity({ app, express });
 
-const { apiLimiter, createRoomLimiter } = createRateLimiters();
+const originGuard = createOriginGuard();
+app.use("/api", originGuard);
+
+const { apiLimiter, createRoomLimiter, oauthLimiter, soundUploadLimiter } = createRateLimiters();
 app.use("/api", apiLimiter);
 
 const roomService = createRoomService({ maxRooms: MAX_ROOMS, emptyRoomTtl: EMPTY_ROOM_TTL });
 const { updateParticipants } = createParticipantManager({ io, roomService });
 const { getSafeTargetSocket } = createSocketGuard({ io });
-const { allowSocketEvent } = createSocketRateLimiter({ maxEvents: 250, windowMs: 10000 });
+const { allowSocketEvent } = createSocketRateLimiter({ maxEvents: 180, windowMs: 10000 });
+const { middleware: socketConnectionGuard } = createSocketConnectionGuard({ maxPerIp: 12 });
+io.use(socketConnectionGuard);
 
 const chatEvents = createChatEvents({ io, roomService, allowSocketEvent, normalizeText, updateParticipants });
 const voiceEvents = createVoiceEvents({ io, roomService, allowSocketEvent, getSafeTargetSocket, isPlainObject, isValidDescription, isValidCandidate });
@@ -75,7 +92,8 @@ app.get("/health", (req, res) => {
 registerStaticFiles({ app, express, rootDir: __dirname });
 registerRoomRoutes({ app, roomService, createRoomLimiter, sanitizeRoomCode, isValidRoomCode });
 registerPageRoutes({ app, rootDir: __dirname, roomService, sanitizeRoomCode, isValidRoomCode });
-registerAuthRoutes({ app });
+registerAuthRoutes({ app, oauthLimiter });
+registerCustomSoundRoutes({ app, express, io, roomService, sanitizeRoomCode, isValidRoomCode, soundUploadLimiter });
 
 io.on("connection", socket => {
     console.log("[SOCKET] conectado", socket.id);

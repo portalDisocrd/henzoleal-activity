@@ -1,4 +1,5 @@
 const { generateRoomCode } = require("../utils/room-utils");
+const { randomToken, hashToken, safeTokenMatch } = require("../security/security-utils");
 
 function createRoomService({ maxRooms, emptyRoomTtl }) {
     const rooms = new Map();
@@ -11,18 +12,39 @@ function createRoomService({ maxRooms, emptyRoomTtl }) {
         if (rooms.size >= maxRooms) return { success: false, reason: "limit" };
         const code = generateRoomCode(rooms);
         const now = Date.now();
+        const hostToken = randomToken(32);
         const room = {
             createdAt: now,
             lastActivity: now,
             emptySince: now,
             hostId: null,
+            hostTokenHash: hashToken(hostToken),
+            hostClaimedAt: null,
             locked: false,
             soundboardPolicy: "everyone",
+            soundUploadPolicy: "everyone",
+            customSounds: new Map(),
+            customSoundBytes: 0,
             users: new Map(),
-            messages: []
+            messages: [],
+            auditLog: []
         };
         rooms.set(code, room);
-        return { success: true, code, room };
+        return { success: true, code, room, hostToken };
+    }
+
+    function verifyHostToken(code, token) {
+        const room = rooms.get(code);
+        return Boolean(room && safeTokenMatch(token, room.hostTokenHash));
+    }
+
+    function audit(code, entry) {
+        const room = rooms.get(code);
+        if (!room) return false;
+        room.auditLog ||= [];
+        room.auditLog.push({ at: Date.now(), ...entry });
+        if (room.auditLog.length > 120) room.auditLog.splice(0, room.auditLog.length - 120);
+        return true;
     }
 
     function remove(code) { return rooms.delete(code); }
@@ -56,7 +78,10 @@ function createRoomService({ maxRooms, emptyRoomTtl }) {
         return removed;
     }
 
-    return { size, has, get, create, remove, entries, markActivity, removeIfEmpty, cleanupExpired };
+    return {
+        size, has, get, create, verifyHostToken, audit,
+        remove, entries, markActivity, removeIfEmpty, cleanupExpired
+    };
 }
 
 module.exports = { createRoomService };

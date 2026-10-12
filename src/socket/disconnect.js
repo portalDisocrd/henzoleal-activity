@@ -1,5 +1,5 @@
 function registerDisconnect({ socket, roomService, updateParticipants }) {
-    socket.on("disconnect", () => {
+    socket.on("disconnect", reason => {
         const roomCode = socket.data.roomCode;
         if (!roomCode) return;
 
@@ -10,6 +10,12 @@ function registerDisconnect({ socket, roomService, updateParticipants }) {
         const wasVoice = Boolean(user?.voiceJoined);
         room.users.delete(socket.id);
         room.lastActivity = Date.now();
+        roomService.audit(roomCode, {
+            type: "leave",
+            actorId: socket.id,
+            actorName: user?.name || "Usuário",
+            reason: String(reason || "disconnect").slice(0, 60)
+        });
 
         socket.to(roomCode).emit("user-left", socket.id);
         socket.to(roomCode).emit("stream-stopped", socket.id);
@@ -20,6 +26,7 @@ function registerDisconnect({ socket, roomService, updateParticipants }) {
             if (next) {
                 room.hostId = next[0];
                 next[1].role = "host";
+                roomService.audit(roomCode, { type: "host-transfer", actorId: next[0], actorName: next[1].name });
                 socket.to(roomCode).emit("room:host-changed", { hostId: room.hostId });
             } else {
                 room.hostId = null;

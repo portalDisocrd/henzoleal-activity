@@ -416,6 +416,10 @@ createButton.addEventListener(
             }
 
 
+            if (data.hostToken) {
+                sessionStorage.setItem(`hl_host_token_${data.code}`, data.hostToken);
+            }
+
             openRoom(
                 data.code
             );

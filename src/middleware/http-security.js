@@ -1,110 +1,47 @@
-﻿const helmet =
-    require("helmet");
+const helmet = require("helmet");
 
+function registerHttpSecurity({ app, express }) {
+    app.disable("x-powered-by");
 
-function registerHttpSecurity({
-    app,
-    express
-}) {
-
-    // Esconder informacao de tecnologia
-    app.disable(
-        "x-powered-by"
-    );
-
-
-    // =============================================
-    // HEADERS DE SEGURANCA
-    // =============================================
-
-    app.use(
-        helmet({
-
-            crossOriginEmbedderPolicy:
-                false,
-
-            // A Activity roda dentro de um iframe do Discord.
-            // A CSP abaixo controla quais sites podem incorporar.
-            xFrameOptions:
-                false,
-
-            contentSecurityPolicy: {
-
-                directives: {
-
-                    defaultSrc: [
-                        "'self'"
-                    ],
-
-                    scriptSrc: [
-                        "'self'",
-                        "'unsafe-inline'"
-                    ],
-
-                    styleSrc: [
-                        "'self'",
-                        "'unsafe-inline'"
-                    ],
-
-                    imgSrc: [
-                        "'self'",
-                        "data:",
-                        "https:"
-                    ],
-
-                    connectSrc: [
-                        "'self'",
-                        "ws:",
-                        "wss:"
-                    ],
-
-                    mediaSrc: [
-                        "'self'",
-                        "blob:"
-                    ],
-
-                    fontSrc: [
-                        "'self'",
-                        "data:"
-                    ],
-
-                    objectSrc: [
-                        "'none'"
-                    ],
-
-                    baseUri: [
-                        "'self'"
-                    ],
-
-                    frameAncestors: [
-                        "'self'",
-                        "https://discord.com",
-                        "https://*.discord.com"
-                    ]
-
-                }
-
+    app.use(helmet({
+        crossOriginEmbedderPolicy: false,
+        crossOriginOpenerPolicy: false,
+        crossOriginResourcePolicy: { policy: "same-origin" },
+        referrerPolicy: { policy: "strict-origin-when-cross-origin" },
+        xFrameOptions: false,
+        contentSecurityPolicy: {
+            useDefaults: true,
+            directives: {
+                defaultSrc: ["'self'"],
+                scriptSrc: ["'self'"],
+                scriptSrcAttr: ["'none'"],
+                styleSrc: ["'self'"],
+                // A UI usa style.* para posições/volumes/reações; blocos <style> foram removidos.
+                styleSrcAttr: ["'unsafe-inline'"],
+                imgSrc: ["'self'", "data:", "https://cdn.discordapp.com", "https://media.discordapp.net", "https://*.discordapp.com", "https://*.discordapp.net"],
+                connectSrc: ["'self'", "ws:", "wss:", "https://discord.com", "https://*.discord.com"],
+                mediaSrc: ["'self'", "blob:"],
+                fontSrc: ["'self'", "data:"],
+                objectSrc: ["'none'"],
+                baseUri: ["'self'"],
+                formAction: ["'self'"],
+                workerSrc: ["'self'", "blob:"],
+                frameAncestors: ["'self'", "https://discord.com", "https://*.discord.com"],
+                upgradeInsecureRequests: process.env.NODE_ENV === "production" ? [] : null
             }
+        }
+    }));
 
-        })
-    );
+    app.use((req, res, next) => {
+        res.setHeader(
+            "Permissions-Policy",
+            "camera=(), microphone=(self), display-capture=(self), fullscreen=(self), autoplay=(self), clipboard-write=(self), geolocation=()"
+        );
+        res.setHeader("X-Permitted-Cross-Domain-Policies", "none");
+        next();
+    });
 
-
-    // =============================================
-    // JSON
-    // =============================================
-
-    app.use(
-        express.json({
-            limit:
-                "16kb"
-        })
-    );
-
+    app.use(express.json({ limit: "20kb", strict: true, type: "application/json" }));
 }
 
-
-module.exports = {
-    registerHttpSecurity
-};
-
+module.exports = { registerHttpSecurity };

@@ -15,7 +15,8 @@
 
             if (
                 !allowSocketEvent(
-                    socket
+                    socket,
+                    "stream:signal"
                 )
             ) {
                 return;
@@ -77,7 +78,8 @@
 
             if (
                 !allowSocketEvent(
-                    socket
+                    socket,
+                    "stream:signal"
                 )
             ) {
                 return;

@@ -3,11 +3,24 @@
 
     if (typeof socket === "undefined") return;
 
+    function storedArray(key) {
+        try {
+            const value = JSON.parse(localStorage.getItem(key) || "[]");
+            return Array.isArray(value) ? value.filter(item => typeof item === "string").slice(0, 40) : [];
+        } catch {
+            return [];
+        }
+    }
+
+    const savedSoundVolume = Number(localStorage.getItem("hl_sound_volume"));
+
     const state = {
         bootstrapped: false,
         role: "member",
         hostId: null,
         soundPolicy: "everyone",
+        soundUploadPolicy: "everyone",
+        apiToken: "",
         participants: new Map(),
         messages: new Map(),
         replyTo: null,
@@ -27,12 +40,16 @@
         soundContext: null,
         soundCooldownUntil: 0,
         activeSounds: new Set(),
-        soundVolume: Number(localStorage.getItem("hl_sound_volume") || 0.72),
+        soundVolume: Number.isFinite(savedSoundVolume) ? Math.min(1, Math.max(0, savedSoundVolume)) : 0.72,
         soundBlockedToastAt: 0,
         unreadChat: 0,
         selectedMicId: localStorage.getItem("hl_voice_mic") || "",
         selectedOutputId: localStorage.getItem("hl_voice_output") || "",
-        reactionPickerOpen: false
+        reactionPickerOpen: false,
+        soundFavorites: new Set(storedArray("hl_sound_favorites")),
+        recentSounds: storedArray("hl_sound_recent"),
+        soundSearch: "",
+        soundCategory: "all"
     };
 
     const modes = ["normal", "focus", "social", "cinema"];
@@ -151,8 +168,9 @@
               <div class="hl-section-title">Soundboard HL</div>
               <div class="hl-section-subtitle">Ouça aqui ou compartilhe com a sala.</div>
             </div>
-            <div class="hl-sound-pulse" aria-hidden="true"></div>
+            <button class="hl-sound-add" id="hlSoundAdd" type="button" disabled><span aria-hidden="true">＋</span><span>Adicionar som</span></button>
           </div>
+
           <div class="hl-sound-policy" id="hlSoundPolicyWrap" hidden>
             <label><span>Quem pode tocar</span>
               <select id="hlSoundPolicy" aria-label="Permissão do soundboard">
@@ -162,7 +180,26 @@
                 <option value="disabled">Desativado</option>
               </select>
             </label>
+            <label><span>Quem pode adicionar</span>
+              <select id="hlSoundUploadPolicy" aria-label="Permissão para adicionar sons">
+                <option value="everyone">Todos podem adicionar</option>
+                <option value="moderators">Host e moderadores</option>
+                <option value="hostOnly">Somente host</option>
+                <option value="disabled">Uploads desativados</option>
+              </select>
+            </label>
           </div>
+
+          <div class="hl-sound-library-tools">
+            <label class="hl-sound-search"><span aria-hidden="true">⌕</span><input id="hlSoundSearch" type="search" maxlength="40" placeholder="Buscar som..." autocomplete="off" aria-label="Buscar sons"></label>
+            <div class="hl-sound-filters" id="hlSoundFilters" aria-label="Categorias de sons">
+              <button type="button" data-sound-filter="all" class="is-active">Todos</button>
+              <button type="button" data-sound-filter="favorites">★ Favoritos</button>
+              <button type="button" data-sound-filter="custom">Meus sons</button>
+              <button type="button" data-sound-filter="recent">Recentes</button>
+            </div>
+          </div>
+
           <div class="hl-sound-toolbar">
             <label class="hl-sound-volume-wrap">
               <span>Volume</span>
@@ -171,9 +208,41 @@
             <button class="hl-sound-stop" id="hlSoundStop" type="button">Parar</button>
           </div>
           <div class="hl-sound-grid" id="hlSoundGrid"></div>
-          <p class="hl-sound-help"><strong>Ouvir aqui</strong> é privado. <strong>Tocar na sala</strong> envia o efeito aos participantes autorizados.</p>
+          <p class="hl-sound-help"><strong>Ouvir aqui</strong> é privado. <strong>Tocar na sala</strong> envia o efeito aos participantes autorizados. Sons adicionados ficam disponíveis apenas enquanto esta sala estiver ativa.</p>
         </div>
-      </section>`;
+      </section>
+
+      <div class="hl-sound-modal" id="hlSoundModal" hidden>
+        <button class="hl-sound-modal-backdrop" id="hlSoundModalBackdrop" type="button" aria-label="Fechar adicionar som"></button>
+        <section class="hl-sound-modal-card" role="dialog" aria-modal="true" aria-labelledby="hlSoundModalTitle">
+          <div class="hl-sound-modal-head">
+            <div><span class="hl-modal-kicker">SOUNDBOARD HL</span><h3 id="hlSoundModalTitle">Adicionar som</h3></div>
+            <button type="button" class="hl-sound-modal-close" id="hlSoundModalClose" aria-label="Fechar">×</button>
+          </div>
+          <div class="hl-sound-upload-drop" id="hlSoundDrop">
+            <input id="hlSoundFile" type="file" accept="audio/*,.mp3,.wav,.ogg,.webm,.m4a" hidden>
+            <div class="hl-upload-icon" aria-hidden="true">♫</div>
+            <strong>Escolha um áudio</strong>
+            <span>MP3, WAV, OGG, WebM ou M4A • você recorta até 15 segundos</span>
+            <button type="button" id="hlSoundChooseFile">Selecionar arquivo</button>
+          </div>
+          <div class="hl-sound-editor" id="hlSoundEditor" hidden>
+            <div class="hl-sound-editor-meta"><strong id="hlSoundFileName">Áudio selecionado</strong><span id="hlSoundFileInfo"></span></div>
+            <div class="hl-sound-trim-row">
+              <label><span>Início</span><input id="hlSoundStart" type="range" min="0" max="0" step="0.1" value="0"><b id="hlSoundStartLabel">0.0s</b></label>
+              <label><span>Duração</span><input id="hlSoundDuration" type="range" min="0.2" max="15" step="0.1" value="5"><b id="hlSoundDurationLabel">5.0s</b></label>
+            </div>
+            <div class="hl-sound-editor-actions"><button type="button" id="hlSoundPreview">▶ Prévia do trecho</button><button type="button" id="hlSoundPreviewStop">■ Parar</button></div>
+            <div class="hl-sound-fields">
+              <label><span>Nome</span><input id="hlSoundName" maxlength="40" placeholder="Ex.: Risada"></label>
+              <label><span>Categoria</span><select id="hlSoundCategory"><option>Memes</option><option>Reações</option><option>Vitória</option><option>Falha</option><option>Suspense</option><option>Outros</option></select></label>
+              <label><span>Emoji</span><input id="hlSoundEmoji" maxlength="8" value="🔊" aria-label="Emoji do som"></label>
+            </div>
+            <div class="hl-upload-security"><span aria-hidden="true">🔒</span><p>O trecho é convertido no seu navegador para WAV curto e o servidor valida formato, duração e tamanho novamente antes de aceitar.</p></div>
+            <div class="hl-sound-modal-actions"><button type="button" id="hlSoundCancel">Cancelar</button><button type="button" class="is-primary" id="hlSoundUpload">Adicionar à sala</button></div>
+          </div>
+        </section>
+      </div>`;
 
     document.body.insertAdjacentHTML("beforeend", html);
 
@@ -234,6 +303,16 @@
     const soundPolicyWrap = document.getElementById("hlSoundPolicyWrap");
     const soundVolume = document.getElementById("hlSoundVolume");
     const soundStop = document.getElementById("hlSoundStop");
+    const soundUploadPolicy = document.getElementById("hlSoundUploadPolicy");
+    const soundAdd = document.getElementById("hlSoundAdd");
+    const soundSearch = document.getElementById("hlSoundSearch");
+    const soundFilters = document.getElementById("hlSoundFilters");
+    const soundModal = document.getElementById("hlSoundModal");
+    const soundFile = document.getElementById("hlSoundFile");
+    const soundEditor = document.getElementById("hlSoundEditor");
+    const soundDrop = document.getElementById("hlSoundDrop");
+    const soundStart = document.getElementById("hlSoundStart");
+    const soundDuration = document.getElementById("hlSoundDuration");
     const connectionPill = document.getElementById("status");
 
     const stageEl = document.getElementById("stage");
@@ -509,6 +588,8 @@
             state.role = result.role || "member";
             state.hostId = result.hostId || null;
             state.soundPolicy = result.soundboardPolicy || "everyone";
+            state.soundUploadPolicy = result.soundUploadPolicy || "everyone";
+            syncCustomSounds(result.customSounds || []);
             updateHostUI();
         });
         socket.emit("chat:history", result => {
@@ -524,6 +605,8 @@
         state.role = data.role || state.role;
         state.hostId = data.hostId || state.hostId;
         state.soundPolicy = data.soundboardPolicy || state.soundPolicy;
+        state.soundUploadPolicy = data.soundUploadPolicy || state.soundUploadPolicy;
+        state.apiToken = data.apiToken || state.apiToken;
         updateHostUI();
     });
 
@@ -614,6 +697,12 @@
     function updateHostUI() {
         soundPolicyWrap.hidden = state.role !== "host";
         soundPolicy.value = state.soundPolicy;
+        if (soundUploadPolicy) soundUploadPolicy.value = state.soundUploadPolicy;
+        const canUpload = canUploadSoundLocally();
+        if (soundAdd) {
+            soundAdd.disabled = !canUpload;
+            soundAdd.title = canUpload ? "Adicionar som personalizado" : "O host restringiu novos sons";
+        }
     }
 
     soundPolicy.addEventListener("change", () => {
@@ -622,6 +711,13 @@
         });
     });
     socket.on("sound:policy", data => { state.soundPolicy = data.policy; updateHostUI(); toast("Permissão do soundboard atualizada."); });
+
+    soundUploadPolicy?.addEventListener("change", () => {
+        socket.emit("moderation:sound-upload-policy", { policy: soundUploadPolicy.value }, result => {
+            if (!result?.success) toast(result?.message || "Não foi possível alterar uploads.");
+        });
+    });
+    socket.on("sound:upload-policy", data => { state.soundUploadPolicy = data.policy; updateHostUI(); toast("Permissão de novos sons atualizada."); });
 
     // Voice -------------------------------------------------
     const voiceRtcConfig = { iceServers: [{ urls: "stun:stun.l.google.com:19302" }, { urls: "stun:stun1.l.google.com:19302" }] };
@@ -908,12 +1004,125 @@
 
     // Soundboard --------------------------------------------
     const grid = document.getElementById("hlSoundGrid");
-    const soundById = new Map(soundCatalog.map(item => [item[0], item]));
+    const soundById = new Map(soundCatalog.map(([id, name, category, emoji, url]) => [id, {
+        id, name, category, emoji, url, custom: false, ownerId: null, ownerName: "HL", duration: null
+    }]));
+    let soundEditorBuffer = null;
+    let soundPreviewSource = null;
+    let soundPreviewContext = null;
 
     for (const [, , , , file] of soundCatalog) {
         const preload = new Audio();
-        preload.preload = "auto";
+        preload.preload = "metadata";
         preload.src = file;
+    }
+
+    function canUploadSoundLocally() {
+        if (state.soundUploadPolicy === "disabled") return false;
+        if (state.soundUploadPolicy === "everyone") return true;
+        if (state.soundUploadPolicy === "hostOnly") return state.role === "host";
+        if (state.soundUploadPolicy === "moderators") return state.role === "host" || state.role === "moderator";
+        return false;
+    }
+
+    function syncCustomSounds(items) {
+        for (const [id, item] of soundById) if (item.custom) soundById.delete(id);
+        for (const item of items || []) {
+            if (!item?.id || !item?.url) continue;
+            soundById.set(item.id, {
+                id: item.id,
+                name: String(item.name || "Som personalizado").slice(0, 40),
+                category: String(item.category || "Outros").slice(0, 30),
+                emoji: String(item.emoji || "🔊").slice(0, 8),
+                url: item.url,
+                custom: true,
+                ownerId: item.ownerId || null,
+                ownerName: item.ownerName || "Usuário",
+                duration: Number(item.duration) || null,
+                createdAt: Number(item.createdAt) || Date.now()
+            });
+        }
+        renderSoundGrid();
+    }
+
+    function rememberRecentSound(id) {
+        state.recentSounds = [id, ...state.recentSounds.filter(item => item !== id)].slice(0, 12);
+        localStorage.setItem("hl_sound_recent", JSON.stringify(state.recentSounds));
+    }
+
+    function toggleFavorite(id) {
+        if (state.soundFavorites.has(id)) state.soundFavorites.delete(id); else state.soundFavorites.add(id);
+        localStorage.setItem("hl_sound_favorites", JSON.stringify(Array.from(state.soundFavorites).slice(0, 40)));
+        renderSoundGrid();
+    }
+
+    function renderSoundGrid() {
+        if (!grid) return;
+        grid.textContent = "";
+        const query = state.soundSearch.trim().toLocaleLowerCase("pt-BR");
+        let items = Array.from(soundById.values());
+        if (query) items = items.filter(item => `${item.name} ${item.category} ${item.ownerName || ""}`.toLocaleLowerCase("pt-BR").includes(query));
+        if (state.soundCategory === "favorites") items = items.filter(item => state.soundFavorites.has(item.id));
+        if (state.soundCategory === "custom") items = items.filter(item => item.custom && item.ownerId === socket.id);
+        if (state.soundCategory === "recent") {
+            const rank = new Map(state.recentSounds.map((id, index) => [id, index]));
+            items = items.filter(item => rank.has(item.id)).sort((a, b) => rank.get(a.id) - rank.get(b.id));
+        }
+
+        if (!items.length) {
+            const empty = document.createElement("div");
+            empty.className = "hl-sound-empty";
+            empty.innerHTML = '<span aria-hidden="true">♫</span><strong>Nenhum som por aqui.</strong><small>Tente outra busca ou adicione um som curto.</small>';
+            grid.appendChild(empty);
+            return;
+        }
+
+        for (const item of items) {
+            const card = document.createElement("article");
+            card.className = `hl-sound-card${item.custom ? " is-custom" : ""}`;
+            card.dataset.soundId = item.id;
+
+            const top = document.createElement("div");
+            top.className = "hl-sound-top";
+            const iconEl = document.createElement("div");
+            iconEl.className = "hl-sound-icon";
+            iconEl.textContent = item.emoji;
+            const meta = document.createElement("div");
+            meta.className = "hl-sound-meta";
+            const strong = document.createElement("strong");
+            strong.textContent = item.name;
+            const small = document.createElement("small");
+            small.textContent = item.custom
+                ? `${item.category} • ${item.duration ? `${item.duration.toFixed(1)}s` : "personalizado"}`
+                : item.category;
+            meta.append(strong, small);
+
+            const fav = document.createElement("button");
+            fav.type = "button";
+            fav.className = `hl-sound-favorite${state.soundFavorites.has(item.id) ? " is-active" : ""}`;
+            fav.textContent = state.soundFavorites.has(item.id) ? "★" : "☆";
+            fav.title = state.soundFavorites.has(item.id) ? "Remover dos favoritos" : "Adicionar aos favoritos";
+            fav.setAttribute("aria-label", fav.title);
+            fav.addEventListener("click", () => toggleFavorite(item.id));
+            top.append(iconEl, meta, fav);
+
+            const actions = document.createElement("div");
+            actions.className = "hl-sound-actions";
+            const preview = tool("Ouvir aqui", () => playSound(item.id, true));
+            preview.title = "Ouvir só aqui";
+            const all = tool("Na sala", () => sendSharedSound(item.id));
+            all.title = "Tocar para os participantes autorizados";
+            actions.append(preview, all);
+
+            if (item.custom && (item.ownerId === socket.id || state.role === "host" || state.role === "moderator")) {
+                const remove = tool("Excluir", () => deleteCustomSound(item.id));
+                remove.classList.add("is-danger");
+                actions.appendChild(remove);
+            }
+
+            card.append(top, actions);
+            grid.appendChild(card);
+        }
     }
 
     soundVolume.value = String(Math.min(1, Math.max(0, state.soundVolume)));
@@ -923,36 +1132,20 @@
         state.activeSounds.forEach(audio => { audio.volume = state.soundVolume; });
     });
 
-    soundStop.addEventListener("click", () => stopAllSounds());
-
-    soundCatalog.forEach(([id, label, desc, icon]) => {
-        const card = document.createElement("div");
-        card.className = "hl-sound-card";
-        card.dataset.soundId = id;
-
-        const top = document.createElement("div");
-        top.className = "hl-sound-top";
-        const iconEl = document.createElement("div");
-        iconEl.className = "hl-sound-icon";
-        iconEl.textContent = icon;
-        const meta = document.createElement("div");
-        meta.className = "hl-sound-meta";
-        const strong = document.createElement("strong");
-        strong.textContent = label;
-        const small = document.createElement("small");
-        small.textContent = desc;
-        meta.append(strong, small);
-        top.append(iconEl, meta);
-
-        const actions = document.createElement("div");
-        actions.className = "hl-sound-actions";
-        const preview = tool("Ouvir aqui", () => playSound(id, true));
-        preview.title = "Ouvir só aqui";
-        const all = tool("Na sala", () => sendSharedSound(id));
-        actions.append(preview, all);
-        card.append(top, actions);
-        grid.appendChild(card);
+    soundStop.addEventListener("click", () => {
+        stopAllSounds();
+        if (state.role === "host" || state.role === "moderator") socket.emit("sound:stop", () => {});
     });
+
+    soundSearch?.addEventListener("input", () => {
+        state.soundSearch = soundSearch.value;
+        renderSoundGrid();
+    });
+    soundFilters?.querySelectorAll("[data-sound-filter]").forEach(button => button.addEventListener("click", () => {
+        state.soundCategory = button.dataset.soundFilter || "all";
+        soundFilters.querySelectorAll("[data-sound-filter]").forEach(item => item.classList.toggle("is-active", item === button));
+        renderSoundGrid();
+    }));
 
     function stopAllSounds() {
         state.activeSounds.forEach(audio => {
@@ -964,11 +1157,11 @@
     async function playSound(id, userInitiated = false) {
         const item = soundById.get(id);
         if (!item) return false;
-        const file = item[4];
-        const audio = new Audio(file);
+        const audio = new Audio(item.url);
         audio.preload = "auto";
         audio.volume = Math.min(1, Math.max(0, state.soundVolume));
         state.activeSounds.add(audio);
+        rememberRecentSound(id);
         const cleanup = () => state.activeSounds.delete(audio);
         audio.addEventListener("ended", cleanup, { once: true });
         audio.addEventListener("error", cleanup, { once: true });
@@ -1001,8 +1194,8 @@
         const now = Date.now();
         if (now < state.soundCooldownUntil) return toast("Aguarde um instante para tocar outro som.");
         if (!canUseSoundLocally()) return toast("Você não tem permissão para usar o soundboard.");
+        if (!soundById.has(soundId)) return toast("Esse som não está mais disponível.");
 
-        // O emissor escuta imediatamente dentro do gesto do clique; os demais recebem pelo servidor.
         await playSound(soundId, true);
         socket.emit("sound:play", { soundId }, result => {
             if (!result?.success) return toast(result?.message || "Som não permitido.");
@@ -1011,10 +1204,226 @@
     }
 
     socket.on("sound:play", data => {
-        if (!data?.soundId) return;
+        if (!data?.soundId || !soundById.has(data.soundId)) return;
         playSound(data.soundId, false);
-        if (data.userId !== socket.id) toast(`${data.name || "Alguém"} tocou um efeito.`);
+        if (data.userId !== socket.id) toast(`${data.name || "Alguém"} tocou ${soundById.get(data.soundId)?.name || "um efeito"}.`);
     });
+    socket.on("sound:stop", () => stopAllSounds());
+    socket.on("sound:catalog-add", item => {
+        if (!item?.id || !item?.url) return;
+        soundById.set(item.id, { ...item, name: String(item.name || "Som personalizado"), category: String(item.category || "Outros"), emoji: String(item.emoji || "🔊"), custom: true });
+        renderSoundGrid();
+        if (item.ownerId !== socket.id) toast(`${item.ownerName || "Alguém"} adicionou um som.`);
+    });
+    socket.on("sound:catalog-remove", data => {
+        if (!data?.id) return;
+        soundById.delete(data.id);
+        state.soundFavorites.delete(data.id);
+        renderSoundGrid();
+    });
+
+    async function deleteCustomSound(id) {
+        const item = soundById.get(id);
+        if (!item?.custom) return;
+        if (!state.apiToken) return toast("Reconecte à sala antes de excluir sons.");
+        try {
+            const response = await fetch(`/api/rooms/${encodeURIComponent(roomCode)}/sounds/${encodeURIComponent(id)}`, {
+                method: "DELETE",
+                headers: { "x-hl-socket-id": socket.id, "x-hl-room-token": state.apiToken }
+            });
+            const result = await response.json().catch(() => ({}));
+            if (!response.ok || !result.success) throw new Error(result.message || "Não foi possível excluir.");
+            toast("Som excluído da sala.");
+        } catch (error) {
+            toast(error.message || "Não foi possível excluir o som.");
+        }
+    }
+
+    function openSoundModal() {
+        if (!canUploadSoundLocally()) return toast("O host restringiu novos sons.");
+        soundModal.hidden = false;
+        document.body.classList.add("hl-modal-open");
+        document.getElementById("hlSoundChooseFile")?.focus();
+    }
+
+    function closeSoundModal() {
+        stopEditorPreview();
+        soundModal.hidden = true;
+        document.body.classList.remove("hl-modal-open");
+        soundEditor.hidden = true;
+        soundDrop.hidden = false;
+        soundEditorBuffer = null;
+        if (soundFile) soundFile.value = "";
+    }
+
+    soundAdd?.addEventListener("click", openSoundModal);
+    document.getElementById("hlSoundModalClose")?.addEventListener("click", closeSoundModal);
+    document.getElementById("hlSoundModalBackdrop")?.addEventListener("click", closeSoundModal);
+    document.getElementById("hlSoundCancel")?.addEventListener("click", closeSoundModal);
+    document.getElementById("hlSoundChooseFile")?.addEventListener("click", () => soundFile?.click());
+
+    soundFile?.addEventListener("change", async () => {
+        const file = soundFile.files?.[0];
+        if (!file) return;
+        if (file.size > 20 * 1024 * 1024) {
+            soundFile.value = "";
+            return toast("Escolha um áudio de até 20 MB.");
+        }
+        const chooseButton = document.getElementById("hlSoundChooseFile");
+        if (chooseButton) { chooseButton.disabled = true; chooseButton.textContent = "Lendo áudio..."; }
+        try {
+            const bytes = await file.arrayBuffer();
+            const context = new (window.AudioContext || window.webkitAudioContext)();
+            soundEditorBuffer = await context.decodeAudioData(bytes.slice(0));
+            await context.close();
+            if (!soundEditorBuffer?.duration || !Number.isFinite(soundEditorBuffer.duration)) throw new Error("Áudio inválido.");
+            if (soundEditorBuffer.duration > 60 * 30) throw new Error("Áudio longo demais para edição rápida.");
+
+            document.getElementById("hlSoundFileName").textContent = file.name.slice(0, 70);
+            document.getElementById("hlSoundFileInfo").textContent = `${formatSeconds(soundEditorBuffer.duration)} • ${(file.size / 1024 / 1024).toFixed(1)} MB`;
+            const cleanName = file.name.replace(/\.[^.]+$/, "").slice(0, 40);
+            document.getElementById("hlSoundName").value = cleanName;
+            soundStart.max = String(Math.max(0, soundEditorBuffer.duration - 0.2));
+            soundStart.value = "0";
+            soundDuration.max = String(Math.min(15, soundEditorBuffer.duration));
+            soundDuration.value = String(Math.min(5, Math.max(0.2, soundEditorBuffer.duration)));
+            updateTrimLabels();
+            soundDrop.hidden = true;
+            soundEditor.hidden = false;
+        } catch (error) {
+            soundEditorBuffer = null;
+            soundFile.value = "";
+            toast(error.message || "O navegador não conseguiu abrir esse áudio.");
+        } finally {
+            if (chooseButton) { chooseButton.disabled = false; chooseButton.textContent = "Selecionar arquivo"; }
+        }
+    });
+
+    function updateTrimLabels() {
+        if (!soundEditorBuffer) return;
+        const start = Math.min(Number(soundStart.value) || 0, Math.max(0, soundEditorBuffer.duration - 0.1));
+        const maxDuration = Math.min(15, Math.max(0.1, soundEditorBuffer.duration - start));
+        soundDuration.max = String(maxDuration);
+        if (Number(soundDuration.value) > maxDuration) soundDuration.value = String(maxDuration);
+        document.getElementById("hlSoundStartLabel").textContent = `${start.toFixed(1)}s`;
+        document.getElementById("hlSoundDurationLabel").textContent = `${Number(soundDuration.value).toFixed(1)}s`;
+    }
+    soundStart?.addEventListener("input", updateTrimLabels);
+    soundDuration?.addEventListener("input", updateTrimLabels);
+
+    function formatSeconds(seconds) {
+        const mins = Math.floor(seconds / 60);
+        const secs = Math.floor(seconds % 60).toString().padStart(2, "0");
+        return `${mins}:${secs}`;
+    }
+
+    function stopEditorPreview() {
+        try { soundPreviewSource?.stop(); } catch {}
+        soundPreviewSource = null;
+        if (soundPreviewContext) { soundPreviewContext.close().catch(() => {}); soundPreviewContext = null; }
+    }
+
+    document.getElementById("hlSoundPreviewStop")?.addEventListener("click", stopEditorPreview);
+    document.getElementById("hlSoundPreview")?.addEventListener("click", async () => {
+        if (!soundEditorBuffer) return;
+        stopEditorPreview();
+        soundPreviewContext = new (window.AudioContext || window.webkitAudioContext)();
+        soundPreviewSource = soundPreviewContext.createBufferSource();
+        soundPreviewSource.buffer = soundEditorBuffer;
+        soundPreviewSource.connect(soundPreviewContext.destination);
+        const start = Number(soundStart.value) || 0;
+        const duration = Math.min(15, Number(soundDuration.value) || 1);
+        soundPreviewSource.start(0, start, duration);
+        soundPreviewSource.onended = () => {
+            soundPreviewSource = null;
+            const context = soundPreviewContext;
+            soundPreviewContext = null;
+            context?.close().catch(() => {});
+        };
+    });
+
+    function encodeWavMono16(audioBuffer) {
+        const samples = audioBuffer.getChannelData(0);
+        const buffer = new ArrayBuffer(44 + samples.length * 2);
+        const view = new DataView(buffer);
+        const write = (offset, text) => { for (let i = 0; i < text.length; i += 1) view.setUint8(offset + i, text.charCodeAt(i)); };
+        write(0, "RIFF");
+        view.setUint32(4, 36 + samples.length * 2, true);
+        write(8, "WAVE");
+        write(12, "fmt ");
+        view.setUint32(16, 16, true);
+        view.setUint16(20, 1, true);
+        view.setUint16(22, 1, true);
+        view.setUint32(24, audioBuffer.sampleRate, true);
+        view.setUint32(28, audioBuffer.sampleRate * 2, true);
+        view.setUint16(32, 2, true);
+        view.setUint16(34, 16, true);
+        write(36, "data");
+        view.setUint32(40, samples.length * 2, true);
+        let offset = 44;
+        for (let i = 0; i < samples.length; i += 1) {
+            const sample = Math.max(-1, Math.min(1, samples[i]));
+            view.setInt16(offset, sample < 0 ? sample * 0x8000 : sample * 0x7fff, true);
+            offset += 2;
+        }
+        return new Blob([buffer], { type: "audio/wav" });
+    }
+
+    async function buildTrimmedWav() {
+        if (!soundEditorBuffer) throw new Error("Escolha um áudio primeiro.");
+        const start = Number(soundStart.value) || 0;
+        const duration = Math.min(15, Math.max(0.2, Number(soundDuration.value) || 1));
+        const sampleRate = 22050;
+        const frames = Math.max(1, Math.ceil(duration * sampleRate));
+        const OfflineContext = window.OfflineAudioContext || window.webkitOfflineAudioContext;
+        if (!OfflineContext) throw new Error("Seu navegador não oferece edição de áudio offline.");
+        const offline = new OfflineContext(1, frames, sampleRate);
+        const source = offline.createBufferSource();
+        source.buffer = soundEditorBuffer;
+        source.connect(offline.destination);
+        source.start(0, start, duration);
+        const rendered = await offline.startRendering();
+        return encodeWavMono16(rendered);
+    }
+
+    document.getElementById("hlSoundUpload")?.addEventListener("click", async event => {
+        if (!soundEditorBuffer) return toast("Escolha um áudio primeiro.");
+        if (!state.apiToken || !socket.connected) return toast("Reconecte à sala antes de adicionar o som.");
+        const button = event.currentTarget;
+        const name = document.getElementById("hlSoundName").value.trim().slice(0, 40) || "Som personalizado";
+        const category = document.getElementById("hlSoundCategory").value;
+        const emoji = document.getElementById("hlSoundEmoji").value.trim().slice(0, 8) || "🔊";
+        button.disabled = true;
+        button.textContent = "Processando...";
+        try {
+            const wav = await buildTrimmedWav();
+            if (wav.size > 700 * 1024) throw new Error("O trecho ficou grande demais. Reduza a duração.");
+            button.textContent = "Enviando...";
+            const response = await fetch(`/api/rooms/${encodeURIComponent(roomCode)}/sounds`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "audio/wav",
+                    "x-hl-socket-id": socket.id,
+                    "x-hl-room-token": state.apiToken,
+                    "x-hl-sound-name": encodeURIComponent(name),
+                    "x-hl-sound-category": encodeURIComponent(category),
+                    "x-hl-sound-emoji": encodeURIComponent(emoji)
+                },
+                body: wav
+            });
+            const result = await response.json().catch(() => ({}));
+            if (!response.ok || !result.success) throw new Error(result.message || "Não foi possível adicionar o som.");
+            toast("Som adicionado à sala.");
+            closeSoundModal();
+        } catch (error) {
+            toast(error.message || "Não foi possível adicionar o som.");
+        } finally {
+            button.disabled = false;
+            button.textContent = "Adicionar à sala";
+        }
+    });
+
+    renderSoundGrid();
 
     // Reactions / modes -------------------------------------
     const reactionQuick = document.getElementById("hlReactionQuick");

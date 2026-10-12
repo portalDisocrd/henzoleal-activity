@@ -6,8 +6,17 @@ function registerStaticFiles({ app, express, rootDir }) {
         ["/hl-social.css", "hl-social.css"],
         ["/hl-v4.css", "hl-v4.css"],
         ["/hl-v5.css", "hl-v5.css"],
+        ["/hl-v6.css", "hl-v6.css"],
         ["/hl-social.js", "hl-social.js"],
-        ["/activity-client.js", "activity-client.js"]
+        ["/activity-client.js", "activity-client.js"],
+        ["/home.css", "home.css"],
+        ["/home.js", "home.js"],
+        ["/room.css", "room.css"],
+        ["/room-core.js", "room-core.js"],
+        ["/activity.css", "activity.css"],
+        ["/activity-room.css", "activity-room.css"],
+        ["/activity-room-core.js", "activity-room-core.js"],
+        ["/not-found.css", "not-found.css"]
     ]);
 
     for (const [route, file] of publicFiles) {

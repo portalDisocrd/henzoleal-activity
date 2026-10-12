@@ -44,7 +44,7 @@ function createChatEvents({ io, roomService, allowSocketEvent, normalizeText, up
         });
 
         socket.on("chat:send", (payload, ack) => {
-            if (!allowSocketEvent(socket)) return typeof ack === "function" && ack({ success: false, message: "Muitas ações em pouco tempo." });
+            if (!allowSocketEvent(socket, "chat:send")) return typeof ack === "function" && ack({ success: false, message: "Muitas ações em pouco tempo." });
             const ctx = getContext(socket);
             if (!ctx) return typeof ack === "function" && ack({ success: false, message: "Você não está em uma sala." });
 
@@ -83,6 +83,7 @@ function createChatEvents({ io, roomService, allowSocketEvent, normalizeText, up
         });
 
         socket.on("chat:edit", (payload, ack) => {
+            if (!allowSocketEvent(socket, "chat:edit")) return typeof ack === "function" && ack({ success: false, message: "Muitas ações em pouco tempo." });
             const ctx = getContext(socket);
             if (!ctx) return typeof ack === "function" && ack({ success: false });
             const id = normalizeText(payload?.id, 80);
@@ -96,6 +97,7 @@ function createChatEvents({ io, roomService, allowSocketEvent, normalizeText, up
         });
 
         socket.on("chat:delete", (payload, ack) => {
+            if (!allowSocketEvent(socket, "chat:edit")) return typeof ack === "function" && ack({ success: false, message: "Muitas ações em pouco tempo." });
             const ctx = getContext(socket);
             if (!ctx) return typeof ack === "function" && ack({ success: false });
             const id = normalizeText(payload?.id, 80);
@@ -112,6 +114,7 @@ function createChatEvents({ io, roomService, allowSocketEvent, normalizeText, up
         });
 
         socket.on("chat:react", (payload, ack) => {
+            if (!allowSocketEvent(socket, "chat:react")) return typeof ack === "function" && ack({ success: false });
             const ctx = getContext(socket);
             if (!ctx) return typeof ack === "function" && ack({ success: false });
             const id = normalizeText(payload?.id, 80);
@@ -130,6 +133,7 @@ function createChatEvents({ io, roomService, allowSocketEvent, normalizeText, up
         });
 
         socket.on("chat:typing", (payload) => {
+            if (!allowSocketEvent(socket, "chat:typing")) return;
             const ctx = getContext(socket);
             if (!ctx) return;
             socket.to(ctx.roomCode).emit("chat:typing", {
@@ -140,7 +144,7 @@ function createChatEvents({ io, roomService, allowSocketEvent, normalizeText, up
         });
 
         socket.on("reaction:send", (payload) => {
-            if (!allowSocketEvent(socket)) return;
+            if (!allowSocketEvent(socket, "reaction:send")) return;
             const ctx = getContext(socket);
             if (!ctx) return;
             const emoji = normalizeText(payload?.emoji, 8);

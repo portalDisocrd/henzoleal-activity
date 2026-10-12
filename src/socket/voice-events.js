@@ -17,6 +17,7 @@ function createVoiceEvents({ io, roomService, allowSocketEvent, getSafeTargetSoc
 
     function register(socket, updateParticipants) {
         socket.on("voice:join", (ack) => {
+            if (!allowSocketEvent(socket, "voice:state")) return typeof ack === "function" && ack({ success: false });
             const ctx = getContext(socket);
             if (!ctx) return typeof ack === "function" && ack({ success: false });
             const existing = voiceList(ctx.room).filter(item => item.id !== socket.id);
@@ -29,6 +30,7 @@ function createVoiceEvents({ io, roomService, allowSocketEvent, getSafeTargetSoc
         });
 
         socket.on("voice:leave", (ack) => {
+            if (!allowSocketEvent(socket, "voice:state")) return typeof ack === "function" && ack({ success: false });
             const ctx = getContext(socket);
             if (!ctx) return typeof ack === "function" && ack({ success: false });
             ctx.user.voiceJoined = false;
@@ -40,6 +42,7 @@ function createVoiceEvents({ io, roomService, allowSocketEvent, getSafeTargetSoc
         });
 
         socket.on("voice:state", (payload) => {
+            if (!allowSocketEvent(socket, "voice:state")) return;
             const ctx = getContext(socket);
             if (!ctx || !ctx.user.voiceJoined) return;
             ctx.user.muted = Boolean(payload?.muted);
@@ -51,7 +54,7 @@ function createVoiceEvents({ io, roomService, allowSocketEvent, getSafeTargetSoc
         socket.on("voice:offer", data => relayDescription(socket, data, "offer", "voice:offer"));
         socket.on("voice:answer", data => relayDescription(socket, data, "answer", "voice:answer"));
         socket.on("voice:ice", data => {
-            if (!allowSocketEvent(socket) || !isPlainObject(data) || !isValidCandidate(data.candidate)) return;
+            if (!allowSocketEvent(socket, "voice:signal") || !isPlainObject(data) || !isValidCandidate(data.candidate)) return;
             const target = getSafeTargetSocket(socket, data.target);
             const ctx = getContext(socket);
             if (!target || !ctx?.user.voiceJoined) return;
@@ -61,7 +64,7 @@ function createVoiceEvents({ io, roomService, allowSocketEvent, getSafeTargetSoc
         });
 
         function relayDescription(source, data, expectedType, eventName) {
-            if (!allowSocketEvent(source) || !isPlainObject(data) || !isValidDescription(data.description, expectedType)) return;
+            if (!allowSocketEvent(source, "voice:signal") || !isPlainObject(data) || !isValidDescription(data.description, expectedType)) return;
             const target = getSafeTargetSocket(source, data.target);
             const ctx = getContext(source);
             if (!target || !ctx?.user.voiceJoined) return;
