@@ -6,6 +6,7 @@
     if (!socket || !state || !panel || !chatList || !chatInput || !chatContext || !typingEl || !sendButton) return null;
 
     const typingUsers = new Map();
+    const typingTimers = new Map();
     const socketHandlers = [];
     const domCleanups = [];
 
@@ -60,9 +61,16 @@
       }
     }
 
+    function isMine(message) {
+      if (!message) return false;
+      if (message.authorKey && state.ownershipKey) return message.authorKey === state.ownershipKey;
+      return message.authorId === socket.id;
+    }
+
     function buildMessage(message) {
+      const mine = isMine(message);
       const box = document.createElement("div");
-      box.className = "hl-chat-message" + (message.authorId === socket.id ? " is-mine" : "");
+      box.className = "hl-chat-message" + (mine ? " is-mine" : "");
       box.dataset.id = message.id;
 
       if (message.replyTo) {
@@ -114,8 +122,10 @@
         updateContext();
         chatInput.focus();
       }));
-      ["👍", "😂", "❤️", "👏", "🔥"].forEach(emoji => tools.appendChild(tool(emoji, () => socket.emit("chat:react", { id: message.id, emoji }))));
-      if (message.authorId === socket.id) {
+      ["👍", "😂", "❤️", "👏", "🔥"].forEach(emoji => tools.appendChild(tool(emoji, () => socket.emit("chat:react", { id: message.id, emoji }, result => {
+        if (!result?.success) toast(result?.message || "Não foi possível reagir.");
+      }))));
+      if (mine) {
         tools.appendChild(tool("Editar", () => {
           state.editId = message.id;
           state.replyTo = null;
@@ -127,7 +137,9 @@
           if (!result?.success) toast(result?.message || "Não foi possível excluir.");
         })));
       } else if (state.role === "host" || state.role === "moderator") {
-        tools.appendChild(tool("Excluir", () => socket.emit("chat:delete", { id: message.id })));
+        tools.appendChild(tool("Excluir", () => socket.emit("chat:delete", { id: message.id }, result => {
+          if (!result?.success) toast(result?.message || "Não foi possível excluir.");
+        })));
       }
       box.appendChild(tools);
       return box;
@@ -150,7 +162,8 @@
 
     function send() {
       const text = chatInput.value.trim();
-      if (!text || navigator.onLine === false) return;
+      if (!text) return;
+      if (navigator.onLine === false || !socket.connected) return toast("Reconecte à sala para enviar mensagens.");
       if (state.editId) {
         const id = state.editId;
         socket.emit("chat:edit", { id, text }, result => {
@@ -209,20 +222,27 @@
 
     onSocket("chat:typing", data => {
       if (!data?.userId) return;
+      const oldTimer = typingTimers.get(data.userId);
+      if (oldTimer) clearTimeout(oldTimer);
+      typingTimers.delete(data.userId);
       if (data.typing) {
         typingUsers.set(data.userId, data.name || "Alguém");
-        setTimeout(() => {
+        const timer = setTimeout(() => {
+          typingTimers.delete(data.userId);
           typingUsers.delete(data.userId);
           renderTyping();
         }, 1800);
-      } else typingUsers.delete(data.userId);
+        typingTimers.set(data.userId, timer);
+      } else {
+        typingUsers.delete(data.userId);
+      }
       renderTyping();
     });
     onSocket("chat:message", message => {
       state.messages.set(message.id, message);
       render();
       const chatVisible = panel.classList.contains("is-open") && panel.querySelector('.hl-social-tab[data-tab="chat"]')?.classList.contains("is-active");
-      if (!chatVisible && message.authorId !== socket.id) {
+      if (!chatVisible && !isMine(message)) {
         state.unreadChat += 1;
         updateUnread();
         toast(`${message.authorName}: ${message.text.slice(0, 55)}`);
@@ -238,6 +258,8 @@
       focus: () => chatInput.focus(),
       destroy() {
         clearTimeout(state.typingTimer);
+        typingTimers.forEach(timer => clearTimeout(timer));
+        typingTimers.clear();
         typingUsers.clear();
         domCleanups.splice(0).forEach(fn => fn());
         socketHandlers.splice(0).forEach(([event, fn]) => socket.off?.(event, fn));
@@ -245,5 +267,5 @@
     };
   }
 
-  window.HLChatModule = Object.freeze({ version: "12.0.1", createChatController });
+  window.HLChatModule = Object.freeze({ version: "12.0.7-foundation.6", createChatController });
 })();

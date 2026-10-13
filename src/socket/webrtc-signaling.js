@@ -1,4 +1,4 @@
-﻿function registerWebRTCSignaling({
+function registerWebRTCSignaling({
     socket,
     allowSocketEvent,
     isPlainObject,
@@ -36,16 +36,7 @@
                     socket,
                     targetId
                 );
-
-            if (!targetSocket) {
-
-                console.warn(
-                    "Offer bloqueada fora da sala:",
-                    socket.id
-                );
-
-                return;
-            }
+            if (!targetSocket) return;
 
             if (
                 !isValidFlowId(
@@ -114,16 +105,7 @@
                     socket,
                     targetId
                 );
-
-            if (!targetSocket) {
-
-                console.warn(
-                    "Answer bloqueada fora da sala:",
-                    socket.id
-                );
-
-                return;
-            }
+            if (!targetSocket) return;
 
             if (
                 !isValidFlowId(

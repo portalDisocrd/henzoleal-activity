@@ -1,9 +1,27 @@
+function normalizeIp(value) {
+    const ip = String(value || "").trim();
+    if (!ip) return "unknown";
+    return ip.startsWith("::ffff:") ? ip.slice(7) : ip;
+}
+
+function extractClientIp(headers = {}, remoteAddress = "") {
+    // O app usa trust proxy = 1. Atrás de um único proxy confiável, o hop
+    // imediatamente anterior ao proxy é o ÚLTIMO valor de X-Forwarded-For.
+    // Usar o primeiro valor permite que um prefixo forjado pelo cliente
+    // contorne o limite de conexões quando o proxy preserva a cadeia.
+    const forwarded = String(headers["x-forwarded-for"] || "")
+        .split(",")
+        .map(part => part.trim())
+        .filter(Boolean);
+    const candidate = forwarded.length ? forwarded[forwarded.length - 1] : remoteAddress;
+    return normalizeIp(candidate);
+}
+
 function createSocketConnectionGuard({ maxPerIp = 12 } = {}) {
     const activeByIp = new Map();
 
     function ipOf(socket) {
-        const forwarded = String(socket.handshake.headers["x-forwarded-for"] || "").split(",")[0].trim();
-        return forwarded || socket.handshake.address || "unknown";
+        return extractClientIp(socket.handshake?.headers || {}, socket.handshake?.address || "");
     }
 
     function middleware(socket, next) {
@@ -19,7 +37,7 @@ function createSocketConnectionGuard({ maxPerIp = 12 } = {}) {
         next();
     }
 
-    return { middleware, activeByIp };
+    return { middleware, activeByIp, ipOf };
 }
 
-module.exports = { createSocketConnectionGuard };
+module.exports = { createSocketConnectionGuard, extractClientIp, normalizeIp };

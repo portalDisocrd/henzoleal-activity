@@ -21,7 +21,7 @@
     height: min(72dvh, 650px);
     max-height: calc(100dvh - 94px);
     border-radius: 22px;
-    z-index:var(--hl-z-backdrop);
+    z-index:var(--hl-z-sheet);
     box-shadow: 0 -22px 70px rgba(0,0,0,.52);
   }
   body.hl-social-ready .hl-social-backdrop {

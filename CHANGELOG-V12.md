@@ -1,3 +1,27 @@
+
+## 12.0.7-foundation.6 — Foundation final
+
+- hardening de IP no limite de conexões Socket.IO atrás de um proxy;
+- rate limit para `social:state`, `chat:history`, diagnostics, presence e speaking;
+- speaking de voz deixa de republicar a lista completa de participantes;
+- logs HTTP não registram query string de áudio;
+- criação de sala usa log estruturado e código mascarado;
+- documentação de segurança e limites de validação final;
+- gate final combina segurança, performance, build, HTTP e smoke visual quando Chromium estiver disponível.
+# Changelog — HL Activity Foundation
+
+## 12.0.7-foundation.6 — PWA, cache e versionamento previsíveis
+
+- torna o cache de cada release imutável depois da instalação;
+- troca assets online para network-first com bypass do HTTP cache;
+- mantém cache apenas como fallback de rede do shell;
+- registra o Service Worker com `updateViaCache: "none"`;
+- adiciona reconciliação de versão para upgrade, downgrade e rollback;
+- VersionGuard verifica a versão ao abrir, a cada 60 s, ao voltar à aba e ao recuperar internet;
+- `/sw.js`, HTML e endpoints de versão recebem políticas explícitas de cache;
+- respostas passam a expor `X-HL-Version` para diagnóstico;
+- remove loop de reload que podia manter frontend e backend em versões diferentes.
+
 # Changelog — HL Activity V12.0.0
 
 ## 12.0.1 — correção visual da pré-entrada

@@ -16,9 +16,10 @@
 
 <script vite-ignore src="/api/socket.io/socket.io.js"></script>
 
-<link rel="stylesheet" href="/styles/room.css">
 <link rel="stylesheet" href="/styles/tokens.css">
 <link rel="stylesheet" href="/styles/components.css">
+<link rel="stylesheet" href="/styles/room.css">
+<link rel="stylesheet" href="/styles/room-entry.css">
 <link rel="stylesheet" href="/styles/product.css">
 <link rel="stylesheet" href="/styles/social-shell.css">
 <link rel="stylesheet" href="/styles/chat.css">
@@ -26,7 +27,6 @@
 <link rel="stylesheet" href="/styles/soundboard.css">
 <link rel="stylesheet" href="/styles/reactions.css">
 <link rel="stylesheet" href="/styles/social-responsive.css">
-<link rel="stylesheet" href="/styles/v12-overrides.css">
 
 
 </head>
@@ -275,9 +275,12 @@ Conectando...
       <button class="profile-avatar" data-avatar="🤖" type="button" aria-label="Avatar robô">🤖</button>
     </div>
     <div class="hl-room-entry-audio">
-      <label class="hl-room-entry-field"><span>Microfone</span><select id="hlRoomEntryMic"><option value="">Padrão do sistema</option></select></label>
+      <div class="hl-room-entry-device-grid">
+        <label class="hl-room-entry-field"><span>Microfone</span><select id="hlRoomEntryMic"><option value="">Padrão do sistema</option></select></label>
+        <label class="hl-room-entry-field"><span>Saída de áudio</span><select id="hlRoomEntryOutput"><option value="">Padrão do sistema</option></select></label>
+      </div>
       <div class="hl-room-entry-meter" aria-hidden="true"><i id="hlRoomEntryMeter"></i></div>
-      <button id="hlRoomEntryMicTest" type="button">Testar microfone</button>
+      <div class="hl-room-entry-test-actions"><button id="hlRoomEntryMicTest" type="button">Testar microfone</button><button id="hlRoomEntryOutputTest" type="button">Testar áudio</button></div>
       <div id="hlRoomEntryMicStatus" class="hl-room-entry-status">Microfone ainda não testado.</div>
       <label class="hl-room-entry-check"><input id="hlRoomEntryMuted" type="checkbox"><span>Entrar no voz mutado por padrão</span></label>
     </div>
@@ -287,10 +290,14 @@ Conectando...
 
 <script vite-ignore src="/client-config.js"></script>
 <script vite-ignore src="/frontend/core/app-version.js"></script>
+<script vite-ignore src="/frontend/core/version-guard.js"></script>
 <script vite-ignore src="/frontend/core/capabilities.js"></script>
 <script vite-ignore src="/frontend/core/connectivity.js"></script>
 <script vite-ignore src="/frontend/core/error-codes.js"></script>
 <script vite-ignore src="/frontend/core/room-entry.js"></script>
+<script vite-ignore src="/frontend/room/room-lifecycle.js"></script>
+<script vite-ignore src="/frontend/room/profile/profile-controller.js"></script>
+<script vite-ignore src="/frontend/room/participants/participants-controller.js"></script>
 <script vite-ignore src="/frontend/social/voice/voice-state.js"></script>
 <script vite-ignore src="/frontend/social/voice/voice-config.js"></script>
 <script vite-ignore src="/frontend/social/voice/voice-devices.js"></script>

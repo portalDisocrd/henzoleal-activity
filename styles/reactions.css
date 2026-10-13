@@ -5,6 +5,7 @@ body.hl-social-ready .hl-ui-overlays > * { pointer-events:auto; }
 
 body.hl-social-ready .hl-reaction-picker {
   position:fixed;
+  z-index:var(--hl-z-popover);
   left:18px;
   bottom:92px;
   width:max-content;

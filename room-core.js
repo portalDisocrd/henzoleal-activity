@@ -1286,34 +1286,35 @@ const profileOverlay =
     );
 
 
+if (
+    !window.HLRoomLifecycle?.create ||
+    !window.HLProfileController?.create ||
+    !window.HLParticipantsController?.create
+) {
+    throw new Error(
+        "HL Activity: módulos fundamentais da sala não foram carregados."
+    );
+}
+
+
+const roomLifecycle =
+    window.HLRoomLifecycle.create({
+        initial:
+            "pre-entry"
+    });
+
+
 // =====================================================
 // DADOS
 // =====================================================
 
 let profile = null;
 
-function isRemoteAvatarUrl(value) {
-    return typeof value === "string" && /^https:\/\/(?:cdn|media)\.discordapp\.(?:com|net)\//i.test(value);
-}
-
-function renderUserAvatar(container, avatarValue, fallback = "😎") {
-    if (!container) return;
-    container.textContent = "";
-    if (isRemoteAvatarUrl(avatarValue)) {
-        const img = document.createElement("img");
-        img.src = avatarValue;
-        img.alt = "Avatar";
-        img.loading = "lazy";
-        img.referrerPolicy = "no-referrer";
-        img.style.width = "100%";
-        img.style.height = "100%";
-        img.style.objectFit = "cover";
-        img.style.borderRadius = "inherit";
-        container.appendChild(img);
-        return;
-    }
-    container.textContent = avatarValue || fallback;
-}
+const renderUserAvatar =
+    window.HLProfileController?.renderAvatar ||
+    ((container, avatarValue, fallback = "😎") => {
+        if (container) container.textContent = avatarValue || fallback;
+    });
 
 let localStream = null;
 
@@ -1322,12 +1323,27 @@ let currentMainOwner = null;
 let audioMuted = true;
 
 
-const participants =
-    new Map();
-
-
 const streams =
     new Map();
+
+
+const participantsController =
+    window.HLParticipantsController.create({
+        container:
+            peopleElement,
+        getSocketId:
+            () => socket.id,
+        renderAvatar:
+            renderUserAvatar,
+        hasStream:
+            ownerId => streams.has(ownerId),
+        onSelectStream:
+            ownerId => selectMainStream(ownerId)
+    });
+
+
+const participants =
+    participantsController.state;
 
 
 const outboundPeers =
@@ -1357,137 +1373,34 @@ const rtcConfig = { iceServers: Array.isArray(window.HL_CONFIG?.iceServers) && w
 // PERFIL
 // =====================================================
 
-function loadProfile() {
+const profileController =
+    window.HLProfileController.create({
+        overlay:
+            profileOverlay,
+        onSubmit:
+            nextProfile => {
 
-    try {
-
-        const saved =
-            sessionStorage.getItem(
-                "leal_profile"
-            );
-
-
-        if (!saved) {
-
-            profileOverlay.style.display =
-                "flex";
-
-            return;
-
-        }
+                entryConfirmed =
+                    true;
 
 
-        profile =
-            JSON.parse(saved);
-
-
-        joinRoom();
-
-
-    } catch {
-
-        profileOverlay.style.display =
-            "flex";
-
-    }
-
-}
-
-
-let selectedAvatar =
-    "😎";
-
-
-document
-    .querySelectorAll(
-        ".profile-avatar"
-    )
-    .forEach(button => {
-
-        button.onclick =
-            () => {
-
-                document
-                    .querySelectorAll(
-                        ".profile-avatar"
-                    )
-                    .forEach(item => {
-
-                        item.classList.remove(
-                            "selected"
-                        );
-
-                    });
-
-
-                button.classList.add(
-                    "selected"
+                roomLifecycle.transition(
+                    "joining",
+                    {
+                        reason:
+                            "entry-confirmed"
+                    }
                 );
 
 
-                selectedAvatar =
-                    button.dataset.avatar ||
-                    button.textContent.trim();
+                profile =
+                    nextProfile;
 
-            };
 
+                joinRoom();
+
+            }
     });
-
-
-document.getElementById(
-    "enterRoom"
-).onclick =
-    () => {
-
-        const name =
-            document
-                .getElementById(
-                    "profileName"
-                )
-                .value
-                .trim();
-
-
-        if (!name) {
-
-            alert(
-                "Digite seu nome."
-            );
-
-            return;
-
-        }
-
-
-        profile = {
-
-            name:
-                name.substring(
-                    0,
-                    24
-                ),
-
-            avatar:
-                selectedAvatar
-
-        };
-
-
-        sessionStorage.setItem(
-            "leal_profile",
-            JSON.stringify(
-                profile
-            )
-        );
-
-
-        profileOverlay.style.display =
-            "none";
-
-
-        joinRoom();
-
-    };
 
 
 // =====================================================
@@ -1495,6 +1408,10 @@ document.getElementById(
 // =====================================================
 
 let joined = false;
+
+// A primeira entrada só pode acontecer após confirmação explícita
+// na pré-entrada. Reconexões posteriores reutilizam essa autorização.
+let entryConfirmed = false;
 
 
 // =====================================================
@@ -1734,6 +1651,7 @@ function joinRoom() {
 
     if (
         joined ||
+        !entryConfirmed ||
         !profile ||
         !socket.connected
     ) {
@@ -1741,6 +1659,17 @@ function joinRoom() {
         return;
 
     }
+
+
+    roomLifecycle.transition(
+        "joining",
+        {
+            reason:
+                reconnectingRoom
+                    ? "reconnect-join"
+                    : "join-room"
+        }
+    );
 
 
     joined = true;
@@ -1780,19 +1709,91 @@ function joinRoom() {
 // Lobby / senha V10 -------------------------------------------------------
 socket.on("room:waiting", data => {
     joined = false;
+    roomLifecycle.transition("waiting", { reason: "room-waiting" });
     window.HLRoomWaitingState = data || {};
     window.dispatchEvent(new CustomEvent("hl:room-waiting", { detail: data || {} }));
 });
 
 socket.on("room:approval", data => {
     window.HLRoomWaitingState = null;
+    roomLifecycle.transition(data?.approved ? "joining" : "waiting", { reason: "room-approval" });
     window.dispatchEvent(new CustomEvent("hl:room-approval", { detail: data || {} }));
     if (data?.approved) { joined = false; setTimeout(() => joinRoom(), 60); }
 });
 
 socket.on("room:password-required", data => {
     joined = false;
+    roomLifecycle.transition("pre-entry", { reason: "password-required" });
     window.dispatchEvent(new CustomEvent("hl:room-password-required", { detail: data || {} }));
+});
+
+
+socket.on("room-error", payload => {
+    joined = false;
+    roomLifecycle.transition("error", { reason: "room-error" });
+
+    const detail =
+        typeof payload === "string"
+            ? { code: "ROOM_ERROR", message: payload }
+            : (payload || {});
+
+    const message =
+        window.HLErrorMessage?.(
+            detail.code,
+            detail.message || "Não foi possível entrar na sala."
+        ) ||
+        detail.message ||
+        "Não foi possível entrar na sala.";
+
+    if (statusElement) {
+        statusElement.textContent =
+            message;
+        statusElement.dataset.state =
+            "error";
+    }
+
+    window.dispatchEvent(
+        new CustomEvent(
+            "hl:room-error",
+            {
+                detail: {
+                    ...detail,
+                    message
+                }
+            }
+        )
+    );
+
+    if (
+        detail.code === "ROOM_NOT_FOUND" ||
+        detail.code === "ROOM_CODE_INVALID"
+    ) {
+        setTimeout(
+            () => {
+                if (
+                    location.pathname.startsWith("/room/") ||
+                    location.pathname === "/activity-room.html"
+                ) {
+                    location.replace("/");
+                }
+            },
+            900
+        );
+        return;
+    }
+
+    entryConfirmed =
+        false;
+
+    roomLifecycle.transition(
+        "pre-entry",
+        {
+            reason:
+                detail.code || "room-error"
+        }
+    );
+
+    profileController.show();
 });
 
 socket.on("stream:blocked", data => {
@@ -1813,6 +1814,17 @@ socket.on(
 
         const wasReconnecting =
             reconnectingRoom;
+
+
+        if (wasReconnecting) {
+            roomLifecycle.transition(
+                "reconnecting",
+                {
+                    reason:
+                        "socket-connect"
+                }
+            );
+        }
 
 
         pendingReconnectRepair =
@@ -1885,6 +1897,14 @@ socket.on(
         reconnectingRoom =
             true;
 
+        roomLifecycle.transition(
+            "reconnecting",
+            {
+                reason:
+                    reason || "socket-disconnect"
+            }
+        );
+
         joined =
             false;
 
@@ -1920,6 +1940,15 @@ socket.on(
 
         reconnectingRoom =
             true;
+
+
+        roomLifecycle.transition(
+            "reconnecting",
+            {
+                reason:
+                    error?.message || "connect-error"
+            }
+        );
 
 
         statusElement.textContent =
@@ -1972,6 +2001,15 @@ window.addEventListener(
         }
 
 
+        roomLifecycle.transition(
+            "reconnecting",
+            {
+                reason:
+                    "offline"
+            }
+        );
+
+
         statusElement.textContent =
             "Sem internet • reconexão automática ativa";
 
@@ -1987,22 +2025,23 @@ socket.on(
     "participants-update",
     list => {
 
-        participants.clear();
-
-
-        list.forEach(
-            user => {
-
-                participants.set(
-                    user.id,
-                    user
-                );
-
-            }
+        participantsController?.replace?.(
+            list
         );
 
 
-        renderParticipants();
+        if (
+            joined &&
+            entryConfirmed
+        ) {
+            roomLifecycle.transition(
+                "joined",
+                {
+                    reason:
+                        "participants-update"
+                }
+            );
+        }
 
 
         if (
@@ -2030,154 +2069,6 @@ socket.on(
 
     }
 );
-
-
-function renderParticipants() {
-
-    peopleElement.innerHTML =
-        "";
-
-
-    participants.forEach(
-        user => {
-
-            const card =
-                document.createElement(
-                    "div"
-                );
-
-
-            card.className =
-                "person";
-
-
-            if (
-                user.streaming
-            ) {
-
-                card.classList.add(
-                    "streaming"
-                );
-
-            }
-
-
-            const avatar =
-                document.createElement(
-                    "div"
-                );
-
-
-            avatar.className =
-                "avatar";
-
-
-            renderUserAvatar(avatar, user.avatar);
-
-
-            const info =
-                document.createElement(
-                    "div"
-                );
-
-
-            info.className =
-                "person-info";
-
-
-            const name =
-                document.createElement(
-                    "div"
-                );
-
-
-            name.className =
-                "person-name";
-
-
-            name.textContent =
-                user.name +
-                (
-                    user.id ===
-                    socket.id
-                        ? " (você)"
-                        : ""
-                );
-
-
-            const personStatus =
-                document.createElement(
-                    "div"
-                );
-
-
-            personStatus.className =
-                "person-status";
-
-
-            const activityLabel = user.streaming
-                ? "AO VIVO"
-                : (user.activity || (user.voiceJoined ? "No voz" : (user.status === "afk" ? "Ausente" : "Online")));
-
-            personStatus.textContent = `● ${activityLabel}`;
-            personStatus.dataset.state = user.status === "afk" ? "afk" : (user.streaming ? "live" : "online");
-            card.dataset.userId = user.id;
-            card.dataset.role = user.role || "member";
-            if (user.spotlighted) card.classList.add("spotlighted");
-
-
-            info.appendChild(
-                name
-            );
-
-
-            info.appendChild(
-                personStatus
-            );
-
-
-            card.appendChild(
-                avatar
-            );
-
-
-            card.appendChild(
-                info
-            );
-
-
-            if (
-                user.streaming
-            ) {
-
-                card.onclick =
-                    () => {
-
-                        if (
-                            streams.has(
-                                user.id
-                            )
-                        ) {
-
-                            selectMainStream(
-                                user.id
-                            );
-
-                        }
-
-                    };
-
-            }
-
-
-            peopleElement.appendChild(
-                card
-            );
-
-        }
-    );
-
-}
 
 
 // =====================================================
@@ -3741,6 +3632,19 @@ function cleanupRoomBeforeExit() {
 
     leavingRoom = true;
 
+    roomLifecycle.transition(
+        "leaving",
+        {
+            reason:
+                "cleanup"
+        }
+    );
+
+
+    window.HLRoomEntry?.destroy?.();
+    profileController.destroy();
+    participantsController.destroy();
+
 
     // Para minha transmissao
     if (localStream) {
@@ -3814,6 +3718,9 @@ function cleanupRoomBeforeExit() {
 
     }
 
+
+    roomLifecycle.destroy();
+
 }
 
 
@@ -3858,7 +3765,7 @@ document.getElementById(
 // CARREGAR PERFIL
 // =====================================================
 
-loadProfile();
+profileController.open();
 
 // Integração V10 ----------------------------------------------------------
 window.HLRoomCore = {
@@ -3868,6 +3775,8 @@ window.HLRoomCore = {
     getCurrentMainOwner: () => currentMainOwner,
     getLocalStream: () => localStream,
     getInboundPeers: () => inboundPeers,
-    getOutboundPeers: () => outboundPeers
+    getOutboundPeers: () => outboundPeers,
+    getRoomState: () => roomLifecycle.getState(),
+    getLifecycle: () => roomLifecycle
 };
 

@@ -1,6 +1,10 @@
 const DEFAULT_POLICIES = Object.freeze({
     "generic": { max: 180, windowMs: 10000 },
     "room:join": { max: 8, windowMs: 15000 },
+    "social:state": { max: 12, windowMs: 10000 },
+    "chat:history": { max: 12, windowMs: 10000 },
+    "diagnostics:ping": { max: 20, windowMs: 10000 },
+    "presence:update": { max: 12, windowMs: 10000 },
     "chat:send": { max: 18, windowMs: 10000 },
     "chat:edit": { max: 14, windowMs: 10000 },
     "chat:react": { max: 20, windowMs: 10000 },
@@ -9,6 +13,7 @@ const DEFAULT_POLICIES = Object.freeze({
     "sound:play": { max: 8, windowMs: 10000 },
     "moderation": { max: 12, windowMs: 10000 },
     "voice:state": { max: 30, windowMs: 10000 },
+    "voice:speaking": { max: 24, windowMs: 10000 },
     "voice:signal": { max: 180, windowMs: 10000 },
     "stream:signal": { max: 220, windowMs: 10000 }
 });

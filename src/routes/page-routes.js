@@ -2,6 +2,12 @@ const path =
     require("path");
 
 
+function noStoreHtml(res) {
+    res.set("Cache-Control", "no-store");
+    return res;
+}
+
+
 function registerPageRoutes({
     app,
     rootDir,
@@ -18,7 +24,7 @@ function registerPageRoutes({
         "/activity",
         (req, res) => {
 
-            res.sendFile(
+            noStoreHtml(res).sendFile(
                 path.join(
                     rootDir,
                     "dist",
@@ -65,7 +71,7 @@ function registerPageRoutes({
             }
 
 
-            res.sendFile(
+            noStoreHtml(res).sendFile(
                 path.join(
                     rootDir,
                     "index.html"
@@ -87,7 +93,7 @@ function registerPageRoutes({
             if (!isValidRoomCode(code) || !roomService.has(code)) {
                 return res.status(404).send("Sala nao encontrada.");
             }
-            res.sendFile(path.join(rootDir, "activity-room.html"));
+            noStoreHtml(res).sendFile(path.join(rootDir, "activity-room.html"));
         }
     );
 
@@ -122,7 +128,26 @@ function registerPageRoutes({
             }
 
 
-            res.sendFile(
+            if (
+                !roomService.has(
+                    code
+                )
+            ) {
+
+                return res
+                    .status(404)
+                    .set("Cache-Control", "no-store")
+                    .sendFile(
+                        path.join(
+                            rootDir,
+                            "not-found.html"
+                        )
+                    );
+
+            }
+
+
+            noStoreHtml(res).sendFile(
                 path.join(
                     rootDir,
                     "room.html"
@@ -158,12 +183,13 @@ function registerPageRoutes({
 
                 return res
                     .status(404)
+                    .set("Cache-Control", "no-store")
                     .sendFile(path.join(rootDir, "not-found.html"));
 
             }
 
 
-            res.sendFile(
+            noStoreHtml(res).sendFile(
                 path.join(
                     rootDir,
                     "room.html"

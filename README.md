@@ -4,7 +4,7 @@ HL Activity é uma sala privada para pequenos grupos conversarem, usarem voz, co
 
 ## Versão
 
-`12.0.0`
+`12.0.7-foundation.6`
 
 A V12 substitui a estratégia de empilhar arquivos versionados de correção por uma base estável com nomes permanentes de assets, módulos sociais separados e uma fonte única de versão.
 
@@ -53,3 +53,13 @@ Uma release só deve ser enviada depois de:
 6. somente então commit/push.
 
 Veja `docs/DEPLOY-ROLLBACK.md`.
+
+
+## Foundation atual
+
+A branch de reconstrução profissional usa atualização PWA controlada, cache de release imutável, VersionGuard ativo e headers de cache explícitos. Consulte `docs/PWA.md` para a política de upgrade, downgrade e rollback.
+
+
+## Foundation
+
+A trilha de estabilização final está documentada em `docs/FOUNDATION-FINAL.md` e o modelo de segurança em `docs/SECURITY.md`.

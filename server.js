@@ -71,6 +71,11 @@ app.set("trust proxy", 1);
 registerRequestContext(app);
 registerHttpSecurity({ app, express });
 
+app.use((req, res, next) => {
+    res.set("X-HL-Version", APP_VERSION);
+    next();
+});
+
 const originGuard = createOriginGuard();
 app.use("/api", originGuard);
 
@@ -89,15 +94,20 @@ const voiceEvents = createVoiceEvents({ io, roomService, allowSocketEvent, getSa
 const socialEvents = createSocialEvents({ io, roomService, allowSocketEvent, getSafeTargetSocket, normalizeText });
 
 app.get("/health", (req, res) => {
+    res.set("Cache-Control", "no-store");
     res.json({ status: "ok", service: "hl-activity", version: APP_VERSION, uptime: Math.floor(process.uptime()) });
 });
 
 app.get("/ready", (req, res) => {
     const ready = server.listening;
+    res.set("Cache-Control", "no-store");
     res.status(ready ? 200 : 503).json({ status: ready ? "ready" : "starting", service: "hl-activity", version: APP_VERSION });
 });
 
-app.get("/api/version", (req, res) => res.json({ success: true, version: APP_VERSION }));
+app.get("/api/version", (req, res) => {
+    res.set("Cache-Control", "no-store");
+    res.json({ success: true, version: APP_VERSION, cache: `hl-activity-${APP_VERSION}` });
+});
 
 app.get("/client-config.js", (req, res) => {
     const iceServers = [
@@ -115,7 +125,7 @@ app.get("/client-config.js", (req, res) => {
     res.type("application/javascript").set("Cache-Control", "no-store").send(`window.HL_CONFIG=${JSON.stringify({ version: APP_VERSION, iceServers, turnAvailable: iceServers.length > 2 })};`);
 });
 
-registerStaticFiles({ app, express, rootDir: __dirname });
+registerStaticFiles({ app, express, rootDir: __dirname, appVersion: APP_VERSION });
 registerRoomRoutes({ app, roomService, createRoomLimiter, sanitizeRoomCode, isValidRoomCode });
 registerPageRoutes({ app, rootDir: __dirname, roomService, sanitizeRoomCode, isValidRoomCode });
 registerAuthRoutes({ app, oauthLimiter });

@@ -46,7 +46,7 @@
   }
 
   window.HLSoundboardModule = Object.freeze({
-    version: "12.0.1",
+    version: "12.0.7-foundation.6",
     maxVisibleColumns: Object.freeze({ desktop: 2, mobile: 1 }),
     BUILTIN_SOUNDS,
     loadStringArray,

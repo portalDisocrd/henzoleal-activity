@@ -39,6 +39,13 @@ function safePasswordMatch(rawValue, encoded) {
     } catch { return false; }
 }
 
+function roomOwnershipKey(roomCode, clientId) {
+    const room = String(roomCode || "").trim().toUpperCase();
+    const client = String(clientId || "").trim();
+    if (!room || !client) return "";
+    return crypto.createHash("sha256").update(`${room}:${client}`, "utf8").digest("base64url").slice(0, 24);
+}
+
 function safeStringEqual(a, b) {
     if (typeof a !== "string" || typeof b !== "string" || !a || !b) return false;
     const left = Buffer.from(a, "utf8");
@@ -53,4 +60,4 @@ function sanitizeLogValue(value, max = 120) {
         .slice(0, max);
 }
 
-module.exports = { randomToken, hashToken, safeTokenMatch, hashPassword, safePasswordMatch, safeStringEqual, sanitizeLogValue };
+module.exports = { randomToken, hashToken, safeTokenMatch, hashPassword, safePasswordMatch, roomOwnershipKey, safeStringEqual, sanitizeLogValue };

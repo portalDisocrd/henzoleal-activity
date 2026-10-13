@@ -1,5 +1,5 @@
 const crypto = require("crypto");
-const { randomToken, safeStringEqual } = require("../security/security-utils");
+const { randomToken, roomOwnershipKey, safeStringEqual } = require("../security/security-utils");
 
 const MAX_SOUND_BYTES = 700 * 1024;
 const MAX_SOUND_DURATION = 15;
@@ -85,9 +85,10 @@ function canUpload(user, policy) {
     return false;
 }
 
-function canDelete(user, sound) {
+function canDelete(user, sound, roomCode) {
     if (!user || !sound) return false;
-    return user.id === sound.ownerId || user.role === "host" || user.role === "moderator";
+    const ownerKey = roomOwnershipKey(roomCode, user.clientId);
+    return (ownerKey && ownerKey === sound.ownerId) || user.role === "host" || user.role === "moderator";
 }
 
 function authorizeRoomHttp(req, io, room, roomCode) {
@@ -148,7 +149,7 @@ function registerCustomSoundRoutes({ app, express, io, roomService, sanitizeRoom
             category,
             emoji,
             duration: Math.round(wav.duration * 10) / 10,
-            ownerId: socket.id,
+            ownerId: roomOwnershipKey(roomCode, user.clientId),
             ownerName: user.name,
             createdAt: now,
             mime: "audio/wav",
@@ -190,7 +191,7 @@ function registerCustomSoundRoutes({ app, express, io, roomService, sanitizeRoom
         if (!auth) return res.status(401).json({ success: false, message: "Sessão da sala inválida." });
         const sound = room.customSounds?.get(String(req.params.soundId || ""));
         if (!sound) return res.status(404).json({ success: false, message: "Som não encontrado." });
-        if (!canDelete(auth.user, sound)) return res.status(403).json({ success: false, message: "Sem permissão para editar este som." });
+        if (!canDelete(auth.user, sound, roomCode)) return res.status(403).json({ success: false, message: "Sem permissão para editar este som." });
 
         const name = decodeHeader(req.body?.name, 40);
         const categoryRaw = decodeHeader(req.body?.category, 30);
@@ -219,7 +220,7 @@ function registerCustomSoundRoutes({ app, express, io, roomService, sanitizeRoom
         if (totalCustomSoundBytes(roomService) + original.bytes > MAX_GLOBAL_SOUND_BYTES) return res.status(503).json({ success: false, code: "SOUND_GLOBAL_LIMIT", message: "O servidor atingiu o limite temporário de áudio. Tente novamente mais tarde." });
 
         const id = `custom-${crypto.randomUUID()}`;
-        const copy = { ...original, id, name: `${original.name} (cópia)`.slice(0,40), ownerId: auth.socket.id, ownerName: auth.user.name, createdAt: Date.now(), buffer: Buffer.from(original.buffer), accessToken: randomToken(18) };
+        const copy = { ...original, id, name: `${original.name} (cópia)`.slice(0,40), ownerId: roomOwnershipKey(roomCode, auth.user.clientId), ownerName: auth.user.name, createdAt: Date.now(), buffer: Buffer.from(original.buffer), accessToken: randomToken(18) };
         room.customSounds.set(id, copy);
         room.customSoundBytes += copy.bytes;
         roomService.audit(roomCode, { type: "sound-duplicate", actorId: auth.socket.id, actorName: auth.user.name, soundId: id, sourceId: original.id });
@@ -238,7 +239,7 @@ function registerCustomSoundRoutes({ app, express, io, roomService, sanitizeRoom
         if (!auth) return res.status(401).json({ success: false, message: "Sessão da sala inválida." });
         const sound = room.customSounds?.get(String(req.params.soundId || ""));
         if (!sound) return res.status(404).json({ success: false, message: "Som não encontrado." });
-        if (!canDelete(auth.user, sound)) return res.status(403).json({ success: false, message: "Sem permissão para excluir este som." });
+        if (!canDelete(auth.user, sound, roomCode)) return res.status(403).json({ success: false, message: "Sem permissão para excluir este som." });
 
         room.customSounds.delete(sound.id);
         room.customSoundBytes = Math.max(0, (room.customSoundBytes || 0) - sound.bytes);

@@ -204,7 +204,7 @@ body.hl-social-ready .hl-sound-empty button { min-height:38px; padding:0 12px; b
 body.hl-social-ready .hl-sound-modal {
   position:fixed;
   inset:0;
-  z-index:var(--hl-z-toast);
+  z-index:var(--hl-z-modal);
   display:grid;
   place-items:center;
   padding:18px;

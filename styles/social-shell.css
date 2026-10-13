@@ -49,7 +49,7 @@ body.hl-social-ready .hl-social-panel {
   background: linear-gradient(180deg, rgba(10, 16, 27, .99), rgba(7, 11, 19, .99));
   box-shadow: 0 18px 54px rgba(0, 0, 0, .24);
   color: var(--hl-social-text);
-  z-index:var(--hl-z-header);
+  z-index:var(--hl-z-panel);
 }
 
 body.hl-social-ready .hl-social-panel.is-open {
@@ -235,6 +235,7 @@ body.hl-social-ready .hl-settings-panel[hidden],
 body.hl-social-ready .hl-more-menu[hidden] { display:none; }
 body.hl-social-ready .hl-more-menu {
   position:fixed;
+  z-index:var(--hl-z-popover);
   left:18px;
   bottom:92px;
   width:220px;
@@ -265,6 +266,7 @@ body.hl-social-ready .hl-more-separator { height:1px; margin:3px 4px; background
 
 body.hl-social-ready .hl-settings-panel {
   position:fixed;
+  z-index:var(--hl-z-modal);
   right:16px;
   top:16px;
   bottom:16px;

@@ -72,7 +72,7 @@
         let items = Array.from(soundById.values());
         if (query) items = items.filter(item => `${item.name} ${item.category} ${item.ownerName || ""}`.toLocaleLowerCase("pt-BR").includes(query));
         if (state.soundCategory === "favorites") items = items.filter(item => state.soundFavorites.has(item.id));
-        if (state.soundCategory === "custom") items = items.filter(item => item.custom && item.ownerId === socket.id);
+        if (state.soundCategory === "custom") items = items.filter(item => item.custom && item.ownerId === state.ownershipKey);
         if (state.soundCategory === "recent") {
             const rank = new Map(state.recentSounds.map((id, index) => [id, index]));
             items = items.filter(item => rank.has(item.id)).sort((a, b) => rank.get(a.id) - rank.get(b.id));
@@ -134,7 +134,7 @@
             all.dataset.soundAction = "room";
             actions.append(preview, all);
 
-            if (item.custom && (item.ownerId === socket.id || state.role === "host" || state.role === "moderator")) {
+            if (item.custom && (item.ownerId === state.ownershipKey || state.role === "host" || state.role === "moderator")) {
                 const edit = soundTool("Editar", () => editCustomSound(item.id));
                 const duplicate = soundTool("Duplicar", () => duplicateCustomSound(item.id));
                 const remove = soundTool("Excluir", () => deleteCustomSound(item.id));
@@ -229,10 +229,14 @@
         if (!canUseSoundLocally()) return toast("Você não tem permissão para usar o soundboard.");
         if (!soundById.has(soundId)) return toast("Esse som não está mais disponível.");
 
-        await playSound(soundId, true);
-        socket.emit("sound:play", { soundId }, result => {
-            if (!result?.success) return toast(result?.message || "Som não permitido.");
-            state.soundCooldownUntil = Date.now() + 900;
+        if (!socket.connected || navigator.onLine === false) return toast("Reconecte à sala para tocar sons.");
+        state.soundCooldownUntil = now + 900;
+        socket.emit("sound:play", { soundId }, async result => {
+            if (!result?.success) {
+                state.soundCooldownUntil = 0;
+                return toast(result?.message || "Som não permitido.");
+            }
+            await playSound(soundId, true);
         });
     }
 
@@ -246,7 +250,7 @@
         if (!item?.id || !item?.url) return;
         soundById.set(item.id, { ...item, name: String(item.name || "Som personalizado"), category: String(item.category || "Outros"), emoji: String(item.emoji || "🔊"), custom: true });
         renderSoundGrid();
-        if (item.ownerId !== socket.id) toast(`${item.ownerName || "Alguém"} adicionou um som.`);
+        if (item.ownerId !== state.ownershipKey) toast(`${item.ownerName || "Alguém"} adicionou um som.`);
     };
     const onSoundCatalogUpdate = item => {
         if (!item?.id || !item?.url) return;
@@ -520,5 +524,5 @@
     };
   }
 
-  window.HLSoundboardController = Object.freeze({ version: "12.0.1", create });
+  window.HLSoundboardController = Object.freeze({ version: "12.0.7-foundation.6", create });
 })();

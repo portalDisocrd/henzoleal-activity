@@ -4,7 +4,7 @@
     if (typeof socket === "undefined") return;
 
     document.body.classList.add("hl-social-ready");
-    document.documentElement.dataset.hlSocialVersion = "12.0";
+    document.documentElement.dataset.hlSocialVersion = "12.0.7-foundation.6";
 
     const savedSoundVolume = Number(localStorage.getItem("hl_sound_volume"));
 
@@ -15,6 +15,7 @@
         soundPolicy: "everyone",
         soundUploadPolicy: "everyone",
         apiToken: "",
+        ownershipKey: "",
         participants: new Map(),
         messages: new Map(),
         replyTo: null,
@@ -501,7 +502,9 @@
         state.soundPolicy = data.soundboardPolicy || state.soundPolicy;
         state.soundUploadPolicy = data.soundUploadPolicy || state.soundUploadPolicy;
         state.apiToken = data.apiToken || state.apiToken;
+        state.ownershipKey = data.ownershipKey || state.ownershipKey;
         updateHostUI();
+        voiceController?.handleRoomJoined?.();
     });
 
     socket.on("participants-update", list => {
@@ -787,7 +790,7 @@
     });
 
     // Connection / reconnect --------------------------------
-    socket.on("connect",()=>{ if (connectionPill) { connectionPill.textContent="Conectado"; connectionPill.dataset.state="online"; } if (settingsStatusText) settingsStatusText.textContent="Conectado"; voiceController?.handleReconnect?.(); });
+    socket.on("connect",()=>{ if (connectionPill) { connectionPill.textContent="Conectado"; connectionPill.dataset.state="online"; } if (settingsStatusText) settingsStatusText.textContent="Conectado"; voiceController?.handleSocketConnected?.(); });
     socket.on("disconnect",()=>{ if (connectionPill) { connectionPill.textContent="Reconectando…"; connectionPill.dataset.state="reconnecting"; } if (settingsStatusText) settingsStatusText.textContent="Reconectando…"; state.bootstrapped=false; voiceController?.handleDisconnect?.(); });
     socket.on("connect_error",()=> { if (connectionPill) { connectionPill.textContent="Sem conexão"; connectionPill.dataset.state="offline"; } if (settingsStatusText) settingsStatusText.textContent="Sem conexão"; voiceController?.handleConnectError?.(); });
     socket.on("moderation:kicked",data=>{ toast(data?.message||"Você foi removido."); leaveVoice(false); setTimeout(()=>location.href="/",800); });

@@ -1,13 +1,14 @@
-const { randomToken } = require("../security/security-utils");
+const { randomToken, roomOwnershipKey } = require("../security/security-utils");
 
 function registerJoinRoom({ socket, roomService, sanitizeRoomCode, isValidRoomCode, sanitizeProfile, isPlainObject, allowSocketEvent, maxUsersPerRoom, updateParticipants }) {
+    const emitRoomError = (code, message) => socket.emit("room-error", { code, message });
     function emitActivity(roomCode, room, user, text, type = "info") {
         const item = roomService.activity(roomCode, { type, text, actorId: socket.id, actorName: user?.name || "Usuário" });
         if (item) socket.nsp.to(roomCode).emit("activity:event", item);
     }
 
     function admit({ roomCode, room, profile, validOwnerToken = false, clientId = "" }) {
-        if (room.users.size >= maxUsersPerRoom) { socket.emit("room-error", "Sala cheia."); return false; }
+        if (room.users.size >= maxUsersPerRoom) { emitRoomError("ROOM_FULL", "Sala cheia."); return false; }
         socket.join(roomCode);
         socket.data.roomCode = roomCode;
         socket.data.pendingRoomCode = null;
@@ -38,7 +39,8 @@ function registerJoinRoom({ socket, roomService, sanitizeRoomCode, isValidRoomCo
             soundUploadPolicy: room.soundUploadPolicy, locked: room.locked,
             entryPolicy: room.entryPolicy || "auto", roomMode: room.roomMode || "normal",
             spotlightId: room.spotlightId || null, hasPassword: Boolean(room.roomPasswordHash),
-            apiToken: socket.data.roomApiToken
+            apiToken: socket.data.roomApiToken,
+            ownershipKey: roomOwnershipKey(roomCode, clientId)
         });
         socket.to(roomCode).emit("user-joined", { id: socket.id, name: profile.name, avatar: profile.avatar, role, streaming: false });
         updateParticipants(roomCode);
@@ -47,13 +49,13 @@ function registerJoinRoom({ socket, roomService, sanitizeRoomCode, isValidRoomCo
 
     socket.on("join-room", data => {
         if (!allowSocketEvent(socket, "room:join")) return;
-        if (!isPlainObject(data)) return socket.emit("room-error", "Dados inválidos.");
+        if (!isPlainObject(data)) return emitRoomError("ROOM_DATA_INVALID", "Dados inválidos.");
         const roomCode = sanitizeRoomCode(data.roomCode);
-        if (!isValidRoomCode(roomCode)) return socket.emit("room-error", "Código de sala inválido.");
+        if (!isValidRoomCode(roomCode)) return emitRoomError("ROOM_CODE_INVALID", "Código de sala inválido.");
         const room = roomService.get(roomCode);
-        if (!room) return socket.emit("room-error", "Sala não encontrada.");
+        if (!room) return emitRoomError("ROOM_NOT_FOUND", "Sala não encontrada.");
         if (socket.data.roomCode === roomCode) return updateParticipants(roomCode);
-        if (socket.data.roomCode) return socket.emit("room-error", "Você já está em outra sala.");
+        if (socket.data.roomCode) return emitRoomError("ROOM_ALREADY_JOINED", "Você já está em outra sala.");
 
         const requestedHostToken = typeof data.hostToken === "string" ? data.hostToken.slice(0,160) : "";
         const requestedTrustToken = typeof data.trustToken === "string" ? data.trustToken.slice(0,160) : "";
@@ -68,11 +70,11 @@ function registerJoinRoom({ socket, roomService, sanitizeRoomCode, isValidRoomCo
         const profile = sanitizeProfile(data.profile);
 
         const banUntil = clientId ? Number(room.bannedClients?.get(clientId) || 0) : 0;
-        if (banUntil > Date.now()) return socket.emit("room-error", "Seu acesso a esta sala foi bloqueado pelo host.");
+        if (banUntil > Date.now()) return emitRoomError("ROOM_BANNED", "Seu acesso a esta sala foi bloqueado pelo host.");
         if (room.roomPasswordHash && !validOwnerToken && !trustedInvite && !approvedRetry && !roomService.verifyRoomPassword(roomCode, password)) {
             return socket.emit("room:password-required", { roomCode, message: "Esta sala possui senha." });
         }
-        if (room.locked && room.users.size > 0 && !validOwnerToken && !trustedInvite && !approvedRetry) return socket.emit("room-error", "A sala está bloqueada pelo host.");
+        if (room.locked && room.users.size > 0 && !validOwnerToken && !trustedInvite && !approvedRetry) return emitRoomError("ROOM_LOCKED", "A sala está bloqueada pelo host.");
 
         const policy = room.entryPolicy || "auto";
         const shouldWait = !validOwnerToken && !trustedInvite && !approvedRetry && (policy === "approveAll" || policy === "approveUnknown");

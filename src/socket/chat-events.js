@@ -1,4 +1,5 @@
 const crypto = require("crypto");
+const { roomOwnershipKey } = require("../security/security-utils");
 
 const ALLOWED_REACTIONS = new Set(["👍", "😂", "❤️", "👏", "🔥"]);
 
@@ -7,6 +8,7 @@ function createChatEvents({ io, roomService, allowSocketEvent, normalizeText, up
         return {
             id: message.id,
             authorId: message.authorId,
+            authorKey: message.authorKey || null,
             authorName: message.authorName,
             authorAvatar: message.authorAvatar,
             text: message.text,
@@ -37,6 +39,7 @@ function createChatEvents({ io, roomService, allowSocketEvent, normalizeText, up
 
     function register(socket) {
         socket.on("chat:history", (ack) => {
+            if (!allowSocketEvent(socket, "chat:history")) return typeof ack === "function" && ack({ success: false, message: "Muitas solicitações em pouco tempo." });
             const ctx = getContext(socket);
             if (!ctx) return typeof ack === "function" && ack({ success: false });
             const messages = ctx.room.messages.map(safeMessage);
@@ -64,6 +67,7 @@ function createChatEvents({ io, roomService, allowSocketEvent, normalizeText, up
             const message = {
                 id: crypto.randomUUID(),
                 authorId: socket.id,
+                authorKey: roomOwnershipKey(ctx.roomCode, ctx.user.clientId),
                 authorName: ctx.user.name,
                 authorAvatar: ctx.user.avatar,
                 text,
@@ -89,7 +93,9 @@ function createChatEvents({ io, roomService, allowSocketEvent, normalizeText, up
             const id = normalizeText(payload?.id, 80);
             const text = normalizeText(payload?.text, 1000);
             const message = ctx.room.messages.find(item => item.id === id);
-            if (!message || message.authorId !== socket.id || !text) return typeof ack === "function" && ack({ success: false, message: "Não foi possível editar." });
+            const actorKey = roomOwnershipKey(ctx.roomCode, ctx.user.clientId);
+            const ownsMessage = message && ((message.authorKey && actorKey && message.authorKey === actorKey) || message.authorId === socket.id);
+            if (!message || !ownsMessage || !text) return typeof ack === "function" && ack({ success: false, message: "Não foi possível editar." });
             message.text = text;
             message.editedAt = Date.now();
             io.to(ctx.roomCode).emit("chat:updated", safeMessage(message));
@@ -105,7 +111,9 @@ function createChatEvents({ io, roomService, allowSocketEvent, normalizeText, up
             if (index < 0) return typeof ack === "function" && ack({ success: false });
             const message = ctx.room.messages[index];
             const author = ctx.room.users.get(message.authorId);
-            if (message.authorId !== socket.id && !canModerate(ctx.room, socket.id, author)) {
+            const actorKey = roomOwnershipKey(ctx.roomCode, ctx.user.clientId);
+            const ownsMessage = (message.authorKey && actorKey && message.authorKey === actorKey) || message.authorId === socket.id;
+            if (!ownsMessage && !canModerate(ctx.room, socket.id, author)) {
                 return typeof ack === "function" && ack({ success: false, message: "Sem permissão." });
             }
             ctx.room.messages.splice(index, 1);
@@ -123,7 +131,8 @@ function createChatEvents({ io, roomService, allowSocketEvent, normalizeText, up
             const message = ctx.room.messages.find(item => item.id === id);
             if (!message) return typeof ack === "function" && ack({ success: false });
             const users = new Set(message.reactionUsers?.[emoji] || []);
-            if (users.has(socket.id)) users.delete(socket.id); else users.add(socket.id);
+            const reactionActor = roomOwnershipKey(ctx.roomCode, ctx.user.clientId) || socket.id;
+            if (users.has(reactionActor)) users.delete(reactionActor); else users.add(reactionActor);
             message.reactionUsers = message.reactionUsers || {};
             message.reactionUsers[emoji] = Array.from(users);
             message.reactions[emoji] = users.size;

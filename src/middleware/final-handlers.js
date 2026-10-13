@@ -1,4 +1,5 @@
 const { sanitizeLogValue } = require("../security/security-utils");
+const { log } = require("../utils/logger");
 
 function registerFinalHandlers({ app }) {
     app.use("/api", (req, res) => {
@@ -9,10 +10,12 @@ function registerFinalHandlers({ app }) {
         if (res.headersSent) return next(error);
 
         const requestId = req.requestId || "-";
-        const path = sanitizeLogValue(req.originalUrl || req.url || "", 180);
+        // Nunca registrar query string: URLs de áudio customizado carregam token
+        // efêmero em ?t=. req.path mantém somente o pathname.
+        const safePath = sanitizeLogValue(req.path || String(req.originalUrl || req.url || "").split("?")[0], 180);
         const method = sanitizeLogValue(req.method || "", 12);
         const message = sanitizeLogValue(error?.message || "Erro desconhecido", 180);
-        console.error(`[HTTP] ${method} ${path} request=${requestId} erro=${message}`);
+        log("error", "http.error", { requestId, method, path: safePath, message, errorName: error?.name || "Error" });
 
         if (error?.type === "entity.too.large" || error?.status === 413) {
             return res.status(413).json({ success: false, message: "Conteúdo enviado é grande demais.", requestId });

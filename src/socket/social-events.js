@@ -15,7 +15,7 @@ function createSocialEvents({ io, roomService, allowSocketEvent, getSafeTargetSo
         if (!room) return null;
         const user = room.users.get(socket.id);
         if (!user) return null;
-        return { roomCode, room, user };
+        return { roomCode, room, user, socketId: socket.id };
     }
     function canUseSound(user, policy) {
         if (!user || user.soundBlocked || policy === "disabled") return false;
@@ -30,12 +30,13 @@ function createSocialEvents({ io, roomService, allowSocketEvent, getSafeTargetSo
         return actor.role === "moderator" && target.role === "member";
     }
     function emitActivity(c, text, type = "info", targetId = null) {
-        const item = roomService.activity(c.roomCode, { type, text, actorId: c.user ? c.user.id : undefined, actorName: c.user?.name, targetId });
+        const item = roomService.activity(c.roomCode, { type, text, actorId: c.socketId || null, actorName: c.user?.name, targetId });
         if (item) io.to(c.roomCode).emit("activity:event", item);
     }
 
     function register(socket, updateParticipants) {
         socket.on("social:state", ack => {
+            if (!allowSocketEvent(socket, "social:state")) return typeof ack === "function" && ack({ success:false, message:"Muitas solicitações em pouco tempo." });
             const c = ctx(socket);
             if (!c) return typeof ack === "function" && ack({ success:false });
             if (typeof ack === "function") ack({
@@ -55,12 +56,12 @@ function createSocialEvents({ io, roomService, allowSocketEvent, getSafeTargetSo
         });
 
         socket.on("diagnostics:ping", (payload, ack) => {
-            if (!allowSocketEvent(socket, "generic")) return;
+            if (!allowSocketEvent(socket, "diagnostics:ping")) return typeof ack === "function" && ack({ success:false });
             if (typeof ack === "function") ack({ success:true, at:Date.now(), echo:payload?.at || null });
         });
 
         socket.on("presence:update", (payload, ack) => {
-            if (!allowSocketEvent(socket, "generic")) return typeof ack === "function" && ack({ success:false });
+            if (!allowSocketEvent(socket, "presence:update")) return typeof ack === "function" && ack({ success:false });
             const c = ctx(socket); if (!c) return typeof ack === "function" && ack({ success:false });
             const status = normalizeText(payload?.status, 16);
             if (!PRESENCE_STATES.has(status)) return typeof ack === "function" && ack({ success:false });

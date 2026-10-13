@@ -2,6 +2,9 @@
   "use strict";
   window.HLErrorMessages = Object.freeze({
     ROOM_NOT_FOUND: "Essa sala não existe mais.",
+    ROOM_CODE_INVALID: "O código da sala é inválido.",
+    ROOM_DATA_INVALID: "Os dados de entrada da sala são inválidos.",
+    ROOM_ALREADY_JOINED: "Você já está conectado a outra sala.",
     ROOM_FULL: "A sala atingiu o limite de participantes.",
     ROOM_LOCKED: "A sala está trancada pelo host.",
     ROOM_PASSWORD_INVALID: "A senha informada está incorreta.",

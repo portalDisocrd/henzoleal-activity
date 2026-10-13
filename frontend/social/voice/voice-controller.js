@@ -16,6 +16,8 @@
     };
 
     const cleanupFns = [];
+    let joiningVoice = false;
+    let reconnectingVoice = false;
     const keydown = event => {
       if (event.code === "Space" && state.ptt && !isTypingTarget(event.target)) {
         event.preventDefault();
@@ -156,12 +158,19 @@
     }
 
     async function join() {
-      if (state.voiceJoined) return;
-      if (!window.HLVoiceConfig?.supports?.() && !navigator.mediaDevices?.getUserMedia) {
+      if (state.voiceJoined || joiningVoice) return;
+      const supported = navigator.mediaDevices?.getUserMedia && (!window.HLVoiceConfig?.supports || window.HLVoiceConfig.supports());
+      if (!supported) {
         window.HLVoiceState?.set("error");
         toast?.("Voz não é suportado neste navegador.");
         return;
       }
+      joiningVoice = true;
+      if (voiceJoin) voiceJoin.disabled = true;
+      const strong = voiceJoin?.querySelector("strong");
+      const small = voiceJoin?.querySelector("small");
+      if (strong) strong.textContent = "Conectando ao voz…";
+      if (small) small.textContent = "Preparando microfone e áudio";
       window.HLVoiceState?.set("requesting-permission");
       try {
         state.voiceStream = await navigator.mediaDevices.getUserMedia({
@@ -178,8 +187,6 @@
         state.muted = sessionStorage.getItem("hl_prejoin_muted") === "1";
         applyMicState();
         voiceJoin?.classList.add("is-connected");
-        const strong = voiceJoin?.querySelector("strong");
-        const small = voiceJoin?.querySelector("small");
         if (strong) strong.textContent = "Conectado ao voz";
         if (small) small.textContent = "Você está ouvindo a sala";
         if (voiceJoin) voiceJoin.disabled = true;
@@ -200,6 +207,11 @@
         const code = error?.name === "NotAllowedError" ? "MIC_PERMISSION_DENIED" : error?.name === "NotFoundError" ? "MIC_NOT_FOUND" : "VOICE_CONNECT_FAILED";
         document.documentElement.dataset.hlVoiceError = code;
         toast?.(code === "MIC_PERMISSION_DENIED" ? "Permissão do microfone negada." : code === "MIC_NOT_FOUND" ? "Nenhum microfone foi encontrado." : "Não foi possível acessar o microfone.");
+        if (strong) strong.textContent = "Entrar no voz";
+        if (small) small.textContent = "Conectar microfone e áudio";
+        if (voiceJoin) voiceJoin.disabled = false;
+      } finally {
+        joiningVoice = false;
       }
     }
 
@@ -379,18 +391,33 @@
       return target?.matches?.("input, textarea, select, [contenteditable='true']");
     }
 
-    function handleReconnect() {
-      window.HLVoiceState?.set(state.voiceJoined ? "reconnecting" : "disconnected");
-      if (!state.voiceJoined || !state.voiceStream) return;
+    function handleSocketConnected() {
+      if (state.voiceJoined) window.HLVoiceState?.set("reconnecting");
+      else window.HLVoiceState?.set("disconnected");
+    }
+
+    function handleRoomJoined() {
+      if (!state.voiceJoined || !state.voiceStream || reconnectingVoice) return;
+      reconnectingVoice = true;
+      window.HLVoiceState?.set("reconnecting");
       Array.from(state.voicePeers.keys()).forEach(closePeer);
       socket.emit("voice:join", {}, async result => {
-        if (!result?.success) { window.HLVoiceState?.set("error"); return; }
-        for (const peer of result.peers || []) await createOffer(peer.id);
-        window.HLVoiceState?.set("connected");
+        try {
+          if (!result?.success) {
+            window.HLVoiceState?.set("error");
+            toast?.("A sala voltou, mas o voz não conseguiu reconectar.");
+            return;
+          }
+          for (const peer of result.peers || []) await createOffer(peer.id);
+          window.HLVoiceState?.set("connected");
+        } finally {
+          reconnectingVoice = false;
+        }
       });
     }
 
     function handleDisconnect() {
+      reconnectingVoice = false;
       if (state.voiceJoined) window.HLVoiceState?.set("reconnecting");
       Array.from(state.voicePeers.keys()).forEach(closePeer);
     }
@@ -478,7 +505,7 @@
 
     return {
       join, leave, refreshAudioDevices, renderList, updateButtons,
-      handleReconnect, handleDisconnect, handleConnectError, forceMute, destroy,
+      handleSocketConnected, handleRoomJoined, handleDisconnect, handleConnectError, forceMute, destroy,
       closePeer, createOffer
     };
   }
