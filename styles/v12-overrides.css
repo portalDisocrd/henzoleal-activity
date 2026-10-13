@@ -1,0 +1,7 @@
+/* V12 consolidation overrides: small, deliberate compatibility layer. */
+#share,.hl-stage-share{border:0;border-radius:14px;background:linear-gradient(135deg,var(--hl-blue),var(--hl-blue-2));color:#fff;font-weight:800;box-shadow:0 10px 30px rgba(35,135,255,.24)}
+#share:hover,.hl-stage-share:hover{filter:brightness(1.08)}
+.hl-social-panel{z-index:var(--hl-z-panel)}.hl-social-backdrop{z-index:var(--hl-z-backdrop)}.hl-reaction-picker,.hl-more-menu{z-index:var(--hl-z-popover)}
+.hl-settings-panel,.hl-sound-modal-backdrop{z-index:var(--hl-z-modal)}.hl-toast-stack{z-index:var(--hl-z-toast)}
+.hl-sound-grid{min-height:0;overflow:auto}.hl-sound-help{position:static}.hl-sound-toolbar{flex:0 0 auto}
+@media(max-width:650px){.hl-sound-grid{grid-template-columns:minmax(0,1fr)}.hl-sound-head-actions{width:100%;display:grid;grid-template-columns:1fr 1fr}.hl-sound-hero{align-items:flex-start;flex-direction:column}}

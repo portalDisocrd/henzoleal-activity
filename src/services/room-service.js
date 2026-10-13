@@ -1,5 +1,5 @@
 const { generateRoomCode } = require("../utils/room-utils");
-const { randomToken, hashToken, safeTokenMatch } = require("../security/security-utils");
+const { randomToken, hashToken, safeTokenMatch, hashPassword, safePasswordMatch } = require("../security/security-utils");
 
 const INVITE_TTLS = new Set([15 * 60 * 1000, 60 * 60 * 1000, 24 * 60 * 60 * 1000, 7 * 24 * 60 * 60 * 1000]);
 
@@ -103,7 +103,7 @@ function createRoomService({ maxRooms, emptyRoomTtl }) {
         const room = rooms.get(code);
         if (!room) return false;
         const value = String(password || "").trim();
-        room.roomPasswordHash = value ? hashToken(value) : null;
+        room.roomPasswordHash = value ? hashPassword(value) : null;
         return true;
     }
 
@@ -111,7 +111,7 @@ function createRoomService({ maxRooms, emptyRoomTtl }) {
         const room = rooms.get(code);
         if (!room) return false;
         if (!room.roomPasswordHash) return true;
-        return safeTokenMatch(String(password || ""), room.roomPasswordHash);
+        return safePasswordMatch(String(password || ""), room.roomPasswordHash);
     }
 
     function audit(code, entry) {

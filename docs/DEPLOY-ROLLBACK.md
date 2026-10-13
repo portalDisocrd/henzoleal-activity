@@ -1,29 +1,20 @@
-# Deploy e rollback
+# Deploy e rollback — V12
 
-## Antes de publicar
+## Gate obrigatório
 
-1. backup local;
-2. preservar `.git` e `.env`;
-3. `npm install`;
+1. criar backup;
+2. `npm ci --include=dev --no-audit --no-fund`;
+3. syntax check apenas do backend/CommonJS apropriado;
 4. `npm test`;
 5. `npm run build`;
-6. syntax check;
-7. iniciar servidor temporário;
-8. validar `/health`;
-9. somente então commit/push.
+6. subir servidor temporário;
+7. validar `/health` e `/ready`;
+8. commit;
+9. push;
+10. Render auto-deploy.
 
-## Render
-
-- Build: `npm install && npm run build`
-- Start: `npm start`
-- Health: `/health`
+Se qualquer etapa falhar, não fazer push.
 
 ## Rollback
 
-O atualizador V11.1 cria um backup antes de alterar o projeto. Se a validação falhar, nada é enviado ao Git/Render.
-
-Para voltar manualmente, restaure a pasta do backup ou use o Git bundle criado pelo script quando disponível.
-
-## PWA/cache
-
-A release V11.1 usa cache `hl-activity-v11-1-social-foundation`. Alterar a camada social exige atualização do cache e dos query params dos assets.
+Antes da atualização, registrar o HEAD anterior e criar backup ZIP/Git bundle quando possível. Para voltar, restaurar o backup ou fazer checkout/revert do commit anterior conforme a situação. Nunca usar force push como procedimento padrão.

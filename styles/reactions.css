@@ -1,0 +1,60 @@
+   REACTIONS / OVERLAYS
+========================================================= */
+body.hl-social-ready .hl-ui-overlays { position:fixed; inset:0; z-index:var(--hl-z-toast); pointer-events:none; }
+body.hl-social-ready .hl-ui-overlays > * { pointer-events:auto; }
+
+body.hl-social-ready .hl-reaction-picker {
+  position:fixed;
+  left:18px;
+  bottom:92px;
+  width:max-content;
+  max-width:calc(100vw - 36px);
+  display:flex;
+  gap:6px;
+  padding:8px;
+  border:1px solid rgba(83,111,255,.24);
+  border-radius:15px;
+  background:rgba(8,13,22,.97);
+  box-shadow:0 18px 50px rgba(0,0,0,.42);
+  backdrop-filter:blur(16px);
+}
+body.hl-social-ready .hl-reaction-picker[hidden] { display:none; }
+body.hl-social-ready .hl-reaction-picker button { width:42px; height:42px; display:grid; place-items:center; border:1px solid transparent; border-radius:11px; background:#101827; font-size:21px; cursor:pointer; transition:transform .14s ease,border-color .14s ease,background .14s ease; }
+body.hl-social-ready .hl-reaction-picker button:hover { transform:translateY(-2px); border-color:rgba(83,111,255,.35); background:#15203a; }
+
+body.hl-social-ready .hl-reaction-layer {
+  position:fixed;
+  inset:auto;
+  pointer-events:none;
+  overflow:hidden;
+  z-index:var(--hl-z-backdrop);
+}
+body.hl-social-ready .hl-floating-reaction-vfx {
+  position:absolute;
+  right:18px;
+  bottom:18px;
+  font-size:24px;
+  line-height:1;
+  opacity:0;
+  filter:drop-shadow(0 5px 14px rgba(0,0,0,.38));
+  animation:hlReactionFloat 1.25s cubic-bezier(.2,.75,.2,1) forwards;
+}
+@keyframes hlReactionFloat {
+  0% { opacity:0; transform:translate(0,8px) scale(.80); }
+  14% { opacity:1; transform:translate(var(--hl-reaction-x,0px),0) scale(1.02); }
+  76% { opacity:.96; }
+  100% { opacity:0; transform:translate(calc(var(--hl-reaction-x,0px) - 8px),-64px) scale(1.06); }
+}
+/* Performance mode reduces the animation; it never hides functional feedback. */
+body.hl-performance.hl11-social-ready .hl-floating-reaction-vfx,
+body.hl-social-ready.hl-performance .hl-floating-reaction-vfx {
+  display:block;
+  animation-duration:.75s;
+}
+
+body.hl-social-ready .hl-toast-stack { position:fixed; left:50%; top:84px; transform:translateX(-50%); z-index:var(--hl-z-toast); display:grid; gap:7px; pointer-events:none; }
+body.hl-social-ready .hl-toast { max-width:min(460px,calc(100vw - 28px)); padding:9px 12px; border:1px solid var(--hl-social-border); border-radius:11px; background:#0a111d; color:white; box-shadow:0 14px 40px rgba(0,0,0,.34); font-size:10px; }
+
+body.hl-social-ready .hl-social-backdrop { display:none; }
+
+/* =========================================================

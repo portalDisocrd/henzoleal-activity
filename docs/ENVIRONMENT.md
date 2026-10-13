@@ -1,18 +1,13 @@
-# Variáveis de ambiente
+# Ambiente — V12
 
-Baseie-se em `.env.example`.
+Node: `>=20.19.0`.
 
-Principais variáveis:
+Variáveis principais:
 
-- `NODE_ENV`
 - `PORT`
-- `DISCORD_CLIENT_ID`
-- `DISCORD_CLIENT_SECRET`
-- `HL_ALLOWED_ORIGINS`
+- Discord OAuth conforme `.env.example`
+- `TURN_URL` opcional
+- `TURN_SHARED_SECRET` preferido para credenciais TURN temporárias
+- `TURN_USERNAME` + `TURN_CREDENTIAL` como fallback estático
 
-## Segurança
-
-- nunca versionar `.env`;
-- nunca imprimir secrets em logs;
-- não colocar tokens em scripts públicos;
-- Render deve receber secrets pelo painel de Environment.
+`.env` não entra no ZIP de distribuição/deploy nem no Git.

@@ -895,7 +895,7 @@ body.hl11-social-ready .hl-sound-modal-actions { display:flex !important; justif
 body.hl11-social-ready .hl-upload-security { display:flex !important; gap:9px !important; padding:10px !important; border-radius:11px !important; background:rgba(72,216,165,.06) !important; color:#7f9b91 !important; font-size:9px !important; line-height:1.5 !important; }
 
 /* =========================================================
-   INTERNAL FALLBACK SETTINGS
+   /* INTERNAL FALLBACK SETTINGS
    The full V10 control center is primary on the web room.
    Discord Activity can still use this compact fallback.
 ========================================================= */

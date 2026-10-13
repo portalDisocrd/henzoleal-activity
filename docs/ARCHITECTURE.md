@@ -1,55 +1,57 @@
-# Arquitetura — HL Activity V11.1
+# Arquitetura — HL Activity V12
 
-## Camadas
+## Princípios
 
-### HTTP / Express
-- `server.js`
-- `src/routes/*`
-- `src/middleware/*`
-- `src/security/*`
+1. Web e Discord Activity compartilham o mesmo core de sala.
+2. Stream e Voz usam WebRTC, mas possuem estados independentes.
+3. O servidor é autoridade para host, moderação, permissões e políticas da sala.
+4. Assets de produção usam nomes estáveis; a versão pertence ao aplicativo, não ao nome do arquivo.
+5. Código legado fica fora das rotas públicas.
 
-### Estado de sala
-- `src/services/room-service.js`
-- servidor é a autoridade para host, roles, permissões e políticas.
+## Frontend
 
-### Socket.IO
-- `src/socket/join-room.js`
-- `src/socket/chat-events.js`
-- `src/socket/voice-events.js`
-- `src/socket/social-events.js`
-- `src/socket/stream-events.js`
-- `src/socket/webrtc-signaling.js`
+### Core
 
-### Cliente principal
-- `room-core.js`: stream/WebRTC e sala web.
-- `activity-room-core.js`: Discord Activity.
-- `hl-v10.js`: recursos de produto (configurações avançadas, lobby, mixer, diagnóstico, PWA integration).
-- `hl-social-v11.js`: única camada social ativa para Chat/Voz/Sons/Reações.
-- `hl-social-v11.css`: autoridade visual da camada social.
+`frontend/core/`
 
-## Regra de isolamento social
+- `app-version.js`: versão visível no cliente.
+- `capabilities.js`: detecção de APIs do navegador.
+- `connectivity.js`: estado online/offline e bloqueio de ações realtime quando offline.
+- `error-codes.js`: mensagens padronizadas.
+- `room-entry.js`: pré-entrada direta na sala com perfil e teste de microfone.
 
-Chat, Voz e Sons usam o mesmo painel, mas apenas uma view pode estar ativa. O JavaScript define `hidden`, `aria-hidden` e classe `is-active`; CSS reforça a regra.
+### Sala
 
-## Legado
+`room-core.js` é compartilhado por `room.html` e `activity-room.html`. Particularidades da Activity são determinadas pelo contexto da rota; a antiga cópia `activity-room-core.js` foi movida para legado.
 
-CSS/JS sociais antigos ficam em `legacy/social/`. Não são publicados pelo Express e não fazem parte da sala em produção.
+### Social
 
-## Reactions
+- `frontend/social/social-runtime.js`: shell, participantes e coordenação.
+- `chat/chat-module.js`: mensagens, edição, resposta, typing e unread.
+- `voice/`: máquina de estado, dispositivos, signaling de voz, PTT, mute/deaf e cleanup.
+- `soundboard/`: catálogo, filtros, preview, upload, reprodução local/sala e edição.
+- `reactions/`: reactionId, deduplicação, limite visual e posicionamento relativo ao palco.
 
-1. clique local;
-2. `reactionId` único;
-3. feedback local imediato;
-4. `reaction:send` ao servidor;
-5. servidor valida e envia somente aos outros sockets;
-6. clientes remotos deduplicam por ID.
+### CSS
 
-A camada visual é posicionada usando `getBoundingClientRect()` do palco.
+- `tokens.css`: escala central de z-index e tokens compartilhados.
+- `components.css`: componentes nativos normalizados.
+- `room.css`: layout-base da sala.
+- `product.css`: central de configurações/produto.
+- `social-shell.css`, `chat.css`, `voice.css`, `soundboard.css`, `reactions.css`, `social-responsive.css`: social por responsabilidade.
 
-## Soundboard
+A produção V12 possui zero `!important` nos arquivos de `styles/` no baseline entregue.
 
-- assets padrão em `/sounds`;
-- personalizados temporários por sala;
-- upload validado por cliente e servidor;
-- grid independente com scroll próprio;
-- 2 colunas desktop / 1 coluna mobile.
+## Backend
+
+`src/socket/` separa join, stream, signaling, chat, voz, social e disconnect.
+
+`src/services/room-service.js` mantém salas efêmeras em memória. Persistência permanente de contas/amigos/sons não faz parte da V12.
+
+## Escala
+
+O limite da sala foi reduzido para 10 participantes. Voz continua P2P mesh; o produto deve ser medido principalmente em 2/4/6/8 participantes antes de considerar SFU.
+
+## TURN
+
+`/client-config.js` fornece ICE servers. `TURN_SHARED_SECRET` nunca é enviado ao cliente; quando configurado, o backend gera username/credential temporários.

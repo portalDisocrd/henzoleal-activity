@@ -1,0 +1,315 @@
+:root {
+  --hl-social-bg: #070b13;
+  --hl-social-surface: #0b111c;
+  --hl-social-surface-2: #101827;
+  --hl-social-surface-3: #141e31;
+  --hl-social-border: rgba(129, 150, 210, .16);
+  --hl-social-border-strong: rgba(100, 122, 255, .42);
+  --hl-social-text: #f4f7ff;
+  --hl-social-muted: #8190ad;
+  --hl-social-muted-2: #66748f;
+  --hl-social-blue: #536fff;
+  --hl-social-violet: #675dff;
+  --hl-social-green: #48d8a5;
+  --hl-social-red: #ff7996;
+  --hl-footer-h: 76px;
+  --hl-header-h: 82px;
+}
+
+/* =========================================================
+   HL ACTIVITY V12 — SOCIAL BOUNDARIES
+   Legacy social styles may still exist in hl-product.css, but
+   this file is the only authority for the social layer.
+========================================================= */
+body.hl-social-ready .hl-social-panel,
+body.hl-social-ready .hl-social-panel *,
+body.hl-social-ready .hl-social-dock,
+body.hl-social-ready .hl-social-dock *,
+body.hl-social-ready .hl-reaction-picker,
+body.hl-social-ready .hl-reaction-picker *,
+body.hl-social-ready .hl-sound-modal,
+body.hl-social-ready .hl-sound-modal * {
+  box-sizing: border-box;
+}
+
+body.hl-social-ready .hl-social-panel {
+  display: none;
+  flex: 0 0 410px;
+  width: 410px;
+  min-width: 360px;
+  max-width: 430px;
+  min-height: 0;
+  height: 100%;
+  overflow: hidden;
+  position: relative;
+  inset: auto;
+  margin: 0;
+  border: 1px solid var(--hl-social-border);
+  border-radius: 22px;
+  background: linear-gradient(180deg, rgba(10, 16, 27, .99), rgba(7, 11, 19, .99));
+  box-shadow: 0 18px 54px rgba(0, 0, 0, .24);
+  color: var(--hl-social-text);
+  z-index:var(--hl-z-header);
+}
+
+body.hl-social-ready .hl-social-panel.is-open {
+  display: flex;
+  flex-direction: column;
+}
+
+body.hl-social-ready .hl-social-view {
+  display: none;
+  min-width: 0;
+  min-height: 0;
+  flex: 1 1 auto;
+  overflow: hidden;
+  background: transparent;
+}
+
+body.hl-social-ready .hl-social-view.is-active:not([hidden]) {
+  display: flex;
+}
+
+body.hl-social-ready .hl-social-view[hidden] {
+  display: none;
+}
+
+/* At common desktop widths, trade the participants rail for the social rail.
+   The stage remains the visual priority. */
+@media (max-width: 1699px) and (min-width: 901px) {
+  body.hl-social-ready.hl-social-panel-open .people-panel {
+    display: none;
+  }
+}
+
+/* =========================================================
+   SOCIAL HEADER / TABS
+========================================================= */
+body.hl-social-ready .hl-social-head {
+  flex: 0 0 auto;
+  min-height: 78px;
+  padding: 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, .055);
+  background: rgba(7, 12, 21, .98);
+}
+
+body.hl-social-ready .hl-social-tabs {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 7px;
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 4px;
+  border-radius: 15px;
+  background: #070c15;
+}
+
+body.hl-social-ready .hl-social-tab,
+body.hl-social-ready .hl-social-close {
+  appearance: none;
+  -webkit-appearance: none;
+  border: 0;
+  font: inherit;
+  cursor: pointer;
+}
+
+body.hl-social-ready .hl-social-tab {
+  min-width: 0;
+  min-height: 46px;
+  padding: 0 12px;
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: #8e9bb5;
+  background: transparent;
+  font-size: 13px;
+  font-weight: 800;
+  transition: color .16s ease, background .16s ease, box-shadow .16s ease, transform .16s ease;
+}
+
+body.hl-social-ready .hl-social-tab:hover {
+  color: #dce4f7;
+  background: rgba(255, 255, 255, .025);
+}
+
+body.hl-social-ready .hl-social-tab.is-active {
+  color: white;
+  background: linear-gradient(135deg, rgba(54, 82, 187, .30), rgba(88, 79, 210, .21));
+  box-shadow: inset 0 0 0 1px rgba(94, 119, 255, .38), 0 8px 24px rgba(49, 67, 177, .11);
+}
+
+body.hl-social-ready .hl-tab-icon {
+  display: inline-grid;
+  place-items: center;
+  min-width: 18px;
+  font-size: 14px;
+}
+
+body.hl-social-ready .hl-social-close {
+  flex: 0 0 38px;
+  width: 38px;
+  height: 38px;
+  border-radius: 11px;
+  display: grid;
+  place-items: center;
+  color: #7f8da7;
+  background: transparent;
+  font-size: 21px;
+}
+
+body.hl-social-ready .hl-social-close:hover {
+  color: white;
+  background: rgba(255, 255, 255, .05);
+}
+
+/* =========================================================
+   DOCK
+========================================================= */
+body.hl-social-ready .hl-social-dock {
+  position: relative;
+  inset: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px;
+  border: 1px solid var(--hl-social-border);
+  border-radius: 16px;
+  background: rgba(9, 14, 24, .88);
+  box-shadow: none;
+  backdrop-filter: blur(14px);
+  z-index: 1;
+}
+
+body.hl-social-ready .hl-social-action {
+  appearance: none;
+  width: 44px;
+  min-width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  color: #95a2bb;
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+  font-size: 16px;
+  transition: background .16s ease, border-color .16s ease, color .16s ease, transform .16s ease;
+}
+
+body.hl-social-ready .hl-social-action:hover,
+body.hl-social-ready .hl-social-action.is-active {
+  color: white;
+  border-color: rgba(91, 112, 255, .26);
+  background: rgba(70, 91, 203, .13);
+}
+
+body.hl-social-ready .hl-social-action:active {
+  transform: scale(.95);
+}
+
+body.hl-social-ready .hl-toolbar-group {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+body.hl-social-ready .hl-toolbar-social { margin-right: auto; }
+body.hl-social-ready .hl-toolbar-stream { margin: 0 auto; }
+body.hl-social-ready .hl-toolbar-room { margin-left: auto; }
+
+/* =========================================================
+   FALLBACK SETTINGS + PARTICIPANT DECORATION
+   INTERNAL FALLBACK SETTINGS
+   The full product control center is primary on the web room.
+   Discord Activity can still use this compact fallback.
+   ========================================================= */
+body.hl-social-ready .hl-settings-panel[hidden],
+body.hl-social-ready .hl-more-menu[hidden] { display:none; }
+body.hl-social-ready .hl-more-menu {
+  position:fixed;
+  left:18px;
+  bottom:92px;
+  width:220px;
+  padding:7px;
+  display:grid;
+  gap:4px;
+  border:1px solid var(--hl-social-border);
+  border-radius:14px;
+  background:rgba(8,13,22,.98);
+  box-shadow:0 20px 60px rgba(0,0,0,.46);
+}
+body.hl-social-ready .hl-more-menu button {
+  min-height:38px;
+  padding:0 10px;
+  display:grid;
+  grid-template-columns:24px minmax(0,1fr);
+  align-items:center;
+  gap:8px;
+  border:0;
+  border-radius:9px;
+  background:transparent;
+  color:#c8d1e4;
+  text-align:left;
+  cursor:pointer;
+}
+body.hl-social-ready .hl-more-menu button:hover { background:#111b2d; color:white; }
+body.hl-social-ready .hl-more-separator { height:1px; margin:3px 4px; background:rgba(255,255,255,.06); }
+
+body.hl-social-ready .hl-settings-panel {
+  position:fixed;
+  right:16px;
+  top:16px;
+  bottom:16px;
+  width:min(390px,calc(100vw - 32px));
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+  border:1px solid var(--hl-social-border);
+  border-radius:20px;
+  background:linear-gradient(180deg,#0d1422,#080d16);
+  color:white;
+  box-shadow:0 28px 90px rgba(0,0,0,.52);
+}
+body.hl-social-ready .hl-settings-head {
+  flex:0 0 68px;
+  padding:0 16px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  border-bottom:1px solid rgba(255,255,255,.055);
+}
+body.hl-social-ready .hl-settings-head span { display:block; color:#7181a5; font-size:8px; font-weight:900; letter-spacing:.14em; }
+body.hl-social-ready .hl-settings-head strong { display:block; margin-top:2px; font-size:16px; }
+body.hl-social-ready .hl-settings-head button { width:36px; height:36px; border:1px solid var(--hl-social-border); border-radius:10px; background:#0c1421; color:#8d99b1; font-size:20px; cursor:pointer; }
+body.hl-social-ready .hl-settings-body { flex:1 1 auto; overflow:auto; padding:14px; display:grid; align-content:start; gap:10px; }
+body.hl-social-ready .hl-settings-field { display:grid; gap:6px; color:#75829b; font-size:9px; font-weight:850; }
+body.hl-social-ready .hl-settings-row,
+body.hl-social-ready .hl-settings-toggle,
+body.hl-social-ready .hl-settings-status { min-height:54px; padding:10px; border:1px solid rgba(255,255,255,.055); border-radius:12px; background:#0e1725; color:#dce4f5; }
+body.hl-social-ready .hl-settings-row { display:grid; grid-template-columns:auto minmax(0,1fr) auto; align-items:center; gap:9px; cursor:pointer; }
+body.hl-social-ready .hl-settings-row strong,
+body.hl-social-ready .hl-settings-toggle strong,
+body.hl-social-ready .hl-settings-status strong { display:block; font-size:11px; }
+body.hl-social-ready .hl-settings-row small,
+body.hl-social-ready .hl-settings-toggle small,
+body.hl-social-ready .hl-settings-status small { display:block; margin-top:2px; color:#73809a; font-size:9px; }
+body.hl-social-ready .hl-settings-toggle { display:flex; justify-content:space-between; align-items:center; gap:10px; }
+body.hl-social-ready .hl-settings-toggle input { width:18px; height:18px; accent-color:var(--hl-social-blue); }
+body.hl-social-ready .hl-settings-status { display:flex; align-items:center; gap:9px; }
+body.hl-social-ready .hl-settings-status-dot { width:10px; height:10px; border-radius:50%; background:var(--hl-social-green); box-shadow:0 0 16px rgba(72,216,165,.38); }
+
+/* =========================================================
+   PARTICIPANT DECORATION
+========================================================= */
+body.hl-social-ready .hl-role-badge { margin-left:5px; padding:4px 6px; border-radius:999px; background:rgba(83,111,255,.12); color:#c5ceff; font-size:7px; font-weight:900; letter-spacing:.07em; }
+body.hl-social-ready .hl-kick-mini { margin-left:auto; min-height:28px; padding:0 8px; border:0; border-radius:8px; background:rgba(255,121,150,.09); color:#ffb8c7; cursor:pointer; font-size:8px; }
+
+/* =========================================================

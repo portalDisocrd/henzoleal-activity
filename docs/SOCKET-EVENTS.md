@@ -1,10 +1,25 @@
-# Eventos Socket.IO — resumo V11.1
+# Eventos Socket.IO — HL Activity V12
 
 ## Sala
 - `join-room`
 - `room:joined`
 - `participants-update`
 - `room:host-changed`
+- `room:host-reconnecting`
+- `room:entry-policy`
+- `room:create-invite`
+- `room:create-trusted-invite`
+- `room:approve-join`
+- `room:reject-join`
+- `room:mode`
+- `room:spotlight`
+
+## Stream / signaling
+- `stream-started`
+- `stream-stopped`
+- `offer`
+- `answer`
+- `ice-candidate`
 
 ## Chat
 - `chat:send`
@@ -22,25 +37,28 @@
 - `voice:offer`
 - `voice:answer`
 - `voice:ice`
+- `voice:user-left`
 
 ## Reações do palco
 - `reaction:send`
 - `reaction:show`
 
-**Contrato:** existe somente um handler servidor de `reaction:send`, em `src/socket/social-events.js`.
+Contrato V12: existe somente um handler servidor de `reaction:send`, em `src/socket/social-events.js`.
 
 ## Soundboard
 - `sound:play`
 - `sound:stop`
 - `sound:policy`
 - `sound:upload-policy`
+- `sound:catalog-add`
+- `sound:catalog-update`
+- `sound:catalog-remove`
 
-## Moderação / produto
+## Moderação / presença / diagnóstico
 - `moderation:*`
-- `room:entry-policy`
-- `room:create-invite`
-- `room:create-trusted-invite`
 - `presence:update`
 - `diagnostics:ping`
 
-Todos os eventos críticos devem validar contexto de sala, role/permissão e rate limit no servidor.
+## Regras
+
+Eventos críticos devem validar contexto da sala, permissão/role no servidor, payload e rate limit. Eventos com target devem confirmar que o socket alvo pertence à mesma sala.

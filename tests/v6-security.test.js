@@ -48,10 +48,10 @@ test("CSP V6 nao permite unsafe-inline em scripts", () => {
 });
 
 test("segurança continua externalizada na base atual", () => {
-    assert.match(read("room.html"), /hl-social-v11\.css\?v=111/);
-    assert.match(read("activity-room.html"), /hl-social-v11\.css\?v=111/);
+    assert.match(read("room.html"), /styles\/social-shell\.css/);
+    assert.match(read("activity-room.html"), /styles\/social-shell\.css/);
     const staticFiles = read("src/middleware/static-files.js");
-    for (const file of ["hl-social-v11.css", "hl-social-v11.js", "home.js", "room-core.js", "activity-room-core.js"]) {
+    for (const file of ["manifest.webmanifest", "home.js", "room-core.js"]) {
         assert.match(staticFiles, new RegExp(file.replace(".", "\\.")));
     }
 });
@@ -59,7 +59,7 @@ test("segurança continua externalizada na base atual", () => {
 test("cliente envia token de host e token efemero protege upload", () => {
     assert.match(read("home.js"), /hl_host_token_/);
     assert.match(read("room-core.js"), /hostToken:/);
-    assert.match(read("hl-social-v11.js"), /x-hl-room-token/);
+    assert.match(read("frontend/social/soundboard/soundboard-controller.js"), /x-hl-room-token/);
     assert.match(read("src/routes/custom-sound-routes.js"), /safeStringEqual\(apiToken, socket\.data\.roomApiToken\)/);
 });
 
@@ -77,11 +77,12 @@ test("origin guard aceita mesma origem e bloqueia origem externa", () => {
 });
 
 test("Soundboard Pro expoe upload seguro e filtros", () => {
-    const source = read("hl-social-v11.js");
-    assert.match(source, /id="hlSoundAdd"/);
-    assert.match(source, /id="hlSoundFile"/);
-    assert.match(source, /OfflineAudioContext|webkitOfflineAudioContext/);
-    assert.match(source, /data-sound-filter="favorites"/);
-    assert.match(source, /data-sound-filter="recent"/);
-    assert.match(source, /x-hl-room-token/);
+    const shell = read("frontend/social/social-runtime.js");
+    const controller = read("frontend/social/soundboard/soundboard-controller.js");
+    assert.match(shell, /id="hlSoundAdd"/);
+    assert.match(shell, /id="hlSoundFile"/);
+    assert.match(controller, /OfflineAudioContext|webkitOfflineAudioContext/);
+    assert.match(shell, /data-sound-filter="favorites"/);
+    assert.match(shell, /data-sound-filter="recent"/);
+    assert.match(controller, /x-hl-room-token/);
 });

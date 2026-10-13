@@ -1,92 +1,55 @@
-# HL Activity V11.1 — Stable Foundation
+# HL Activity V12 — Core Consolidation
 
-HL Activity é uma sala privada para pequenos grupos conversarem, usarem voz, compartilharem tela, assistirem juntos, reagirem e usarem Soundboard.
+HL Activity é uma sala privada para pequenos grupos conversarem, usarem voz, compartilharem tela, assistirem juntos, reagirem e brincarem com sons.
 
-A V11.1 marca uma mudança de estratégia: **parar de empilhar hotfixes e consolidar uma base social estável**.
+## Versão
 
-## O que mudou
+`12.0.0`
 
-- camada social única: `hl-social-v11.js` + `hl-social-v11.css`;
-- Chat, Voz e Sons controlados por estado JavaScript e `hidden`;
-- apenas uma aba social pode ficar visível;
-- Soundboard reconstruído com scroll próprio, 2 colunas no desktop e 1 no mobile;
-- 6 sons padrão sempre disponíveis;
-- upload de som personalizado preservado;
-- reactions com `reactionId`, deduplicação e um único handler servidor;
-- reactions ancoradas à geometria real do palco;
-- modo desempenho reduz animação, mas não esconde feedback funcional;
-- Configurações e menu Mais preservados;
-- arquivos sociais legados movidos para `legacy/social/` e removidos do bundle público;
-- PWA com cache versionado para a nova base.
+A V12 substitui a estratégia de empilhar arquivos versionados de correção por uma base estável com nomes permanentes de assets, módulos sociais separados e uma fonte única de versão.
 
-## Recursos preservados
+## Estrutura principal
 
-- compartilhamento WebRTC;
-- voz WebRTC;
-- chat;
-- Soundboard;
-- pré-entrada;
-- lobby seletivo;
-- convites temporários/confiáveis/uso único;
-- sala com senha e bloqueio;
-- moderação server-side;
-- modos Normal/Cinema/Jogatina/Estudo;
-- mixer e smart ducking;
-- diagnóstico;
-- PWA/PiP/Wake Lock;
-- segurança V6+.
+- `server.js` — bootstrap HTTP/Socket.IO.
+- `src/` — rotas, serviços, segurança e eventos Socket.IO.
+- `room-core.js` — core compartilhado entre sala Web e Discord Activity.
+- `frontend/core/` — versão, capacidades, conectividade, erros e pré-entrada.
+- `frontend/social/chat/` — controlador de chat.
+- `frontend/social/voice/` — estado, dispositivos, WebRTC e UX de voz.
+- `frontend/social/soundboard/` — catálogo e controlador do Soundboard.
+- `frontend/social/reactions/` — reações e deduplicação.
+- `frontend/product/` — configurações, lobby, convites, diagnóstico e recursos de produto.
+- `frontend/pwa/` — instalação/atualização PWA.
+- `styles/` — tokens, componentes, layout e CSS social separado por responsabilidade.
+- `legacy/` — histórico não servido em produção.
+- `tests/` — testes Node e harness visual de navegador.
 
-## Instalar
+## Desenvolvimento
 
-```powershell
-npm install
-```
-
-## Testar
-
-```powershell
+```bash
+npm ci --include=dev
 npm test
-```
-
-## Build
-
-```powershell
 npm run build
-```
-
-## Executar
-
-```powershell
 npm start
 ```
 
-## Render
+Node requerido: `>=20.19.0`.
 
-Build Command:
+## Variáveis de ambiente
 
-```text
-npm install && npm run build
-```
+Copie `.env.example` para `.env` e preencha apenas no ambiente local/Render. Nunca faça commit de `.env`.
 
-Start Command:
+TURN é opcional. Quando `TURN_URL` e `TURN_SHARED_SECRET` estiverem configurados, o servidor gera credenciais temporárias compatíveis com coturn REST. Sem TURN, o HL usa STUN.
 
-```text
-npm start
-```
+## Gates de release
 
-Health Check:
+Uma release só deve ser enviada depois de:
 
-```text
-/health
-```
+1. dependências instaladas;
+2. sintaxe backend aprovada;
+3. testes aprovados;
+4. `npm run build` aprovado;
+5. servidor temporário responder `/health` e `/ready`;
+6. somente então commit/push.
 
-## Ambiente
-
-Use `.env.example` como referência. Nunca envie `.env` para Git ou para terceiros.
-
-## Documentação
-
-- `docs/ARCHITECTURE.md`
-- `docs/SOCKET-EVENTS.md`
-- `docs/DEPLOY-ROLLBACK.md`
-- `docs/ENVIRONMENT.md`
+Veja `docs/DEPLOY-ROLLBACK.md`.

@@ -1428,23 +1428,7 @@ const inboundIce =
 // WEBRTC
 // =====================================================
 
-const rtcConfig = {
-
-    iceServers: [
-
-        {
-            urls:
-                "stun:stun.l.google.com:19302"
-        },
-
-        {
-            urls:
-                "stun:stun1.l.google.com:19302"
-        }
-
-    ]
-
-};
+const rtcConfig = { iceServers: Array.isArray(window.HL_CONFIG?.iceServers) && window.HL_CONFIG.iceServers.length ? window.HL_CONFIG.iceServers : [{ urls: "stun:stun.l.google.com:19302" }, { urls: "stun:stun1.l.google.com:19302" }] };
 
 
 // =====================================================

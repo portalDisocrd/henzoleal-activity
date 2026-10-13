@@ -1168,11 +1168,16 @@ startAutoQuality();
 // =====================================================
 
 
-const roomCode =
-    location.pathname
-        .split("/")
-        .pop()
-        .toUpperCase();
+const isActivityRoom = location.pathname.includes("activity-room");
+
+const roomCode = (isActivityRoom
+    ? (new URLSearchParams(location.search).get("room") || "")
+    : location.pathname.split("/").pop()
+).trim().toUpperCase();
+
+if (!/^[A-F0-9]{8}$/.test(roomCode)) {
+    console.error("Código de sala inválido.");
+}
 
 
 document.getElementById(
@@ -1258,6 +1263,22 @@ const statusElement =
         "status"
     );
 
+function setShareState(state, message = "") {
+    if (shareButton) {
+        shareButton.dataset.state = state;
+        shareButton.disabled = state === "requesting" || state === "stopping";
+        shareButton.setAttribute("aria-busy", state === "requesting" ? "true" : "false");
+    }
+    if (stopButton) {
+        stopButton.dataset.state = state;
+        stopButton.disabled = state === "stopping";
+    }
+    document.documentElement.dataset.hlShareState = state;
+    if (message && statusElement) statusElement.textContent = message;
+}
+
+setShareState("idle");
+
 
 const profileOverlay =
     document.getElementById(
@@ -1270,6 +1291,29 @@ const profileOverlay =
 // =====================================================
 
 let profile = null;
+
+function isRemoteAvatarUrl(value) {
+    return typeof value === "string" && /^https:\/\/(?:cdn|media)\.discordapp\.(?:com|net)\//i.test(value);
+}
+
+function renderUserAvatar(container, avatarValue, fallback = "😎") {
+    if (!container) return;
+    container.textContent = "";
+    if (isRemoteAvatarUrl(avatarValue)) {
+        const img = document.createElement("img");
+        img.src = avatarValue;
+        img.alt = "Avatar";
+        img.loading = "lazy";
+        img.referrerPolicy = "no-referrer";
+        img.style.width = "100%";
+        img.style.height = "100%";
+        img.style.objectFit = "cover";
+        img.style.borderRadius = "inherit";
+        container.appendChild(img);
+        return;
+    }
+    container.textContent = avatarValue || fallback;
+}
 
 let localStream = null;
 
@@ -1306,23 +1350,7 @@ const inboundIce =
 // WEBRTC
 // =====================================================
 
-const rtcConfig = {
-
-    iceServers: [
-
-        {
-            urls:
-                "stun:stun.l.google.com:19302"
-        },
-
-        {
-            urls:
-                "stun:stun1.l.google.com:19302"
-        }
-
-    ]
-
-};
+const rtcConfig = { iceServers: Array.isArray(window.HL_CONFIG?.iceServers) && window.HL_CONFIG.iceServers.length ? window.HL_CONFIG.iceServers : [{ urls: "stun:stun.l.google.com:19302" }, { urls: "stun:stun1.l.google.com:19302" }] };
 
 
 // =====================================================
@@ -2044,8 +2072,7 @@ function renderParticipants() {
                 "avatar";
 
 
-            avatar.textContent =
-                user.avatar;
+            renderUserAvatar(avatar, user.avatar);
 
 
             const info =
@@ -2276,8 +2303,7 @@ function updateMainLabel() {
         );
 
 
-    mainLabel.textContent =
-        `${user?.avatar || "🖥"} ${user?.name || "Usuário"}`;
+    mainLabel.textContent = user?.name || "Usuário";
 
 }
 
@@ -2619,8 +2645,7 @@ function renderStreamStrip() {
                 "thumb-name";
 
 
-            name.textContent =
-                `${user?.avatar || "🖥"} ${user?.name || "Usuário"}`;
+            name.textContent = user?.name || "Usuário";
 
 
             thumb.appendChild(
@@ -3326,6 +3351,15 @@ socket.on(
 shareButton.onclick =
     async () => {
 
+        if (isActivityRoom) {
+            setShareState("requesting", "Abrindo transmissor no navegador...");
+            const shareUrl = `${location.origin}/share/${encodeURIComponent(roomCode)}`;
+            statusElement.textContent = "Abrindo transmissor no navegador...";
+            const externalWindow = window.open(shareUrl, "_blank", "noopener,noreferrer");
+            setShareState(externalWindow ? "idle" : "error", externalWindow ? "🟢 Transmissor aberto no navegador" : `Abra no navegador: ${shareUrl}`);
+            return;
+        }
+
         if (
             localStream
         ) {
@@ -3334,6 +3368,13 @@ shareButton.onclick =
 
         }
 
+
+        if (!navigator.mediaDevices?.getDisplayMedia) {
+            setShareState("error", "Seu navegador não oferece compartilhamento de tela.");
+            return;
+        }
+
+        setShareState("requesting", "Escolha a tela ou janela que deseja compartilhar...");
 
         try {
 
@@ -3434,6 +3475,7 @@ shareButton.onclick =
             );
 
 
+            setShareState("sharing");
             shareButton.style.display =
                 "none";
 
@@ -3504,6 +3546,9 @@ shareButton.onclick =
             localStream =
                 null;
 
+            const cancelled = error?.name === "NotAllowedError" || error?.name === "AbortError";
+            setShareState(cancelled ? "idle" : "error", cancelled ? "Compartilhamento cancelado." : "Não foi possível iniciar o compartilhamento.");
+
         }
 
     };
@@ -3516,8 +3561,11 @@ shareButton.onclick =
 function stopSharing() {
 
     if (!localStream) {
+        setShareState("idle");
         return;
     }
+
+    setShareState("stopping", "Encerrando transmissão...");
 
 
     const oldStream =
@@ -3582,8 +3630,7 @@ function stopSharing() {
         "none";
 
 
-    statusElement.textContent =
-        "Você parou sua transmissão";
+    setShareState("idle", "Você parou sua transmissão");
 
 }
 
@@ -3601,10 +3648,7 @@ document.getElementById(
 ).onclick =
     async () => {
 
-        const invite =
-            location.origin +
-            "/room/" +
-            roomCode;
+        const invite = isActivityRoom ? roomCode : `${location.origin}/room/${roomCode}`;
 
 
         try {
@@ -3618,8 +3662,7 @@ document.getElementById(
 
             /* INVITE FEEDBACK V2 */
 
-            statusElement.textContent =
-                "✅ Convite copiado";
+            statusElement.textContent = isActivityRoom ? `✅ Código copiado: ${roomCode}` : "✅ Convite copiado";
 
             const copyButton =
                 document.getElementById(
@@ -3659,8 +3702,7 @@ document.getElementById(
                 setTimeout(
                     () => {
 
-                        copyButton.textContent =
-                            "🔗 Convite";
+                        copyButton.textContent = isActivityRoom ? "🔗 Código" : "🔗 Convite";
 
                         copyButton.classList.remove(
                             "copied"
@@ -3673,10 +3715,7 @@ document.getElementById(
 
         } catch {
 
-            prompt(
-                "Copie o convite:",
-                invite
-            );
+            prompt(isActivityRoom ? "Copie o código da sala:" : "Copie o convite:", invite);
 
         }
 
@@ -3801,8 +3840,16 @@ document.getElementById(
 
         cleanupRoomBeforeExit();
 
-        window.location.href =
-            "/";
+        if (isActivityRoom) {
+            sessionStorage.setItem("hl_activity_returning", "1");
+            if (window.history.length > 1) {
+                window.history.back();
+                return;
+            }
+            window.location.href = "/activity";
+            return;
+        }
+        window.location.href = "/";
 
     };
 
