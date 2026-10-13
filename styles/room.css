@@ -2522,7 +2522,13 @@ footer button:hover {
         rgba(5,5,9,.91);
 
     backdrop-filter:
-        blur(9px);
+        none;
+
+    -webkit-backdrop-filter:
+        none;
+
+    isolation:
+        isolate;
 
 }
 
@@ -2533,6 +2539,12 @@ footer button:hover {
 
     position:
         relative;
+
+    z-index:
+        1;
+
+    isolation:
+        isolate;
 
     width:
         min(430px, calc(100vw - 32px));
@@ -2601,6 +2613,19 @@ footer button:hover {
 
     pointer-events:
         none;
+
+    z-index:
+        0;
+
+}
+
+#profileOverlay .profile-card > * {
+
+    position:
+        relative;
+
+    z-index:
+        1;
 
 }
 

@@ -1,4 +1,4 @@
-const APP_VERSION = "12.0.0";
+const APP_VERSION = "12.0.1";
 const CACHE = `hl-activity-${APP_VERSION}`;
 const SHELL = [
   "/", "/home.css", "/home.js", "/frontend/home/home-enhancements.js",

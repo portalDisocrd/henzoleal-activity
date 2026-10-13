@@ -8,7 +8,7 @@ const root = path.join(__dirname, '..');
 const read = p => fs.readFileSync(path.join(root,p),'utf8');
 
 test('V12 usa versionamento único e assets estáveis',()=>{
-  assert.equal(APP_VERSION,'12.0.0');
+  assert.equal(APP_VERSION,'12.0.1');
   const room=read('room.html'), activity=read('activity-room.html'), sw=read('sw.js');
   for(const source of [room,activity,sw]) assert.doesNotMatch(source,/\?v=(?:10|103|111)/);
   assert.match(room,/\/styles\/social-shell\.css/);
@@ -115,4 +115,12 @@ test('V12 marca scripts clássicos da Activity para o Vite não tentar empacotá
     .filter(([,before,,after])=>!`${before} ${after}`.includes('type="module"'));
   assert.ok(classicScripts.length > 0);
   for(const match of classicScripts) assert.match(match[0],/\svite-ignore(?:\s|>)/);
+});
+
+test('V12 mantém pré-entrada nítida sem blur no próprio overlay',()=>{
+  const components=read('styles/components.css');
+  const room=read('styles/room.css');
+  assert.match(components,/\.hl-room-entry\{[^}]*backdrop-filter:none[^}]*isolation:isolate/);
+  assert.match(room,/#profileOverlay\s*\{[\s\S]*?backdrop-filter:\s*none;[\s\S]*?-webkit-backdrop-filter:\s*none;[\s\S]*?isolation:\s*isolate;/);
+  assert.match(room,/#profileOverlay \.profile-card > \*[\s\S]*?z-index:\s*1;/);
 });

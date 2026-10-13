@@ -245,5 +245,5 @@
     };
   }
 
-  window.HLChatModule = Object.freeze({ version: "12.0.0", createChatController });
+  window.HLChatModule = Object.freeze({ version: "12.0.1", createChatController });
 })();

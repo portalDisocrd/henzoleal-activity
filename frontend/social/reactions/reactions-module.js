@@ -169,7 +169,7 @@
   }
 
   window.HLReactionsModule = Object.freeze({
-    version: "12.0.0",
+    version: "12.0.1",
     ...DEFAULTS,
     createReactionController
   });

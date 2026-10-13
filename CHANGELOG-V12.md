@@ -1,5 +1,14 @@
 # Changelog — HL Activity V12.0.0
 
+## 12.0.1 — correção visual da pré-entrada
+
+- Corrige regressão no Chromium/Opera em que o `backdrop-filter` aplicado no overlay da pré-entrada podia fazer o conteúdo do card ficar desfocado enquanto o input focado permanecia nítido.
+- Remove o blur do próprio ancestral `#profileOverlay`/`.hl-room-entry` e isola o card em uma camada própria.
+- Mantém o glow decorativo atrás dos controles por z-index explícito.
+- Adiciona teste de regressão para impedir que o blur volte ao ancestral da pré-entrada.
+- Incrementa a versão para `12.0.1`, forçando um cache PWA novo (`hl-activity-12.0.1`).
+
+
 ## Core
 - versão global 12.0.0;
 - core de sala compartilhado Web/Discord Activity;

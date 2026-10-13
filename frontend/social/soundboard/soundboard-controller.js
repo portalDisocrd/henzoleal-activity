@@ -520,5 +520,5 @@
     };
   }
 
-  window.HLSoundboardController = Object.freeze({ version: "12.0.0", create });
+  window.HLSoundboardController = Object.freeze({ version: "12.0.1", create });
 })();
