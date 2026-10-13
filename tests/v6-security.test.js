@@ -47,11 +47,11 @@ test("CSP V6 nao permite unsafe-inline em scripts", () => {
     assert.doesNotMatch(source, /scriptSrc:[\s\S]{0,100}unsafe-inline/);
 });
 
-test("V6 carrega CSS novo e publica arquivos externalizados", () => {
-    assert.match(read("room.html"), /hl-v6\.css\?v=6/);
-    assert.match(read("activity-room.html"), /hl-v6\.css\?v=6/);
+test("segurança continua externalizada na base atual", () => {
+    assert.match(read("room.html"), /hl-social-v11\.css\?v=111/);
+    assert.match(read("activity-room.html"), /hl-social-v11\.css\?v=111/);
     const staticFiles = read("src/middleware/static-files.js");
-    for (const file of ["hl-v6.css", "home.js", "room-core.js", "activity-room-core.js"]) {
+    for (const file of ["hl-social-v11.css", "hl-social-v11.js", "home.js", "room-core.js", "activity-room-core.js"]) {
         assert.match(staticFiles, new RegExp(file.replace(".", "\\.")));
     }
 });
@@ -59,7 +59,7 @@ test("V6 carrega CSS novo e publica arquivos externalizados", () => {
 test("cliente envia token de host e token efemero protege upload", () => {
     assert.match(read("home.js"), /hl_host_token_/);
     assert.match(read("room-core.js"), /hostToken:/);
-    assert.match(read("hl-social.js"), /x-hl-room-token/);
+    assert.match(read("hl-social-v11.js"), /x-hl-room-token/);
     assert.match(read("src/routes/custom-sound-routes.js"), /safeStringEqual\(apiToken, socket\.data\.roomApiToken\)/);
 });
 
@@ -77,7 +77,7 @@ test("origin guard aceita mesma origem e bloqueia origem externa", () => {
 });
 
 test("Soundboard Pro expoe upload seguro e filtros", () => {
-    const source = read("hl-social.js");
+    const source = read("hl-social-v11.js");
     assert.match(source, /id="hlSoundAdd"/);
     assert.match(source, /id="hlSoundFile"/);
     assert.match(source, /OfflineAudioContext|webkitOfflineAudioContext/);

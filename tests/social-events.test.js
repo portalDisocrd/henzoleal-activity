@@ -77,3 +77,26 @@ test("soundboard respeita politica da sala", () => {
     member.handlers.get("sound:play")({ soundId: "bonk" }, value => { play = value; });
     assert.equal(play.success, false);
 });
+
+test("reaction envia exatamente um broadcast remoto e preserva reactionId", () => {
+    const io = fakeIo();
+    const socket = fakeSocket("host");
+    const room = {
+        hostId: "host",
+        soundboardPolicy: "everyone",
+        soundUploadPolicy: "everyone",
+        roomMode: "normal",
+        lastActivity: 0,
+        users: new Map([["host", { id:"host", name: "Host", role: "host" }]])
+    };
+    const roomService = { get: () => room, audit: () => true, activity: () => null };
+    const factory = createSocialEvents({ io, roomService, allowSocketEvent: () => true, getSafeTargetSocket: () => null, normalizeText });
+    factory.register(socket, () => {});
+    let ack;
+    socket.handlers.get("reaction:send")({ emoji: "🔥", reactionId: "rx-123" }, value => { ack = value; });
+    assert.equal(ack.success, true);
+    const reactionEvents = socket.emitted.filter(([name]) => name === "to:reaction:show");
+    assert.equal(reactionEvents.length, 1);
+    assert.equal(reactionEvents[0][1].reactionId, "rx-123");
+    assert.equal(reactionEvents[0][1].emoji, "🔥");
+});

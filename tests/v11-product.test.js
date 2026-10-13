@@ -7,23 +7,22 @@ const { createRoomService } = require('../src/services/room-service');
 const root = path.resolve(__dirname, '..');
 const read = p => fs.readFileSync(path.join(root, p), 'utf8');
 
-test('V10 carrega shell unificado, PWA e pré-entrada', () => {
+test('V11 preserva shell unificado, PWA e pré-entrada', () => {
   const room = read('room.html');
   const home = read('index.html');
   assert.match(room, /hl-v10\.css\?v=10/);
-  assert.match(room, /hl-social\.js\?v=10/);
-  assert.match(room, /hl-v10\.js\?v=10/);
+  assert.match(room, /hl-social-v11\.js\?v=111/);
+  assert.match(room, /hl-v10\.js\?v=103/);
   assert.match(room, /hl-pwa\.js\?v=10/);
   assert.match(home, /manifest\.webmanifest/);
   assert.match(home, /home-v10\.js\?v=10/);
 });
 
-test('V10 mantém Activity no social atual e publica CSS base V9 explicitamente', () => {
+test('V11 mantém Activity na camada social nova e publica assets necessários', () => {
   const activity = read('activity-room.html');
   const staticFiles = read('src/middleware/static-files.js');
-  assert.match(activity, /hl-social\.js\?v=10/);
-  assert.match(staticFiles, /\["\/hl-v9\.css", "hl-v9\.css"\]/);
-  assert.match(staticFiles, /\["\/hl-v10\.css", "hl-v10\.css"\]/);
+  assert.match(activity, /hl-social-v11\.js\?v=111/);
+    assert.match(staticFiles, /\["\/hl-social-v11\.css", "hl-social-v11\.css"\]/);
   assert.match(staticFiles, /manifest\.webmanifest/);
   assert.match(staticFiles, /\/sw\.js/);
 });
@@ -54,7 +53,7 @@ test('V10 inclui lobby seletivo, mixer, diagnósticos, PWA, PiP, Wake Lock e Pom
 });
 
 test('V10 reaction usa ID, deduplicação e limite visual pequeno', () => {
-  const social = read('hl-social.js');
+  const social = read('hl-social-v11.js');
   const server = read('src/socket/social-events.js');
   assert.match(social, /seenReactionIds/);
   assert.match(social, /reactionId/);
@@ -64,18 +63,18 @@ test('V10 reaction usa ID, deduplicação e limite visual pequeno', () => {
   assert.match(server, /lastReactionAt \|\| 0\) < 450/);
 });
 
-test('V10 soundboard evita sobreposição e vira uma coluna no celular', () => {
-  const css = read('hl-v10.css');
-  const social = read('hl-social.js');
-  assert.match(css, /\.hl-social-view\.hl-sound-view[^\n]*grid-template-rows:auto auto auto minmax\(0,1fr\) auto/);
-  assert.match(css, /\.hl-sound-grid\{[^\n]*overflow-y:auto/);
-  assert.match(css, /@media\(max-width:650px\)[\s\S]*\.hl-sound-grid\{grid-template-columns:1fr!important/);
-  assert.match(css, /\.hl-sound-help\{position:static!important/);
+test('V11 soundboard evita sobreposição e vira uma coluna no celular', () => {
+  const css = read('hl-social-v11.css');
+  const social = read('hl-social-v11.js');
+  assert.match(css, /\.hl-sound-view[\s\S]*flex-direction:\s*column\s*!important/);
+  assert.match(css, /\.hl-sound-grid[\s\S]*overflow-y:\s*auto\s*!important/);
+  assert.match(css, /@media \(max-width:\s*650px\)[\s\S]*\.hl-sound-grid[\s\S]*grid-template-columns:1fr\s*!important/);
+  assert.match(css, /\.hl-sound-help[\s\S]*flex:\s*0 0 auto\s*!important/);
   assert.match(social, /▶ Ouvir/);
   assert.match(social, /📢 Na sala/);
 });
 
-test('V10 pré-entrada testa microfone, saída e mostra preview da sala', () => {
+test('V11 preserva pré-entrada com microfone, saída e preview da sala', () => {
   const js = read('home-v10.js');
   assert.match(js, /getUserMedia/);
   assert.match(js, /enumerateDevices/);
@@ -85,9 +84,9 @@ test('V10 pré-entrada testa microfone, saída e mostra preview da sala', () => 
   assert.match(js, /Permissão de microfone negada/);
 });
 
-test('V10 PWA não intercepta API nem Socket.IO', () => {
+test('V11 PWA não intercepta API nem Socket.IO', () => {
   const sw = read('sw.js');
-  assert.match(sw, /hl-activity-v10-shell/);
+  assert.match(sw, /hl-activity-v11-1-social-foundation/);
   assert.match(sw, /url\.pathname\.startsWith\("\/api\/"\)/);
   assert.match(sw, /api\/socket\.io/);
   assert.match(sw, /request\.mode === "navigate"/);

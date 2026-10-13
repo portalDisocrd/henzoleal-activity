@@ -1,13 +1,12 @@
-const CACHE = "hl-activity-v10-shell-v103";
+const CACHE = "hl-activity-v11-1-social-foundation";
 const SHELL = [
   "/",
   "/home.css",
   "/home.js",
   "/home-v10.js?v=10",
-  "/hl-v4.css?v=4",
   "/hl-v10.css?v=10",
-  "/hl-v102.css?v=102",
-  "/hl-v103.css?v=103",
+  "/hl-social-v11.css?v=111",
+  "/hl-social-v11.js?v=111",
   "/hl-pwa.js?v=10",
   "/logo-hl.png",
   "/icon-192.png",

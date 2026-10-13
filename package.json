@@ -1,7 +1,7 @@
 {
   "name": "hl-activity",
-  "version": "10.3.0",
-  "description": "HL Activity V10.3 - painel social reestruturado, Soundboard estável e reações ancoradas ao palco.",
+  "version": "11.1.0",
+  "description": "HL Activity V11.1 - stable social foundation, isolated tabs, reactions and soundboard rebuilt.",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
