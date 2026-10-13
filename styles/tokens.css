@@ -1,7 +1,0 @@
-:root{
- --hl-bg:#050a13;--hl-surface:#0b1220;--hl-surface-2:#101a2d;--hl-border:rgba(148,163,184,.16);
- --hl-text:#f7f9fc;--hl-muted:#91a0b8;--hl-blue:#2387ff;--hl-blue-2:#5a63ff;--hl-danger:#ff5d73;--hl-success:#29d391;
- --hl-space-1:4px;--hl-space-2:8px;--hl-space-3:12px;--hl-space-4:16px;--hl-space-5:24px;--hl-space-6:32px;
- --hl-radius-sm:8px;--hl-radius-md:12px;--hl-radius-lg:18px;--hl-radius-xl:24px;
- --hl-z-base:0;--hl-z-header:100;--hl-z-footer:200;--hl-z-panel:300;--hl-z-popover:400;--hl-z-backdrop:500;--hl-z-modal:600;--hl-z-toast:700;
-}

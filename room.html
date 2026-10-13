@@ -12,24 +12,18 @@
 
 <title>HL ACTIVITY • Sala</title>
 
-<link rel="icon" type="image/png" href="/logo-hl.webp">
-<link rel="manifest" href="/manifest.webmanifest">
-<meta name="theme-color" content="#0B1220">
+<link rel="icon" type="image/png" href="/logo-hl.png?v=3">
 
 <script src="/api/socket.io/socket.io.js"></script>
 
-<link rel="stylesheet" href="/styles/room.css">
+<link rel="stylesheet" href="/room.css">
 
-<link rel="stylesheet" href="/styles/tokens.css">
-<link rel="stylesheet" href="/styles/components.css">
-<link rel="stylesheet" href="/styles/product.css">
-<link rel="stylesheet" href="/styles/social-shell.css">
-<link rel="stylesheet" href="/styles/chat.css">
-<link rel="stylesheet" href="/styles/voice.css">
-<link rel="stylesheet" href="/styles/soundboard.css">
-<link rel="stylesheet" href="/styles/reactions.css">
-<link rel="stylesheet" href="/styles/social-responsive.css">
-<link rel="stylesheet" href="/styles/v12-overrides.css">
+<link rel="stylesheet" href="/hl-social.css?v=4">
+<link rel="stylesheet" href="/hl-v4.css?v=4">
+<link rel="stylesheet" href="/hl-v5.css?v=5">
+<link rel="stylesheet" href="/hl-v6.css?v=6">
+<link rel="stylesheet" href="/hl-v7.css?v=7">
+<link rel="stylesheet" href="/hl-v9.css?v=92">
 
 </head>
 
@@ -45,7 +39,7 @@
         <div class="hl-logo-shell">
 
             <img
-                src="/logo-hl.webp"
+                src="/logo-hl.png?v=4"
                 alt="HL Activity"
                 class="hl-room-logo"
             >
@@ -253,50 +247,87 @@ Conectando...
 </footer>
 
 
-<div id="profileOverlay" class="profile-overlay hl-room-entry">
-  <section class="profile-card hl-room-entry-card" role="dialog" aria-modal="true" aria-labelledby="hlRoomEntryTitle">
-    <div class="hl-room-entry-head">
-      <div><span>PRÉ-ENTRADA</span><h2 id="hlRoomEntryTitle">Pronto para entrar?</h2><p>Confira seu perfil e áudio. Você pode liberar o microfone depois.</p></div>
-    </div>
-    <label class="hl-room-entry-field"><span>Seu nome</span><input id="profileName" maxlength="24" placeholder="Seu nome" autocomplete="nickname"></label>
-    <div class="hl-room-entry-avatars" aria-label="Escolha um avatar">
-      <button class="profile-avatar selected" data-avatar="😎" type="button" aria-label="Avatar óculos">😎</button>
-      <button class="profile-avatar" data-avatar="👾" type="button" aria-label="Avatar alien">👾</button>
-      <button class="profile-avatar" data-avatar="🐺" type="button" aria-label="Avatar lobo">🐺</button>
-      <button class="profile-avatar" data-avatar="🦊" type="button" aria-label="Avatar raposa">🦊</button>
-      <button class="profile-avatar" data-avatar="🐉" type="button" aria-label="Avatar dragão">🐉</button>
-      <button class="profile-avatar" data-avatar="🤖" type="button" aria-label="Avatar robô">🤖</button>
-    </div>
-    <div class="hl-room-entry-audio">
-      <label class="hl-room-entry-field"><span>Microfone</span><select id="hlRoomEntryMic"><option value="">Padrão do sistema</option></select></label>
-      <div class="hl-room-entry-meter" aria-hidden="true"><i id="hlRoomEntryMeter"></i></div>
-      <button id="hlRoomEntryMicTest" type="button">Testar microfone</button>
-      <div id="hlRoomEntryMicStatus" class="hl-room-entry-status">Microfone ainda não testado.</div>
-      <label class="hl-room-entry-check"><input id="hlRoomEntryMuted" type="checkbox"><span>Entrar no voz mutado por padrão</span></label>
-    </div>
-    <button id="enterRoom" class="hl-room-entry-submit">Entrar na sala</button>
-  </section>
+<div
+    id="profileOverlay"
+    class="profile-overlay"
+>
+
+<div class="profile-card">
+
+<h2>
+Entre na sala
+</h2>
+
+<p>
+Escolha seu próprio perfil.
+</p>
+
+<input
+    id="profileName"
+    maxlength="24"
+    placeholder="Seu nome"
+>
+
+
+<div class="avatar-options">
+
+    <button
+        class="profile-avatar selected"
+        data-avatar="😎"
+        type="button"
+        aria-label="Avatar óculos"
+    >😎</button>
+
+    <button
+        class="profile-avatar"
+        data-avatar="👾"
+        type="button"
+        aria-label="Avatar alien"
+    >👾</button>
+
+    <button
+        class="profile-avatar"
+        data-avatar="🐺"
+        type="button"
+        aria-label="Avatar lobo"
+    >🐺</button>
+
+    <button
+        class="profile-avatar"
+        data-avatar="🦊"
+        type="button"
+        aria-label="Avatar raposa"
+    >🦊</button>
+
+    <button
+        class="profile-avatar"
+        data-avatar="🐉"
+        type="button"
+        aria-label="Avatar dragão"
+    >🐉</button>
+
+    <button
+        class="profile-avatar"
+        data-avatar="🤖"
+        type="button"
+        aria-label="Avatar robô"
+    >🤖</button>
+
 </div>
 
-<script src="/client-config.js"></script>
-<script src="/frontend/core/app-version.js"></script>
-<script src="/frontend/core/capabilities.js"></script>
-<script src="/frontend/core/connectivity.js"></script>
-<script src="/frontend/core/error-codes.js"></script>
-<script src="/frontend/core/room-entry.js"></script>
-<script src="/frontend/social/voice/voice-state.js"></script>
-<script src="/frontend/social/voice/voice-config.js"></script>
-<script src="/frontend/social/voice/voice-devices.js"></script>
-<script src="/frontend/social/voice/voice-controller.js"></script>
-<script src="/frontend/social/chat/chat-module.js"></script>
-<script src="/frontend/social/soundboard/soundboard-module.js"></script>
-<script src="/frontend/social/soundboard/soundboard-controller.js"></script>
-<script src="/frontend/social/reactions/reactions-module.js"></script>
+
+<button id="enterRoom">
+Entrar
+</button>
+
+</div>
+
+</div>
+
+
 <script src="/room-core.js"></script>
 
-<script src="/frontend/social/social-runtime.js"></script>
-<script src="/frontend/pwa/pwa.js"></script>
-<script src="/frontend/product/product-runtime.js"></script>
+<script src="/hl-social.js?v=92"></script>
 
 </body>
 

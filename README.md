@@ -1,55 +1,164 @@
-# HL Activity V12 — Core Consolidation
+# HL Activity V9.2
 
-HL Activity é uma sala privada para pequenos grupos conversarem, usarem voz, compartilharem tela, assistirem juntos, reagirem e brincarem com sons.
+Base V9 com controles de Configurações/Mais reforçados, camadas responsivas corrigidas e 41 testes automatizados.
 
-## Versão
+# HL Activity V7
 
-`12.0.0`
+HL Activity é um aplicativo de salas sociais em tempo real com transmissão de tela, chat, voz WebRTC, Soundboard HL e integração com Discord Activity.
 
-A V12 substitui a estratégia de empilhar arquivos versionados de correção por uma base estável com nomes permanentes de assets, módulos sociais separados e uma fonte única de versão.
 
-## Estrutura principal
+## V7 — Redesign 10/10 Desktop + Mobile
 
-- `server.js` — bootstrap HTTP/Socket.IO.
-- `src/` — rotas, serviços, segurança e eventos Socket.IO.
-- `room-core.js` — core compartilhado entre sala Web e Discord Activity.
-- `frontend/core/` — versão, capacidades, conectividade, erros e pré-entrada.
-- `frontend/social/chat/` — controlador de chat.
-- `frontend/social/voice/` — estado, dispositivos, WebRTC e UX de voz.
-- `frontend/social/soundboard/` — catálogo e controlador do Soundboard.
-- `frontend/social/reactions/` — reações e deduplicação.
-- `frontend/product/` — configurações, lobby, convites, diagnóstico e recursos de produto.
-- `frontend/pwa/` — instalação/atualização PWA.
-- `styles/` — tokens, componentes, layout e CSS social separado por responsabilidade.
-- `legacy/` — histórico não servido em produção.
-- `tests/` — testes Node e harness visual de navegador.
+A V7 é uma revisão visual estrutural em cima da V6 segura. Ela não troca o fundo nem recria o produto: corrige densidade, hierarquia, controles nativos, Soundboard mobile e integração da toolbar.
 
-## Desenvolvimento
+Principais mudanças:
 
-```bash
-npm ci --include=dev
-npm test
-npm run build
+- configurações administrativas do Soundboard saem da tela principal e ficam em **⚙ Configurar** apenas para host;
+- `+ Adicionar som` vira ação clara e consistente, sem botão branco nativo;
+- busca, chips, selects, slider e botões recebem aparência controlada no desktop/mobile;
+- volume mostra porcentagem e usa slider estilizado;
+- Soundboard mobile vira uma coluna com cards compactos e ações legíveis;
+- bottom sheet ocupa a largura correta no celular e mantém scroll interno;
+- Voz recebe hierarquia, controles e seletores refinados;
+- Chat recebe compose e empty state mais limpos;
+- palco vazio fica compacto e mantém Compartilhar como CTA;
+- toolbar desktop é agrupada; no mobile ficam apenas ações prioritárias;
+- configuração/convite/qualidade deixam de disputar espaço no celular;
+- nenhum fundo gamer/imagem decorativa foi adicionado;
+- segurança, host token, rate limits e upload validado da V6 foram preservados.
+
+## V6 — Soundboard Pro + Segurança
+
+A V6 preserva a essência e o streaming existente, mas endurece a arquitetura de segurança e transforma o Soundboard em uma função completa.
+
+### Soundboard Pro
+
+- sons originais do HL continuam disponíveis;
+- botão **Adicionar som** dentro da aba Sons;
+- aceita arquivo local que o navegador consiga decodificar (MP3/WAV/OGG/WebM/M4A quando suportado pelo navegador);
+- recorte de início e duração de até 15 segundos;
+- prévia antes de enviar;
+- nome, categoria e emoji;
+- conversão no navegador para WAV PCM mono 16-bit/22.05 kHz;
+- servidor valida novamente estrutura WAV, duração e tamanho;
+- busca;
+- Favoritos;
+- Recentes;
+- Meus sons;
+- Ouvir aqui / Na sala;
+- exclusão pelo dono, host ou moderador;
+- política do host para quem pode tocar;
+- política separada para quem pode adicionar;
+- cooldown e limite por sala;
+- host/mod pode parar os sons compartilhados.
+
+Os sons personalizados ficam apenas **na memória da sala** nesta versão. Reiniciar o serviço apaga esses uploads. Isso evita fingir persistência usando o filesystem efêmero do Render. A arquitetura pode receber R2/S3 depois sem refazer a UI.
+
+## Segurança V6
+
+- token criptograficamente aleatório para o criador reivindicar o papel de host;
+- hash do token de host no servidor, nunca o valor puro no estado da sala;
+- token efêmero de API ligado ao socket atual para ações HTTP da sala;
+- comparação de tokens com `timingSafeEqual`;
+- verificação de origem em requisições `/api`;
+- verificação de origem no handshake Socket.IO em produção;
+- limite de sockets simultâneos por IP;
+- rate limit HTTP geral, criação de sala, OAuth e upload;
+- rate limits Socket.IO separados para chat, reação, soundboard, moderação, voz e sinalização WebRTC;
+- limite de payload Socket.IO;
+- `Helmet` e CSP endurecida;
+- JavaScript inline removido das páginas principais para eliminar `unsafe-inline` de `script-src`;
+- `script-src-attr 'none'`;
+- `object-src 'none'`, `base-uri 'self'`, `form-action 'self'`;
+- Permissions Policy para câmera, microfone, captura de tela, geolocalização e clipboard;
+- arquivos internos não são publicados como estáticos;
+- API usa `no-store`;
+- Request ID por requisição;
+- erros de API não expõem stack interno;
+- OAuth tem limite, timeout e não registra token/response sensível;
+- upload de som não grava arquivo no disco;
+- áudio customizado recebe URL com token aleatório de acesso;
+- logs de auditoria temporários para ações de sala/moderação/soundboard;
+- timeouts HTTP e compressão WebSocket desabilitada para reduzir superfície de abuso.
+
+### Limite importante de identidade
+
+Usuários convidados continuam sendo identidades temporárias da sala. Sem login obrigatório/banco de dados, não existe ban persistente confiável entre sessões. A V6 não finge que existe.
+
+## Recursos existentes preservados
+
+- criar/entrar em sala;
+- stream WebRTC;
+- Auto, 720p30, 720p60, 1080p30, 1080p60;
+- chat temporário;
+- voz WebRTC separada da stream;
+- mute/deaf/PTT;
+- seleção de microfone/saída quando suportada;
+- participantes e roles;
+- host/moderação básica;
+- reações;
+- interface desktop/mobile;
+- Discord Activity;
+- `/health`;
+- graceful shutdown.
+
+## Instalar
+
+```powershell
+npm install
+```
+
+## Executar
+
+```powershell
 npm start
 ```
 
-Node requerido: `>=20.19.0`.
+## Testar
 
-## Variáveis de ambiente
+```powershell
+npm test
+```
 
-Copie `.env.example` para `.env` e preencha apenas no ambiente local/Render. Nunca faça commit de `.env`.
+## Build da Discord Activity
 
-TURN é opcional. Quando `TURN_URL` e `TURN_SHARED_SECRET` estiverem configurados, o servidor gera credenciais temporárias compatíveis com coturn REST. Sem TURN, o HL usa STUN.
+```powershell
+npm run build
+```
 
-## Gates de release
+## Render
 
-Uma release só deve ser enviada depois de:
+Build Command:
 
-1. dependências instaladas;
-2. sintaxe backend aprovada;
-3. testes aprovados;
-4. `npm run build` aprovado;
-5. servidor temporário responder `/health` e `/ready`;
-6. somente então commit/push.
+```text
+npm install && npm run build
+```
 
-Veja `docs/DEPLOY-ROLLBACK.md`.
+Start Command:
+
+```text
+npm start
+```
+
+Health check:
+
+```text
+/health
+```
+
+## Variáveis
+
+Copie `.env.example`. Nunca envie `.env` ao Git.
+
+```text
+NODE_ENV=production
+DISCORD_CLIENT_ID=
+DISCORD_CLIENT_SECRET=
+HL_ALLOWED_ORIGINS=
+```
+
+`HL_ALLOWED_ORIGINS` é opcional para origens extras. O próprio host atual do Render/custom domain é validado dinamicamente.
+
+## TURN
+
+A base continua com STUN público. Para maior confiabilidade entre NATs/redes restritivas, configure TURN em uma próxima etapa e conecte as credenciais ao RTC antes de anunciar o recurso como ativo.

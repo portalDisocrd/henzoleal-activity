@@ -49,10 +49,7 @@
         soundFavorites: new Set(storedArray("hl_sound_favorites")),
         recentSounds: storedArray("hl_sound_recent"),
         soundSearch: "",
-        soundCategory: "all",
-        seenReactionIds: new Set(),
-        lastReactionAt: 0,
-        localSpeech: null
+        soundCategory: "all"
     };
 
     const modes = ["normal", "focus", "social", "cinema"];
@@ -371,27 +368,11 @@
     const connectionPill = document.getElementById("status");
 
     const stageEl = document.getElementById("stage");
-    let reactionLayer = null;
-    const syncReactionLayer = () => {
-        if (!stageEl || !reactionLayer) return;
-        const rect = stageEl.getBoundingClientRect();
-        reactionLayer.style.left = `${Math.max(0, rect.left)}px`;
-        reactionLayer.style.top = `${Math.max(0, rect.top)}px`;
-        reactionLayer.style.width = `${Math.max(0, rect.width)}px`;
-        reactionLayer.style.height = `${Math.max(0, rect.height)}px`;
-    };
     if (stageEl) {
-        reactionLayer = document.createElement("div");
-        reactionLayer.id = "hlFloatingReactions";
-        reactionLayer.className = "hl-floating-reactions";
-        document.body.appendChild(reactionLayer);
-        requestAnimationFrame(syncReactionLayer);
-        window.addEventListener("resize", syncReactionLayer, { passive: true });
-        document.addEventListener("scroll", syncReactionLayer, true);
-        if (typeof ResizeObserver === "function") {
-            const observer = new ResizeObserver(syncReactionLayer);
-            observer.observe(stageEl);
-        }
+        const reactions = document.createElement("div");
+        reactions.id = "hlFloatingReactions";
+        reactions.className = "hl-floating-reactions";
+        stageEl.appendChild(reactions);
     }
 
     const stageEmpty = document.getElementById("stageEmpty");
@@ -848,7 +829,6 @@
                 });
                 oldStream?.getTracks().forEach(track => track.stop());
                 state.voiceStream = stream;
-                startLocalSpeechDetector(state.voiceStream);
                 state.muted = wasMuted;
                 applyMicState();
                 toast("Microfone atualizado.");
@@ -869,48 +849,12 @@
 
     navigator.mediaDevices?.addEventListener?.("devicechange", refreshAudioDevices);
 
-    function stopLocalSpeechDetector() {
-        const record = state.localSpeech;
-        if (!record) return;
-        record.active = false;
-        if (record.raf) cancelAnimationFrame(record.raf);
-        record.context?.close?.().catch(() => {});
-        state.localSpeech = null;
-        if (socket.connected) socket.emit("voice:speaking", { speaking: false });
-    }
-
-    function startLocalSpeechDetector(stream) {
-        stopLocalSpeechDetector();
-        try {
-            const context = new (window.AudioContext || window.webkitAudioContext)();
-            const source = context.createMediaStreamSource(stream);
-            const analyser = context.createAnalyser(); analyser.fftSize = 128; source.connect(analyser);
-            const data = new Uint8Array(analyser.frequencyBinCount);
-            const record = { context, analyser, data, speaking: false, active: true, raf: 0, lastEmit: 0 };
-            state.localSpeech = record;
-            const tick = () => {
-                if (!record.active || state.localSpeech !== record) return;
-                analyser.getByteFrequencyData(data);
-                const avg = data.reduce((sum, value) => sum + value, 0) / data.length;
-                const speaking = !state.muted && avg > 18;
-                const now = Date.now();
-                if (speaking !== record.speaking || now - record.lastEmit > 2200) {
-                    record.speaking = speaking; record.lastEmit = now;
-                    if (socket.connected) socket.emit("voice:speaking", { speaking });
-                }
-                record.raf = requestAnimationFrame(tick);
-            };
-            tick();
-        } catch {}
-    }
-
     async function joinVoice() {
         if (state.voiceJoined) return;
         try {
             state.voiceStream = await navigator.mediaDevices.getUserMedia({ audio: { deviceId: state.selectedMicId ? { exact: state.selectedMicId } : undefined, echoCancellation: true, noiseSuppression: true, autoGainControl: true }, video: false });
-            startLocalSpeechDetector(state.voiceStream);
             state.voiceJoined = true;
-            state.muted = sessionStorage.getItem("hl_prejoin_muted") === "1";
+            state.muted = false;
             applyMicState();
             voiceJoin.classList.add("is-connected");
             voiceJoin.querySelector("strong").textContent = "Conectado ao voz";
@@ -943,7 +887,6 @@
         if (emit && socket.connected) socket.emit("voice:leave", {}, () => {});
         state.voiceJoined = false;
         state.voicePeers.forEach((_, id) => closeVoicePeer(id));
-        stopLocalSpeechDetector();
         state.voiceStream?.getTracks().forEach(track => track.stop());
         state.voiceStream = null;
         state.muted = false;
@@ -1238,22 +1181,16 @@
 
             const actions = document.createElement("div");
             actions.className = "hl-sound-actions";
-            const preview = tool("▶ Ouvir", () => playSound(item.id, true));
+            const preview = tool("Ouvir aqui", () => playSound(item.id, true));
             preview.title = "Ouvir só aqui";
-            preview.dataset.soundAction = "preview";
-            const all = tool("📢 Na sala", () => sendSharedSound(item.id));
+            const all = tool("Na sala", () => sendSharedSound(item.id));
             all.title = "Tocar para os participantes autorizados";
-            all.dataset.soundAction = "room";
             actions.append(preview, all);
 
             if (item.custom && (item.ownerId === socket.id || state.role === "host" || state.role === "moderator")) {
-                const edit = tool("Editar", () => editCustomSound(item.id));
-                const duplicate = tool("Duplicar", () => duplicateCustomSound(item.id));
                 const remove = tool("Excluir", () => deleteCustomSound(item.id));
-                edit.classList.add("is-secondary");
-                duplicate.classList.add("is-secondary");
                 remove.classList.add("is-danger");
-                actions.append(edit, duplicate, remove);
+                actions.appendChild(remove);
             }
 
             card.append(top, actions);
@@ -1359,49 +1296,12 @@
         renderSoundGrid();
         if (item.ownerId !== socket.id) toast(`${item.ownerName || "Alguém"} adicionou um som.`);
     });
-    socket.on("sound:catalog-update", item => {
-        if (!item?.id || !item?.url) return;
-        soundById.set(item.id, { ...item, name: String(item.name || "Som personalizado"), category: String(item.category || "Outros"), emoji: String(item.emoji || "🔊"), custom: true });
-        renderSoundGrid();
-    });
     socket.on("sound:catalog-remove", data => {
         if (!data?.id) return;
         soundById.delete(data.id);
         state.soundFavorites.delete(data.id);
         renderSoundGrid();
     });
-
-    async function editCustomSound(id) {
-        const item = soundById.get(id);
-        if (!item?.custom || !state.apiToken) return;
-        const name = prompt("Nome do som:", item.name);
-        if (name === null) return;
-        const emoji = prompt("Emoji do som:", item.emoji || "🔊");
-        if (emoji === null) return;
-        try {
-            const response = await fetch(`/api/rooms/${encodeURIComponent(roomCode)}/sounds/${encodeURIComponent(id)}`, {
-                method: "PATCH",
-                headers: { "Content-Type": "application/json", "x-hl-socket-id": socket.id, "x-hl-room-token": state.apiToken },
-                body: JSON.stringify({ name: name.trim().slice(0,40), emoji: emoji.trim().slice(0,8), category: item.category })
-            });
-            const result = await response.json().catch(() => ({}));
-            if (!response.ok || !result.success) throw new Error(result.message || "Não foi possível editar.");
-            toast("Som atualizado.");
-        } catch (error) { toast(error.message || "Não foi possível editar o som."); }
-    }
-
-    async function duplicateCustomSound(id) {
-        if (!state.apiToken) return toast("Reconecte à sala antes de duplicar sons.");
-        try {
-            const response = await fetch(`/api/rooms/${encodeURIComponent(roomCode)}/sounds/${encodeURIComponent(id)}/duplicate`, {
-                method: "POST",
-                headers: { "x-hl-socket-id": socket.id, "x-hl-room-token": state.apiToken }
-            });
-            const result = await response.json().catch(() => ({}));
-            if (!response.ok || !result.success) throw new Error(result.message || "Não foi possível duplicar.");
-            toast("Som duplicado.");
-        } catch (error) { toast(error.message || "Não foi possível duplicar o som."); }
-    }
 
     async function deleteCustomSound(id) {
         const item = soundById.get(id);
@@ -1649,26 +1549,15 @@
         moreQuick?.setAttribute("aria-expanded", "false");
     };
 
-    function showFloatingReaction(emoji, reactionId = "") {
-        if (!emoji) return;
-        syncReactionLayer();
-        if (reactionId) {
-            if (state.seenReactionIds.has(reactionId)) return;
-            state.seenReactionIds.add(reactionId);
-            if (state.seenReactionIds.size > 80) {
-                const first = state.seenReactionIds.values().next().value;
-                state.seenReactionIds.delete(first);
-            }
-        }
+    function showFloatingReaction(emoji) {
         const host = document.getElementById("hlFloatingReactions");
-        if (!host) return;
-        while (host.childElementCount >= 3) host.firstElementChild?.remove();
+        if (!host || !emoji) return;
         const el = document.createElement("div");
-        el.className = "hl-floating-reaction hl-v10-reaction";
+        el.className = "hl-floating-reaction hl-v9-reaction";
         el.textContent = emoji;
-        el.style.setProperty("--hl-reaction-x", `${Math.floor(Math.random() * 22) - 6}px`);
+        el.style.setProperty("--hl-reaction-x", `${Math.floor(Math.random() * 56) - 28}px`);
         host.appendChild(el);
-        setTimeout(() => el.remove(), 1450);
+        setTimeout(() => el.remove(), 1650);
     }
 
     const openSettingsPanel = () => {
@@ -1731,15 +1620,10 @@
     });
 
     reactionPicker?.querySelectorAll("[data-reaction]").forEach(button => button.addEventListener("click", event => {
-        event.preventDefault();
         event.stopPropagation();
-        const now = Date.now();
-        if (now - state.lastReactionAt < 500) return;
-        state.lastReactionAt = now;
         const emoji = button.dataset.reaction;
-        const reactionId = crypto?.randomUUID?.() || `${socket.id}-${now}-${Math.random().toString(36).slice(2)}`;
-        showFloatingReaction(emoji, reactionId);
-        socket.emit("reaction:send", { emoji, reactionId }, result => {
+        showFloatingReaction(emoji);
+        socket.emit("reaction:send", { emoji }, result => {
             if (result && result.success === false) toast(result.message || "Não foi possível enviar a reação.");
         });
         closeReactionPicker();
@@ -1790,8 +1674,8 @@
     });
 
     socket.on("reaction:show", data => {
-        if (!data?.emoji) return;
-        showFloatingReaction(data.emoji, data.reactionId || `${data.senderId || "remote"}-${data.at || Date.now()}`);
+        if (data?.senderId === socket.id) return;
+        showFloatingReaction(data?.emoji);
     });
 
     // Connection / reconnect --------------------------------
@@ -1799,15 +1683,6 @@
     socket.on("disconnect",()=>{ if (connectionPill) { connectionPill.textContent="Reconectando…"; connectionPill.dataset.state="reconnecting"; } if (settingsStatusText) settingsStatusText.textContent="Reconectando…"; state.bootstrapped=false; state.voicePeers.forEach((_,id)=>closeVoicePeer(id)); });
     socket.on("connect_error",()=> { if (connectionPill) { connectionPill.textContent="Sem conexão"; connectionPill.dataset.state="offline"; } if (settingsStatusText) settingsStatusText.textContent="Sem conexão"; });
     socket.on("moderation:kicked",data=>{ toast(data?.message||"Você foi removido."); leaveVoice(false); setTimeout(()=>location.href="/",800); });
-
-    socket.on("moderation:force-mute", () => {
-        if (!state.voiceJoined) return;
-        state.muted = true;
-        state.voiceStream?.getAudioTracks?.().forEach(track => { track.enabled = false; });
-        socket.emit("voice:state", { muted: true, deaf: state.deaf });
-        updateVoiceButtons();
-        toast("Seu microfone foi silenciado pela moderação.");
-    });
 
     window.addEventListener("beforeunload",()=>{ try{ if(state.voiceJoined) socket.emit("voice:leave"); }catch{} state.voiceStream?.getTracks().forEach(t=>t.stop()); state.analysers.forEach(a=>a.context?.close().catch(()=>{})); });
 

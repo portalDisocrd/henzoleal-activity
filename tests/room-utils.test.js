@@ -11,19 +11,6 @@ test("generateRoomCode segue formato esperado", () => {
 test("getParticipants devolve apenas estado publico", () => {
     const room = { users: new Map([["sock1", { name: "A", avatar: "😎", role: "host", streaming: true, voiceJoined: true, muted: false, deaf: false, secret: "x" }]]) };
     const [user] = getParticipants(room);
-    assert.equal(user.id, "sock1");
-    assert.equal(user.name, "A");
-    assert.equal(user.avatar, "😎");
-    assert.equal(user.streaming, true);
-    assert.equal(user.role, "host");
-    assert.equal(user.voiceJoined, true);
-    assert.equal(user.muted, false);
-    assert.equal(user.deaf, false);
-    assert.equal(user.status, "online");
-    assert.equal(user.activity, "Transmitindo");
-    assert.equal(typeof user.lastActive, "number");
-    assert.equal(user.soundBlocked, false);
-    assert.equal(user.streamBlocked, false);
-    assert.equal(user.spotlighted, false);
+    assert.deepEqual(user, { id: "sock1", name: "A", avatar: "😎", streaming: true, role: "host", voiceJoined: true, muted: false, deaf: false });
     assert.equal("secret" in user, false);
 });

@@ -2,10 +2,7 @@ require("dotenv").config();
 
 const express = require("express");
 const http = require("http");
-const crypto = require("crypto");
 const { Server } = require("socket.io");
-const { APP_VERSION } = require("./src/config/version");
-const { log } = require("./src/utils/logger");
 
 const {
     PORT,
@@ -89,30 +86,7 @@ const voiceEvents = createVoiceEvents({ io, roomService, allowSocketEvent, getSa
 const socialEvents = createSocialEvents({ io, roomService, allowSocketEvent, getSafeTargetSocket, normalizeText });
 
 app.get("/health", (req, res) => {
-    res.json({ status: "ok", service: "hl-activity", version: APP_VERSION, uptime: Math.floor(process.uptime()) });
-});
-
-app.get("/ready", (req, res) => {
-    const ready = server.listening;
-    res.status(ready ? 200 : 503).json({ status: ready ? "ready" : "starting", service: "hl-activity", version: APP_VERSION });
-});
-
-app.get("/api/version", (req, res) => res.json({ success: true, version: APP_VERSION }));
-
-app.get("/client-config.js", (req, res) => {
-    const iceServers = [
-        { urls: "stun:stun.l.google.com:19302" },
-        { urls: "stun:stun1.l.google.com:19302" }
-    ];
-    if (process.env.TURN_URL && process.env.TURN_SHARED_SECRET) {
-        const expires = Math.floor(Date.now() / 1000) + 3600;
-        const username = `${expires}:hl`;
-        const credential = crypto.createHmac("sha1", process.env.TURN_SHARED_SECRET).update(username).digest("base64");
-        iceServers.push({ urls: process.env.TURN_URL, username, credential });
-    } else if (process.env.TURN_URL && process.env.TURN_USERNAME && process.env.TURN_CREDENTIAL) {
-        iceServers.push({ urls: process.env.TURN_URL, username: process.env.TURN_USERNAME, credential: process.env.TURN_CREDENTIAL });
-    }
-    res.type("application/javascript").set("Cache-Control", "no-store").send(`window.HL_CONFIG=${JSON.stringify({ version: APP_VERSION, iceServers, turnAvailable: iceServers.length > 2 })};`);
+    res.json({ status: "ok", service: "hl-activity", uptime: Math.floor(process.uptime()) });
 });
 
 registerStaticFiles({ app, express, rootDir: __dirname });
@@ -122,7 +96,7 @@ registerAuthRoutes({ app, oauthLimiter });
 registerCustomSoundRoutes({ app, express, io, roomService, sanitizeRoomCode, isValidRoomCode, soundUploadLimiter });
 
 io.on("connection", socket => {
-    log("info", "socket.connected", { socketId: socket.id });
+    console.log("[SOCKET] conectado", socket.id);
 
     registerJoinRoom({
         socket,
@@ -145,7 +119,7 @@ io.on("connection", socket => {
 });
 
 const cleanupTimer = setInterval(() => {
-    roomService.cleanupExpired().forEach(code => log("info", "room.expired", { room: String(code).slice(0, 3) + "***" }));
+    roomService.cleanupExpired().forEach(code => console.log(`[ROOM] expirada ${code}`));
 }, 5 * 60 * 1000);
 cleanupTimer.unref();
 
@@ -156,7 +130,6 @@ server.listen(PORT, HOST, () => {
     console.log("================================");
     console.log("          HL ACTIVITY");
     console.log("================================");
-    console.log(`Versão: ${APP_VERSION}`);
     console.log(`Porta: ${PORT}`);
     console.log(`Ambiente: ${process.env.NODE_ENV || "development"}`);
     console.log("Segurança: ATIVA");
@@ -167,7 +140,7 @@ let shuttingDown = false;
 function gracefulShutdown(signal) {
     if (shuttingDown) return;
     shuttingDown = true;
-    log("info", "server.shutdown", { signal });
+    console.log(`[SERVER] ${signal} recebido. Encerrando...`);
     clearInterval(cleanupTimer);
     io.close(() => {
         server.close(() => process.exit(0));

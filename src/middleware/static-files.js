@@ -3,25 +3,26 @@ const path = require("path");
 function registerStaticFiles({ app, express, rootDir }) {
     const publicFiles = new Map([
         ["/logo-hl.png", "logo-hl.png"],
-        ["/logo-hl.webp", "logo-hl.webp"],
+        ["/hl-social.css", "hl-social.css"],
+        ["/hl-v4.css", "hl-v4.css"],
+        ["/hl-v5.css", "hl-v5.css"],
+        ["/hl-v6.css", "hl-v6.css"],
+        ["/hl-v7.css", "hl-v7.css"],
+        ["/hl-social.js", "hl-social.js"],
         ["/activity-client.js", "activity-client.js"],
         ["/home.css", "home.css"],
         ["/home.js", "home.js"],
+        ["/room.css", "room.css"],
         ["/room-core.js", "room-core.js"],
         ["/activity.css", "activity.css"],
-        ["/manifest.webmanifest", "manifest.webmanifest"],
-        ["/sw.js", "sw.js"],
-        ["/icon-192.png", "icon-192.png"],
-        ["/icon-512.png", "icon-512.png"],
+        ["/activity-room.css", "activity-room.css"],
+        ["/activity-room-core.js", "activity-room-core.js"],
         ["/not-found.css", "not-found.css"]
     ]);
 
     for (const [route, file] of publicFiles) {
         app.get(route, (req, res) => res.sendFile(path.join(rootDir, file)));
     }
-
-    app.use("/styles", express.static(path.join(rootDir, "styles"), { dotfiles: "deny", index: false, maxAge: 0 }));
-    app.use("/frontend", express.static(path.join(rootDir, "frontend"), { dotfiles: "deny", index: false, maxAge: 0 }));
 
     app.use(
         "/sounds",

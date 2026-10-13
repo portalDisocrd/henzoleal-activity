@@ -5,15 +5,7 @@ const MAX_SOUND_BYTES = 700 * 1024;
 const MAX_SOUND_DURATION = 15;
 const MAX_CUSTOM_SOUNDS = 16;
 const MAX_ROOM_SOUND_BYTES = 7 * 1024 * 1024;
-const MAX_GLOBAL_SOUND_BYTES = 64 * 1024 * 1024;
 const ALLOWED_CATEGORIES = new Set(["Memes", "Reações", "Vitória", "Falha", "Suspense", "Outros"]);
-
-
-function totalCustomSoundBytes(roomService) {
-    let total = 0;
-    for (const [, room] of roomService.entries()) total += Number(room.customSoundBytes || 0);
-    return total;
-}
 
 function decodeHeader(value, max = 80) {
     try {
@@ -134,8 +126,7 @@ function registerCustomSoundRoutes({ app, express, io, roomService, sanitizeRoom
         room.customSounds ||= new Map();
         room.customSoundBytes ||= 0;
         if (room.customSounds.size >= MAX_CUSTOM_SOUNDS) return res.status(409).json({ success: false, message: `A sala já chegou ao limite de ${MAX_CUSTOM_SOUNDS} sons personalizados.` });
-        if (room.customSoundBytes + req.body.length > MAX_ROOM_SOUND_BYTES) return res.status(409).json({ success: false, code: "SOUND_ROOM_LIMIT", message: "A sala chegou ao limite temporário de sons." });
-        if (totalCustomSoundBytes(roomService) + req.body.length > MAX_GLOBAL_SOUND_BYTES) return res.status(503).json({ success: false, code: "SOUND_GLOBAL_LIMIT", message: "O servidor atingiu o limite temporário de áudio. Tente novamente mais tarde." });
+        if (room.customSoundBytes + req.body.length > MAX_ROOM_SOUND_BYTES) return res.status(409).json({ success: false, message: "A sala chegou ao limite temporário de sons." });
 
         const now = Date.now();
         if (now - (socket.data.lastSoundUploadAt || 0) < 3000) return res.status(429).json({ success: false, message: "Aguarde alguns segundos antes de adicionar outro som." });
@@ -179,55 +170,6 @@ function registerCustomSoundRoutes({ app, express, io, roomService, sanitizeRoom
         return res.send(sound.buffer);
     });
 
-
-
-    app.patch("/api/rooms/:code/sounds/:soundId", soundUploadLimiter, (req, res) => {
-        const roomCode = sanitizeRoomCode(req.params.code);
-        if (!isValidRoomCode(roomCode)) return res.status(400).json({ success: false, message: "Sala inválida." });
-        const room = roomService.get(roomCode);
-        if (!room) return res.status(404).json({ success: false, message: "Sala não encontrada." });
-        const auth = authorizeRoomHttp(req, io, room, roomCode);
-        if (!auth) return res.status(401).json({ success: false, message: "Sessão da sala inválida." });
-        const sound = room.customSounds?.get(String(req.params.soundId || ""));
-        if (!sound) return res.status(404).json({ success: false, message: "Som não encontrado." });
-        if (!canDelete(auth.user, sound)) return res.status(403).json({ success: false, message: "Sem permissão para editar este som." });
-
-        const name = decodeHeader(req.body?.name, 40);
-        const categoryRaw = decodeHeader(req.body?.category, 30);
-        const emoji = decodeHeader(req.body?.emoji, 8);
-        if (name) sound.name = name;
-        if (ALLOWED_CATEGORIES.has(categoryRaw)) sound.category = categoryRaw;
-        if (emoji) sound.emoji = emoji;
-        roomService.audit(roomCode, { type: "sound-edit", actorId: auth.socket.id, actorName: auth.user.name, soundId: sound.id });
-        const metadata = publicSound(sound, roomCode);
-        io.to(roomCode).emit("sound:catalog-update", metadata);
-        return res.json({ success: true, sound: metadata });
-    });
-
-    app.post("/api/rooms/:code/sounds/:soundId/duplicate", soundUploadLimiter, (req, res) => {
-        const roomCode = sanitizeRoomCode(req.params.code);
-        if (!isValidRoomCode(roomCode)) return res.status(400).json({ success: false, message: "Sala inválida." });
-        const room = roomService.get(roomCode);
-        if (!room) return res.status(404).json({ success: false, message: "Sala não encontrada." });
-        const auth = authorizeRoomHttp(req, io, room, roomCode);
-        if (!auth) return res.status(401).json({ success: false, message: "Sessão da sala inválida." });
-        const original = room.customSounds?.get(String(req.params.soundId || ""));
-        if (!original) return res.status(404).json({ success: false, message: "Som não encontrado." });
-        if (!canUpload(auth.user, room.soundUploadPolicy || "everyone")) return res.status(403).json({ success: false, message: "Sem permissão para duplicar sons." });
-        if (room.customSounds.size >= MAX_CUSTOM_SOUNDS) return res.status(409).json({ success: false, message: `A sala já chegou ao limite de ${MAX_CUSTOM_SOUNDS} sons personalizados.` });
-        if (room.customSoundBytes + original.bytes > MAX_ROOM_SOUND_BYTES) return res.status(409).json({ success: false, code: "SOUND_ROOM_LIMIT", message: "A sala chegou ao limite temporário de sons." });
-        if (totalCustomSoundBytes(roomService) + original.bytes > MAX_GLOBAL_SOUND_BYTES) return res.status(503).json({ success: false, code: "SOUND_GLOBAL_LIMIT", message: "O servidor atingiu o limite temporário de áudio. Tente novamente mais tarde." });
-
-        const id = `custom-${crypto.randomUUID()}`;
-        const copy = { ...original, id, name: `${original.name} (cópia)`.slice(0,40), ownerId: auth.socket.id, ownerName: auth.user.name, createdAt: Date.now(), buffer: Buffer.from(original.buffer), accessToken: randomToken(18) };
-        room.customSounds.set(id, copy);
-        room.customSoundBytes += copy.bytes;
-        roomService.audit(roomCode, { type: "sound-duplicate", actorId: auth.socket.id, actorName: auth.user.name, soundId: id, sourceId: original.id });
-        const metadata = publicSound(copy, roomCode);
-        io.to(roomCode).emit("sound:catalog-add", metadata);
-        return res.status(201).json({ success: true, sound: metadata, persistence: "session" });
-    });
-
     app.delete("/api/rooms/:code/sounds/:soundId", soundUploadLimiter, (req, res) => {
         const roomCode = sanitizeRoomCode(req.params.code);
         if (!isValidRoomCode(roomCode)) return res.status(400).json({ success: false, message: "Sala inválida." });
@@ -257,7 +199,5 @@ module.exports = {
     MAX_SOUND_BYTES,
     MAX_SOUND_DURATION,
     MAX_CUSTOM_SOUNDS,
-    MAX_ROOM_SOUND_BYTES,
-    MAX_GLOBAL_SOUND_BYTES,
-    totalCustomSoundBytes
+    MAX_ROOM_SOUND_BYTES
 };

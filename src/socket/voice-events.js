@@ -1,15 +1,80 @@
 function createVoiceEvents({ io, roomService, allowSocketEvent, getSafeTargetSocket, isPlainObject, isValidDescription, isValidCandidate }) {
-    function getContext(socket){const roomCode=socket.data.roomCode;if(!roomCode)return null;const room=roomService.get(roomCode);if(!room)return null;const user=room.users.get(socket.id);if(!user)return null;return{roomCode,room,user};}
-    function voiceList(room){return Array.from(room.users.entries()).filter(([,u])=>u.voiceJoined).map(([id,u])=>({id,name:u.name,avatar:u.avatar,muted:Boolean(u.muted),deaf:Boolean(u.deaf),role:u.role,status:u.status||"online"}));}
-    function register(socket,updateParticipants){
-        socket.on("voice:join",ack=>{if(!allowSocketEvent(socket,"voice:state"))return typeof ack==="function"&&ack({success:false});const c=getContext(socket);if(!c)return typeof ack==="function"&&ack({success:false});const existing=voiceList(c.room).filter(i=>i.id!==socket.id);c.user.voiceJoined=true;c.user.muted=false;c.user.deaf=false;c.user.status="online";c.user.activity="No voz";c.user.lastActive=Date.now();socket.to(c.roomCode).emit("voice:user-joined",{id:socket.id,name:c.user.name,avatar:c.user.avatar});const item=roomService.activity(c.roomCode,{type:"voice-join",text:`${c.user.name} entrou no voz`,actorId:socket.id,actorName:c.user.name});if(item)io.to(c.roomCode).emit("activity:event",item);updateParticipants(c.roomCode);if(typeof ack==="function")ack({success:true,peers:existing});});
-        socket.on("voice:leave",ack=>{if(!allowSocketEvent(socket,"voice:state"))return typeof ack==="function"&&ack({success:false});const c=getContext(socket);if(!c)return typeof ack==="function"&&ack({success:false});c.user.voiceJoined=false;c.user.muted=false;c.user.deaf=false;c.user.activity=c.user.streaming?"Transmitindo":"Online";c.user.lastActive=Date.now();socket.to(c.roomCode).emit("voice:user-left",{id:socket.id});updateParticipants(c.roomCode);if(typeof ack==="function")ack({success:true});});
-        socket.on("voice:state",payload=>{if(!allowSocketEvent(socket,"voice:state"))return;const c=getContext(socket);if(!c||!c.user.voiceJoined)return;c.user.muted=Boolean(payload?.muted);c.user.deaf=Boolean(payload?.deaf);c.user.lastActive=Date.now();io.to(c.roomCode).emit("voice:state",{id:socket.id,muted:c.user.muted,deaf:c.user.deaf});updateParticipants(c.roomCode);});
-        socket.on("voice:speaking",payload=>{if(!allowSocketEvent(socket,"voice:state"))return;const c=getContext(socket);if(!c||!c.user.voiceJoined)return;const speaking=Boolean(payload?.speaking);c.user.activity=speaking?"Falando":"No voz";c.user.lastActive=Date.now();io.to(c.roomCode).emit("voice:speaking",{id:socket.id,speaking});updateParticipants(c.roomCode);});
-        socket.on("voice:offer",data=>relayDescription(socket,data,"offer","voice:offer"));socket.on("voice:answer",data=>relayDescription(socket,data,"answer","voice:answer"));
-        socket.on("voice:ice",data=>{if(!allowSocketEvent(socket,"voice:signal")||!isPlainObject(data)||!isValidCandidate(data.candidate))return;const target=getSafeTargetSocket(socket,data.target);const c=getContext(socket);if(!target||!c?.user.voiceJoined)return;const targetUser=c.room.users.get(target.id);if(!targetUser?.voiceJoined)return;target.emit("voice:ice",{sender:socket.id,candidate:data.candidate});});
-        function relayDescription(source,data,expectedType,eventName){if(!allowSocketEvent(source,"voice:signal")||!isPlainObject(data)||!isValidDescription(data.description,expectedType))return;const target=getSafeTargetSocket(source,data.target);const c=getContext(source);if(!target||!c?.user.voiceJoined)return;const targetUser=c.room.users.get(target.id);if(!targetUser?.voiceJoined)return;target.emit(eventName,{sender:source.id,description:data.description});}
+    function getContext(socket) {
+        const roomCode = socket.data.roomCode;
+        if (!roomCode) return null;
+        const room = roomService.get(roomCode);
+        if (!room) return null;
+        const user = room.users.get(socket.id);
+        if (!user) return null;
+        return { roomCode, room, user };
     }
-    return{register,voiceList};
+
+    function voiceList(room) {
+        return Array.from(room.users.entries())
+            .filter(([, user]) => user.voiceJoined)
+            .map(([id, user]) => ({ id, name: user.name, avatar: user.avatar, muted: Boolean(user.muted), deaf: Boolean(user.deaf), role: user.role }));
+    }
+
+    function register(socket, updateParticipants) {
+        socket.on("voice:join", (ack) => {
+            if (!allowSocketEvent(socket, "voice:state")) return typeof ack === "function" && ack({ success: false });
+            const ctx = getContext(socket);
+            if (!ctx) return typeof ack === "function" && ack({ success: false });
+            const existing = voiceList(ctx.room).filter(item => item.id !== socket.id);
+            ctx.user.voiceJoined = true;
+            ctx.user.muted = false;
+            ctx.user.deaf = false;
+            socket.to(ctx.roomCode).emit("voice:user-joined", { id: socket.id, name: ctx.user.name, avatar: ctx.user.avatar });
+            updateParticipants(ctx.roomCode);
+            if (typeof ack === "function") ack({ success: true, peers: existing });
+        });
+
+        socket.on("voice:leave", (ack) => {
+            if (!allowSocketEvent(socket, "voice:state")) return typeof ack === "function" && ack({ success: false });
+            const ctx = getContext(socket);
+            if (!ctx) return typeof ack === "function" && ack({ success: false });
+            ctx.user.voiceJoined = false;
+            ctx.user.muted = false;
+            ctx.user.deaf = false;
+            socket.to(ctx.roomCode).emit("voice:user-left", { id: socket.id });
+            updateParticipants(ctx.roomCode);
+            if (typeof ack === "function") ack({ success: true });
+        });
+
+        socket.on("voice:state", (payload) => {
+            if (!allowSocketEvent(socket, "voice:state")) return;
+            const ctx = getContext(socket);
+            if (!ctx || !ctx.user.voiceJoined) return;
+            ctx.user.muted = Boolean(payload?.muted);
+            ctx.user.deaf = Boolean(payload?.deaf);
+            io.to(ctx.roomCode).emit("voice:state", { id: socket.id, muted: ctx.user.muted, deaf: ctx.user.deaf });
+            updateParticipants(ctx.roomCode);
+        });
+
+        socket.on("voice:offer", data => relayDescription(socket, data, "offer", "voice:offer"));
+        socket.on("voice:answer", data => relayDescription(socket, data, "answer", "voice:answer"));
+        socket.on("voice:ice", data => {
+            if (!allowSocketEvent(socket, "voice:signal") || !isPlainObject(data) || !isValidCandidate(data.candidate)) return;
+            const target = getSafeTargetSocket(socket, data.target);
+            const ctx = getContext(socket);
+            if (!target || !ctx?.user.voiceJoined) return;
+            const targetUser = ctx.room.users.get(target.id);
+            if (!targetUser?.voiceJoined) return;
+            target.emit("voice:ice", { sender: socket.id, candidate: data.candidate });
+        });
+
+        function relayDescription(source, data, expectedType, eventName) {
+            if (!allowSocketEvent(source, "voice:signal") || !isPlainObject(data) || !isValidDescription(data.description, expectedType)) return;
+            const target = getSafeTargetSocket(source, data.target);
+            const ctx = getContext(source);
+            if (!target || !ctx?.user.voiceJoined) return;
+            const targetUser = ctx.room.users.get(target.id);
+            if (!targetUser?.voiceJoined) return;
+            target.emit(eventName, { sender: source.id, description: data.description });
+        }
+    }
+
+    return { register, voiceList };
 }
-module.exports={createVoiceEvents};
+
+module.exports = { createVoiceEvents };
