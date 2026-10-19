@@ -96,3 +96,13 @@ test("a primeira regra do soundboard e parseavel e mantem o catalogo em coluna",
   assert.match(soundboard, /^\/\*[\s\S]*?\*\/\s*body\.hl-social-ready \.hl-sound-view\s*\{[\s\S]*?flex-direction:\s*column;/);
   assert.match(soundboard, /body\.hl-social-ready \.hl-sound-grid\s*\{[\s\S]*?overflow-y:\s*auto;/);
 });
+
+test("reações ficam centradas e distribuidas no layout portrait mobile", () => {
+  const responsive = read("styles/social-responsive.css");
+  const reactions = read("frontend/social/reactions/reactions-module.js");
+  assert.match(responsive, /hl-reaction-picker\s*\{[\s\S]*?left:\s*50%;[\s\S]*?env\(safe-area-inset-bottom\)/);
+  assert.match(responsive, /@media \(max-width:\s*650px\) and \(orientation:\s*portrait\)[\s\S]*?hl-reaction-layer\.is-portrait[\s\S]*?right:\s*auto;/);
+  assert.match(reactions, /layer\.classList\.toggle\("is-portrait"/);
+  assert.match(reactions, /nextPortraitLane\+\+ % laneCount/);
+  assert.match(reactions, /el\.style\.left = `\$\{\(\(lane \+ 1\) \/ \(laneCount \+ 1\)\) \* 100\}%`/);
+});

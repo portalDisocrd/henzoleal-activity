@@ -26,6 +26,7 @@
     let lastReactionAt = 0;
     let open = false;
     let resizeObserver = null;
+    let nextPortraitLane = 0;
 
     const layer = document.createElement("div");
     layer.id = "hlFloatingReactions";
@@ -36,6 +37,7 @@
 
     function syncLayer() {
       const rect = stage.getBoundingClientRect();
+      layer.classList.toggle("is-portrait", window.innerWidth <= 650 && rect.height > rect.width);
       const left = Math.max(0, rect.left);
       const top = Math.max(0, rect.top);
       const right = Math.min(window.innerWidth, rect.right);
@@ -69,6 +71,11 @@
       el.setAttribute("role", "status");
       el.setAttribute("aria-label", `Reação ${emoji}`);
       el.style.setProperty("--hl-reaction-x", `${Math.floor(Math.random() * 17) - 8}px`);
+      if (layer.classList.contains("is-portrait")) {
+        const laneCount = Math.min(3, Math.max(1, maxVisible));
+        const lane = nextPortraitLane++ % laneCount;
+        el.style.left = `${((lane + 1) / (laneCount + 1)) * 100}%`;
+      }
       layer.appendChild(el);
       window.setTimeout(() => el.remove(), durationMs);
       return true;
@@ -169,7 +176,7 @@
   }
 
   window.HLReactionsModule = Object.freeze({
-    version: "12.0.7-foundation.7",
+    version: "12.0.7-foundation.8",
     ...DEFAULTS,
     createReactionController
   });

@@ -4,7 +4,7 @@
     if (typeof socket === "undefined") return;
 
     document.body.classList.add("hl-social-ready");
-    document.documentElement.dataset.hlSocialVersion = "12.0.7-foundation.7";
+    document.documentElement.dataset.hlSocialVersion = "12.0.7-foundation.8";
 
     const storedSoundVolume = localStorage.getItem("hl_sound_volume");
     const savedSoundVolume = storedSoundVolume === null ? 0.72 : Number(storedSoundVolume);

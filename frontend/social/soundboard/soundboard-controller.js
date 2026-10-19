@@ -524,5 +524,5 @@
     };
   }
 
-  window.HLSoundboardController = Object.freeze({ version: "12.0.7-foundation.7", create });
+  window.HLSoundboardController = Object.freeze({ version: "12.0.7-foundation.8", create });
 })();

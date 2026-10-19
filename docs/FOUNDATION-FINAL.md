@@ -1,6 +1,6 @@
 # HL Activity — Foundation final
 
-Versão: `12.0.7-foundation.7`
+Versão: `12.0.7-foundation.8`
 
 A Foundation consolida recuperação, bugs críticos, arquitetura, design system, social, PWA/cache/versionamento e hardening de segurança/performance.
 

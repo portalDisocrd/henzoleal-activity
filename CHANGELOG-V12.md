@@ -10,6 +10,11 @@
 - gate final combina segurança, performance, build, HTTP e smoke visual quando Chromium estiver disponível.
 # Changelog — HL Activity Foundation
 
+## 12.0.7-foundation.8 — Reações organizadas em portrait
+
+- centraliza o seletor de reações acima dos controles em telas mobile;
+- distribui os emojis animados em faixas horizontais no palco portrait.
+
 ## 12.0.7-foundation.7 — Soundboard e atualização automática
 
 - corrige o cabeçalho CSS que impedia o layout vertical e os controles do Soundboard;

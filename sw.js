@@ -1,4 +1,4 @@
-const APP_VERSION = "12.0.7-foundation.7";
+const APP_VERSION = "12.0.7-foundation.8";
 const CACHE_PREFIX = "hl-activity-";
 const CACHE = `${CACHE_PREFIX}${APP_VERSION}`;
 

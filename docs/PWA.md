@@ -2,7 +2,7 @@
 
 A release usa uma única identidade:
 
-`APP_VERSION = 12.0.7-foundation.7`
+`APP_VERSION = 12.0.7-foundation.8`
 
 O mesmo valor aparece no backend, frontend, Service Worker, `/health`, `/ready`, `/api/version` e diagnóstico.
 
