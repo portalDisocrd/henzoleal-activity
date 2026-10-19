@@ -87,6 +87,7 @@ test("reaction envia exatamente um broadcast remoto e preserva reactionId", () =
         soundUploadPolicy: "everyone",
         roomMode: "normal",
         lastActivity: 0,
+        reactionIds: new Map(),
         users: new Map([["host", { id:"host", name: "Host", role: "host" }]])
     };
     const roomService = { get: () => room, audit: () => true, activity: () => null };
@@ -99,4 +100,32 @@ test("reaction envia exatamente um broadcast remoto e preserva reactionId", () =
     assert.equal(reactionEvents.length, 1);
     assert.equal(reactionEvents[0][1].reactionId, "rx-123");
     assert.equal(reactionEvents[0][1].emoji, "🔥");
+});
+
+test("reaction:send deduplica o mesmo reactionId para evitar eco", () => {
+    const io = fakeIo();
+    const socket = fakeSocket("host");
+    const room = {
+        hostId: "host",
+        soundboardPolicy: "everyone",
+        soundUploadPolicy: "everyone",
+        roomMode: "normal",
+        lastActivity: 0,
+        reactionIds: new Map(),
+        users: new Map([["host", { id:"host", name: "Host", role: "host" }]])
+    };
+    const roomService = { get: () => room, audit: () => true, activity: () => null };
+    const factory = createSocialEvents({ io, roomService, allowSocketEvent: () => true, getSafeTargetSocket: () => null, normalizeText });
+    factory.register(socket, () => {});
+
+    let firstAck;
+    let secondAck;
+    socket.handlers.get("reaction:send")({ emoji: "👏", reactionId: "rx-repeat" }, value => { firstAck = value; });
+    socket.handlers.get("reaction:send")({ emoji: "👏", reactionId: "rx-repeat" }, value => { secondAck = value; });
+
+    assert.equal(firstAck.success, true);
+    assert.equal(secondAck.success, true);
+    assert.equal(secondAck.deduplicated, true);
+    const reactionEvents = socket.emitted.filter(([name]) => name === "to:reaction:show");
+    assert.equal(reactionEvents.length, 1);
 });

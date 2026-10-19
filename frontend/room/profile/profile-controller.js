@@ -40,6 +40,43 @@
     let selectedAvatar = "😎";
     let savedProfile = null;
     let destroyed = false;
+    let modalOpen = false;
+    let previousFocus = null;
+
+    function getFocusableElements() {
+      if (!overlay) return [];
+      return Array.from(overlay.querySelectorAll(
+        'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+      )).filter(element =>
+        element.getClientRects().length > 0 &&
+        getComputedStyle(element).visibility !== "hidden"
+      );
+    }
+
+    function containTabFocus(event) {
+      if (event.key !== "Tab" || !modalOpen) return;
+
+      const focusable = getFocusableElements();
+      if (focusable.length === 0) {
+        event.preventDefault();
+        return;
+      }
+
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      const current = document.activeElement;
+
+      if (!overlay.contains(current)) {
+        event.preventDefault();
+        (event.shiftKey ? last : first).focus();
+      } else if (event.shiftKey && current === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && current === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    }
 
     function selectAvatar(value) {
       if (destroyed) return;
@@ -78,12 +115,26 @@
 
     function show() {
       if (destroyed || !overlay) return;
+      if (!modalOpen) {
+        previousFocus = document.activeElement;
+        document.addEventListener("keydown", containTabFocus);
+        modalOpen = true;
+      }
       overlay.style.display = "flex";
+      (nameInput || getFocusableElements()[0])?.focus();
     }
 
     function hide() {
       if (destroyed || !overlay) return;
       overlay.style.display = "none";
+      if (modalOpen) {
+        document.removeEventListener("keydown", containTabFocus);
+        modalOpen = false;
+      }
+      if (previousFocus?.isConnected && previousFocus !== document.body && !overlay.contains(previousFocus)) {
+        previousFocus.focus();
+      }
+      previousFocus = null;
     }
 
     function submit() {
@@ -141,6 +192,8 @@
       });
       avatarHandlers.clear();
       enterButton?.removeEventListener("click", enterHandler);
+      document.removeEventListener("keydown", containTabFocus);
+      modalOpen = false;
     }
 
     return Object.freeze({

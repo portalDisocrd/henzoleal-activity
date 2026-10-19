@@ -37,6 +37,7 @@ function createRoomService({ maxRooms, emptyRoomTtl }) {
             customSoundBytes: 0,
             users: new Map(),
             messages: [],
+            reactionIds: new Map(),
             activityFeed: [],
             auditLog: []
         };

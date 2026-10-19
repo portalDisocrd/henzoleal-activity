@@ -77,7 +77,7 @@
 
     <div class="hero-badge">
 
-    SALAS EM TEMPO REAL
+    SALAS PRIVADAS
 
 </div>
 
@@ -111,7 +111,7 @@
 
     <div class="preview-item feature-quality">
         <span>▣</span>
-        1080p • 60 FPS
+        Até 1080p • 60 FPS
     </div>
 
     <div class="preview-item">
@@ -170,11 +170,11 @@
 </p>
 
 
-    <span class="label">
+    <label class="label" for="name">
 
         Nome
 
-    </span>
+    </label>
 
 
     <input
@@ -182,14 +182,17 @@
         type="text"
         maxlength="24"
         placeholder="Como devemos chamar você?"
+        autocomplete="nickname"
+        required
     >
 
 
-    <span class="label">
+    <fieldset class="avatar-field">
+    <legend class="label">
 
         Avatar
 
-    </span>
+    </legend>
 
 
     <div
@@ -198,42 +201,42 @@
     >
 
 
-        <button class="avatar selected">
+        <button class="avatar selected" type="button" aria-label="Avatar sorridente" aria-pressed="true">
 
             😎
 
         </button>
 
 
-        <button class="avatar">
+        <button class="avatar" type="button" aria-label="Avatar alienígena" aria-pressed="false">
 
             👾
 
         </button>
 
 
-        <button class="avatar">
+        <button class="avatar" type="button" aria-label="Avatar lobo" aria-pressed="false">
 
             🐺
 
         </button>
 
 
-        <button class="avatar">
+        <button class="avatar" type="button" aria-label="Avatar raposa" aria-pressed="false">
 
             🦊
 
         </button>
 
 
-        <button class="avatar">
+        <button class="avatar" type="button" aria-label="Avatar dragão" aria-pressed="false">
 
             🐉
 
         </button>
 
 
-        <button class="avatar">
+        <button class="avatar" type="button" aria-label="Avatar robô" aria-pressed="false">
 
             🤖
 
@@ -241,11 +244,13 @@
 
 
     </div>
+    </fieldset>
 
 
     <button
         id="create"
         class="primary"
+        type="button"
     >
 
     <span class="button-icon">
@@ -263,24 +268,30 @@
 </button>
 
 
-    <div class="divider">
+    <div class="divider" aria-hidden="true">
 
         OU USE UM CÓDIGO
 
     </div>
 
 
+    <label class="visually-hidden" for="roomCode">Código da sala</label>
     <input
         id="roomCode"
         type="text"
         maxlength="8"
         placeholder="Código da sala"
+        autocomplete="off"
+        autocapitalize="characters"
+        spellcheck="false"
+        inputmode="text"
     >
 
 
     <button
         id="join"
         class="secondary"
+        type="button"
     >
 
     <span>
@@ -293,8 +304,10 @@
 
 </button>
 
+<p id="homeFeedback" class="home-feedback" role="status" aria-live="polite" aria-atomic="true" hidden></p>
+
 <div class="v4-session-trust" aria-label="Detalhes da sessão">
-    <span><i></i> Perfil salvo neste dispositivo</span>
+    <span><i></i> Nome e avatar nesta sessão</span>
     <span><i></i> Sala por código</span>
 </div>
 

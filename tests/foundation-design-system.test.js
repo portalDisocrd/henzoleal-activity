@@ -80,3 +80,13 @@ test("CSS de producao continua sem important", () => {
   const content = files.map(name => read(path.join("styles", name))).join("\n");
   assert.equal((content.match(/!important/g) || []).length, 0);
 });
+
+test("componentes ocultos da sala nao sobrepoem o estado hidden", () => {
+  const responsive = read("styles/social-responsive.css");
+  assert.match(responsive, /body\.hl-social-ready\s+\[hidden\]\s*\{\s*display:\s*none;\s*\}\s*$/);
+});
+
+test("a primeira regra do stylesheet de voz e parseavel", () => {
+  const voice = read("styles/voice.css");
+  assert.match(voice, /^\/\*[\s\S]*?\*\/\s*body\.hl-social-ready \.hl-voice-view\s*\{[\s\S]*?flex-direction:\s*column;/);
+});

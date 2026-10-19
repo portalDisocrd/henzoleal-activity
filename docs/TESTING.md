@@ -6,7 +6,7 @@
 npm test
 ```
 
-Cobrem serviços de sala, validação, segurança, chat, soundboard, reactionId, versionamento, scrypt, core compartilhado, PWA, limites e estados de compartilhamento.
+Cobrem serviços de sala, validação, segurança, chat, soundboard, reactionId, ACKs Socket.IO de entrada/saída de voz, estados de compartilhamento, cascata CSS e semântica de componentes ocultos, versionamento, scrypt, core compartilhado, PWA e limites.
 
 ## Build
 
@@ -19,6 +19,8 @@ O frontend ESM deve ser validado pelo Vite. Não executar `node --check` cegamen
 ## Navegador
 
 `tests/browser-harness-v12.html` é um harness de inspeção. A matriz de viewport desejada é 1920×1080, 1366×768, 1280×720, 1024×768, 430×932, 390×844 e 360×800.
+
+No Chromium integrado foi validado o ciclo local de microfone/voz, inclusive conectar e sair. A captura de tela não pôde ser completada nesse ambiente: `getDisplayMedia` terminou com `NotSupportedError`/restrição de política do navegador. Isso não substitui validação de compartilhamento em browser de campo.
 
 ## E2E multiplayer esperado
 

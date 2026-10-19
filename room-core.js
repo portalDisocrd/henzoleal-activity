@@ -3269,43 +3269,46 @@ shareButton.onclick =
 
         try {
 
-            localStream =
-                await navigator
-                    .mediaDevices
-                    .getDisplayMedia({
+            const profile = getQualityProfile();
+            const mediaRequest = window.HLMediaIntelligence?.buildDisplayMediaRequest?.({
+                width: profile.width,
+                height: profile.height,
+                fps: profile.fps,
+                preferAudio: true
+            }) || {
+                video: {
+                    width: {
+                        ideal: profile.width,
+                        max: profile.width
+                    },
+                    height: {
+                        ideal: profile.height,
+                        max: profile.height
+                    },
+                    frameRate: {
+                        ideal: profile.fps,
+                        max: profile.fps
+                    }
+                },
+                audio: true
+            };
 
+            try {
+                localStream = await navigator.mediaDevices.getDisplayMedia(mediaRequest);
+            } catch (requestError) {
+                if (requestError?.name === "NotSupportedError" || requestError?.name === "TypeError") {
+                    localStream = await navigator.mediaDevices.getDisplayMedia({
                         video: {
-
-                            width: {
-                                ideal:
-                                    getQualityProfile().width,
-
-                                max:
-                                    getQualityProfile().width
-                            },
-
-                            height: {
-                                ideal:
-                                    getQualityProfile().height,
-
-                                max:
-                                    getQualityProfile().height
-                            },
-
-                            frameRate: {
-                                ideal:
-                                    getQualityProfile().fps,
-
-                                max:
-                                    getQualityProfile().fps
-                            }
-
+                            width: { ideal: profile.width, max: profile.width },
+                            height: { ideal: profile.height, max: profile.height },
+                            frameRate: { ideal: profile.fps, max: profile.fps }
                         },
-
-                        audio:
-                            true
-
+                        audio: false
                     });
+                } else {
+                    throw requestError;
+                }
+            }
 
 
             /* STREAM QUALITY V1 */

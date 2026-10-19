@@ -6,7 +6,8 @@
     document.body.classList.add("hl-social-ready");
     document.documentElement.dataset.hlSocialVersion = "12.0.7-foundation.6";
 
-    const savedSoundVolume = Number(localStorage.getItem("hl_sound_volume"));
+    const storedSoundVolume = localStorage.getItem("hl_sound_volume");
+    const savedSoundVolume = storedSoundVolume === null ? 0.72 : Number(storedSoundVolume);
 
     const state = {
         bootstrapped: false,

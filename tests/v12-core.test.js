@@ -125,3 +125,60 @@ test('V12 mantém pré-entrada nítida e isolada em stylesheet próprio',()=>{
   assert.doesNotMatch(entry,/backdrop-filter\s*:\s*blur/);
   assert.doesNotMatch(room,/#profileOverlay\s*\{/);
 });
+
+test('V12 voice state usa transições explícitas e meta',()=>{
+  const vm = require('node:vm');
+  const source = read('frontend/social/voice/voice-state.js');
+  class CustomEventShim {
+    constructor(type, init = {}) { this.type = type; this.detail = init.detail || {}; }
+  }
+  const context = {
+    console,
+    CustomEvent: CustomEventShim,
+    window: {
+      dispatchEvent() { return true; },
+      CustomEvent: CustomEventShim
+    },
+    document: {
+      documentElement: { dataset: {} }
+    }
+  };
+  vm.runInNewContext(source, context);
+  const state = context.window.HLVoiceState;
+  assert.equal(state.get(), 'disconnected');
+  assert.equal(state.transition('requesting-permission', { trigger: 'test' }), 'requesting-permission');
+  assert.equal(state.is('requesting-permission'), true);
+  assert.equal(state.getMeta().trigger, 'test');
+  assert.equal(state.transition('connected'), 'connected');
+  assert.equal(state.history.length >= 2, true);
+  assert.ok(state.validStates.includes('ready'));
+});
+
+test('V12 media intelligence cria request de tela com fallback seguro',()=>{
+  const vm = require('node:vm');
+  const source = read('frontend/media/media-intelligence.js');
+  const CustomEventShim = class CustomEvent {
+    constructor(type, init = {}) { this.type = type; this.detail = init.detail || {}; }
+  };
+  const context = {
+    console,
+    CustomEvent: CustomEventShim,
+    navigator: { userAgent: 'Chrome/124', mediaDevices: { getDisplayMedia() {} } },
+    window: {
+      location: { origin: 'https://example.com', pathname: '/room/ABC123' },
+      dispatchEvent() { return true; },
+      CustomEvent: CustomEventShim,
+      HTMLMediaElement: { prototype: { setSinkId() {} } },
+      RTCPeerConnection: function RTCPeerConnection() {}
+    },
+    document: { documentElement: { dataset: {} } },
+    HTMLMediaElement: { prototype: { setSinkId() {} } }
+  };
+  vm.runInNewContext(source, context);
+  const request = context.window.HLMediaIntelligence.buildDisplayMediaRequest({ width: 1280, height: 720, fps: 30, preferAudio: true });
+  assert.equal(request.video.width.ideal, 1280);
+  assert.equal(request.video.height.ideal, 720);
+  assert.equal(request.audio, true);
+  const fallback = context.window.HLMediaIntelligence.buildDisplayMediaRequest({ preferAudio: false });
+  assert.equal(fallback.audio, false);
+});

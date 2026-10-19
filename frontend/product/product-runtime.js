@@ -325,11 +325,14 @@
   $("hlProductInstall").addEventListener("click",async()=>{const result=await window.HLPWA?.install?.();toast(result?.success?"HL Activity instalado.":"Instalação cancelada ou indisponível.");syncInstall();});
 
   if(!localStorage.getItem("hl_onboarding_done") && !document.querySelector(".hl-product-onboarding")){
-    const banner=document.createElement("div");
-    banner.className="hl-product-onboarding";
-    banner.innerHTML='<strong>HL Activity pronto.</strong><span>1. Convide amigos · 2. Entre no voz · 3. Compartilhe sua tela · 4. Use Chat e Sons</span><button>Entendi</button>';
-    document.body.appendChild(banner);
-    banner.querySelector("button").addEventListener("click",()=>{localStorage.setItem("hl_onboarding_done","1");banner.remove();});
+    socket.once("room:joined",()=>{
+      if(localStorage.getItem("hl_onboarding_done") || document.querySelector(".hl-product-onboarding")) return;
+      const banner=document.createElement("div");
+      banner.className="hl-product-onboarding";
+      banner.innerHTML='<strong>HL Activity pronto.</strong><span>1. Convide amigos · 2. Entre no voz · 3. Compartilhe sua tela · 4. Use Chat e Sons</span><button type="button">Entendi</button>';
+      document.body.appendChild(banner);
+      banner.querySelector("button").addEventListener("click",()=>{localStorage.setItem("hl_onboarding_done","1");banner.remove();});
+    });
   }
 
   // Activity quick access in header when there is room ---------------------

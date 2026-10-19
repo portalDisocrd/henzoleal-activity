@@ -15,7 +15,8 @@ A V12 substitui a estratégia de empilhar arquivos versionados de correção por
 - `room-core.js` — core compartilhado entre sala Web e Discord Activity.
 - `frontend/core/` — versão, capacidades, conectividade, erros e pré-entrada.
 - `frontend/social/chat/` — controlador de chat.
-- `frontend/social/voice/` — estado, dispositivos, WebRTC e UX de voz.
+- `frontend/social/voice/` — estado, dispositivos, WebRTC, diagnóstico e UX de voz.
+- `frontend/media/` — inteligência e diagnóstico de mídia para transmissão, tela e voz.
 - `frontend/social/soundboard/` — catálogo e controlador do Soundboard.
 - `frontend/social/reactions/` — reações e deduplicação.
 - `frontend/product/` — configurações, lobby, convites, diagnóstico e recursos de produto.

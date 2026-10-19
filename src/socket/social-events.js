@@ -82,11 +82,23 @@ function createSocialEvents({ io, roomService, allowSocketEvent, getSafeTargetSo
             const reactionId = normalizeText(payload?.reactionId, 80) || `${socket.id}-${Date.now()}`;
             if (!REACTION_EMOJIS.has(emoji)) return typeof ack === "function" && ack({ success:false, message:"Reação inválida." });
             const now = Date.now();
+            c.room.reactionIds ||= new Map();
+            const previous = c.room.reactionIds.get(reactionId);
+            if (previous && now - previous < 30000) {
+                if (typeof ack === "function") ack({ success:true, reactionId, deduplicated:true });
+                return;
+            }
             if (now - (socket.data.lastReactionAt || 0) < 450) return typeof ack === "function" && ack({ success:false, message:"Aguarde um instante." });
+            c.room.reactionIds.set(reactionId, now);
+            while (c.room.reactionIds.size > 200) {
+                const oldest = [...c.room.reactionIds.entries()].sort(([, left], [, right]) => left - right)[0];
+                if (!oldest) break;
+                c.room.reactionIds.delete(oldest[0]);
+            }
             socket.data.lastReactionAt = now;
             c.room.lastActivity = now;
             socket.to(c.roomCode).emit("reaction:show", { emoji, reactionId, senderId:socket.id, name:c.user.name, at:now });
-            if (typeof ack === "function") ack({ success:true, reactionId });
+            if (typeof ack === "function") ack({ success:true, reactionId, deduplicated:false });
         });
 
         socket.on("sound:play", (payload, ack) => {
