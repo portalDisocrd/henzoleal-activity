@@ -32,6 +32,9 @@ test("registro PWA ignora HTTP cache do sw e possui reconciliacao", () => {
   assert.match(pwa, /clearManagedCaches/);
   assert.match(pwa, /controllerchange/);
   assert.match(pwa, /reloadScheduled/);
+  assert.match(pwa, /function isActiveRoomPage/);
+  assert.match(pwa, /deferUpdateUntilRoomEnds/);
+  assert.doesNotMatch(pwa, /Atualizar agora/);
 });
 
 test("version guard monitora mudanca de release durante a sessao", () => {
@@ -42,6 +45,105 @@ test("version guard monitora mudanca de release durante a sessao", () => {
   assert.match(guard, /HLPWA\?\.reconcileVersion/);
   assert.match(guard, /_hlv/);
   assert.match(guard, /cache:\s*"no-store"/);
+  assert.match(guard, /updateAutomatically/);
+  assert.doesNotMatch(guard, /Atualizar agora/);
+  assert.doesNotMatch(guard, /notice\.innerHTML/);
+});
+
+function loadPwa(pathname) {
+  const windowListeners = new Map();
+  const serviceWorkerListeners = new Map();
+  const intervals = new Map();
+  let nextInterval = 1;
+  let reloads = 0;
+  let activations = 0;
+  const waiting = { postMessage: message => {
+    assert.equal(message.type, "SKIP_WAITING");
+    activations += 1;
+  } };
+  const registration = {
+    waiting,
+    addEventListener() {},
+    update: async () => {}
+  };
+  const location = {
+    protocol: "https:",
+    hostname: "hl.test",
+    pathname,
+    reload: () => { reloads += 1; },
+    replace: () => { reloads += 1; },
+    href: `https://hl.test${pathname}`
+  };
+  const window = {
+    navigator: { standalone: false },
+    matchMedia: () => ({ matches: false }),
+    addEventListener: (name, handler) => windowListeners.set(name, handler),
+    dispatchEvent() {}
+  };
+  const navigator = {
+    onLine: true,
+    serviceWorker: {
+      register: async () => registration,
+      addEventListener: (name, handler) => serviceWorkerListeners.set(name, handler)
+    }
+  };
+  const document = {
+    documentElement: { dataset: {} },
+    addEventListener() {},
+    readyState: "complete"
+  };
+  const context = {
+    window,
+    navigator,
+    document,
+    location,
+    caches: { keys: async () => [], delete: async () => true },
+    CustomEvent: function CustomEvent() {},
+    setTimeout,
+    clearTimeout,
+    setInterval: handler => {
+      const id = nextInterval++;
+      intervals.set(id, handler);
+      return id;
+    },
+    clearInterval: id => intervals.delete(id),
+    console
+  };
+  vm.runInNewContext(read("frontend/pwa/pwa.js"), context);
+  return {
+    window,
+    intervals,
+    registration,
+    serviceWorkerListeners,
+    location,
+    load: () => windowListeners.get("load")(),
+    activateCount: () => activations,
+    reloadCount: () => reloads
+  };
+}
+
+test("PWA ativa novas versões automaticamente fora de uma sala", async () => {
+  const pwa = loadPwa("/");
+  pwa.load();
+  await pwa.window.HLPWA.getRegistration();
+  assert.equal(pwa.activateCount(), 1);
+  pwa.serviceWorkerListeners.get("controllerchange")();
+  assert.equal(pwa.reloadCount(), 1);
+});
+
+test("PWA adia atualização até sair da sala ativa", async () => {
+  const pwa = loadPwa("/room/AB12CD34");
+  pwa.load();
+  await pwa.window.HLPWA.getRegistration();
+  assert.equal(pwa.activateCount(), 0);
+  assert.equal(pwa.window.HLPWA.getStatus(), "update-deferred");
+
+  const [tick] = pwa.intervals.values();
+  pwa.location.pathname = "/";
+  tick();
+  assert.equal(pwa.activateCount(), 1);
+  pwa.serviceWorkerListeners.get("controllerchange")();
+  assert.equal(pwa.reloadCount(), 1);
 });
 
 test("PWA carrega antes do version guard nas paginas web", () => {

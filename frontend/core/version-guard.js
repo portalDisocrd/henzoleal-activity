@@ -4,9 +4,9 @@
   const CHECK_INTERVAL_MS = 60000;
   const localVersion = String(window.HL_APP_VERSION || "");
   let mismatchShown = false;
-  let mismatchNotice = null;
   let checkPromise = null;
   let timer = null;
+  let reloadScheduled = false;
 
   function setMismatchState(value, remoteVersion = "") {
     document.documentElement.dataset.hlVersionMismatch = value ? "true" : "false";
@@ -24,39 +24,55 @@
           keys.filter(key => key.startsWith("hl-activity-")).map(key => caches.delete(key))
         );
       }
-    } catch {}
+    } catch (error) {
+      console.warn("[VersionGuard] Limpeza do cache gerenciado:", error);
+    }
 
     const url = new URL(location.href);
     url.searchParams.set("_hlv", remoteVersion || String(Date.now()));
     location.replace(url.toString());
   }
 
-  async function updateNow(remoteVersion, button) {
-    if (button) {
-      button.disabled = true;
-      button.textContent = "Atualizando…";
-    }
-
+  async function updateAutomatically(remoteVersion) {
+    if (reloadScheduled) return;
     try {
       if (window.HLPWA?.reconcileVersion) {
         const result = await window.HLPWA.reconcileVersion(remoteVersion);
-        if (result?.reloadScheduled) return;
+        if (result?.reloadScheduled) {
+          reloadScheduled = true;
+          return;
+        }
+        if (result?.deferred) return;
         if (result?.forceFreshReload) {
+          reloadScheduled = true;
           await forceFreshReload(remoteVersion);
           return;
         }
       } else {
+        if (isActiveRoomPage()) return;
         const registrations = await navigator.serviceWorker?.getRegistrations?.();
         for (const registration of registrations || []) {
-          await registration.update().catch(() => {});
+          await registration.update();
           if (registration.waiting) {
+            reloadScheduled = true;
             registration.waiting.postMessage({ type: "SKIP_WAITING" });
+            return;
           }
         }
       }
-    } catch {}
+    } catch (error) {
+      console.warn("[VersionGuard] Atualização automática:", error);
+    }
 
+    if (isActiveRoomPage()) return;
+    reloadScheduled = true;
     await forceFreshReload(remoteVersion);
+  }
+
+  function isActiveRoomPage() {
+    return window.HLPWA?.isActiveRoomPage?.() ||
+      /^\/(?:room|share)\/[^/]+\/?$/.test(location.pathname) ||
+      location.pathname === "/activity-room.html";
   }
 
   function showMismatch(remoteVersion) {
@@ -66,39 +82,15 @@
       detail: { localVersion, remoteVersion }
     }));
 
-    if (mismatchShown && mismatchNotice?.isConnected) {
-      const versionText = mismatchNotice.querySelector("[data-hl-version-detail]");
-      if (versionText) versionText.textContent = `${localVersion || "?"} → ${remoteVersion || "?"}`;
-      return;
-    }
-
+    if (mismatchShown) return;
     mismatchShown = true;
-    const notice = document.createElement("div");
-    mismatchNotice = notice;
-    notice.id = "hlVersionMismatch";
-    notice.className = "hl-version-mismatch";
-    notice.setAttribute("role", "alert");
-    notice.innerHTML = `
-      <div>
-        <strong>Atualização necessária</strong>
-        <span>O servidor está em outra versão. Atualize antes de continuar para evitar arquivos incompatíveis.</span>
-        <small data-hl-version-detail>${localVersion || "?"} → ${remoteVersion || "?"}</small>
-      </div>
-      <button type="button">Atualizar agora</button>
-    `;
-
-    notice.querySelector("button").addEventListener("click", event => {
-      updateNow(remoteVersion, event.currentTarget);
-    });
-
-    document.body.appendChild(notice);
+    updateAutomatically(remoteVersion);
   }
 
   function clearMismatch() {
     setMismatchState(false);
     mismatchShown = false;
-    if (mismatchNotice?.isConnected) mismatchNotice.remove();
-    mismatchNotice = null;
+    reloadScheduled = false;
   }
 
   async function performCheck() {

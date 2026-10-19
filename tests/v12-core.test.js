@@ -8,7 +8,7 @@ const root = path.join(__dirname, '..');
 const read = p => fs.readFileSync(path.join(root,p),'utf8');
 
 test('V12 usa versionamento único e assets estáveis',()=>{
-  assert.equal(APP_VERSION,'12.0.7-foundation.6');
+  assert.equal(APP_VERSION,'12.0.7-foundation.7');
   const room=read('room.html'), activity=read('activity-room.html'), sw=read('sw.js');
   for(const source of [room,activity,sw]) assert.doesNotMatch(source,/\?v=(?:10|103|111)/);
   assert.match(room,/\/styles\/social-shell\.css/);

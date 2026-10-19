@@ -8,9 +8,9 @@ const read = file => fs.readFileSync(path.join(root, file), "utf8");
 
 test("foundation usa versao local unica", () => {
   const { APP_VERSION } = require("../src/config/version");
-  assert.equal(APP_VERSION, "12.0.7-foundation.6");
-  assert.match(read("frontend/core/app-version.js"), /12\.0\.7-foundation\.6/);
-  assert.match(read("sw.js"), /12\.0\.7-foundation\.6/);
+  assert.equal(APP_VERSION, "12.0.7-foundation.7");
+  assert.match(read("frontend/core/app-version.js"), /12\.0\.7-foundation\.7/);
+  assert.match(read("sw.js"), /12\.0\.7-foundation\.7/);
 });
 
 test("shell PWA referencia apenas arquivos existentes", () => {

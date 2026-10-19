@@ -4,7 +4,7 @@ HL Activity é uma sala privada para pequenos grupos conversarem, usarem voz, co
 
 ## Versão
 
-`12.0.7-foundation.6`
+`12.0.7-foundation.7`
 
 A V12 substitui a estratégia de empilhar arquivos versionados de correção por uma base estável com nomes permanentes de assets, módulos sociais separados e uma fonte única de versão.
 

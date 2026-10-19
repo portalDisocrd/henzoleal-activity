@@ -2,7 +2,7 @@
 
 A release usa uma única identidade:
 
-`APP_VERSION = 12.0.7-foundation.6`
+`APP_VERSION = 12.0.7-foundation.7`
 
 O mesmo valor aparece no backend, frontend, Service Worker, `/health`, `/ready`, `/api/version` e diagnóstico.
 
@@ -15,12 +15,13 @@ Cache gerenciado:
 A instalação:
 
 - pré-cacheia somente um shell pequeno e conhecido;
-- não chama `skipWaiting()` automaticamente;
+- mantém o novo worker em espera enquanto uma sala está ativa;
 - apaga o cache novo se o precache falhar.
 
 A ativação:
 
-- ocorre somente após autorização explícita (`SKIP_WAITING`) quando já existe um worker ativo;
+- envia `SKIP_WAITING` automaticamente assim que é seguro;
+- não recarrega uma sala ou Discord Activity enquanto ela estiver em uso; ativa/aplica a release ao sair;
 - remove caches antigos `hl-activity-*`;
 - chama `clients.claim()`.
 
@@ -53,13 +54,7 @@ O Service Worker não intercepta:
 
 `updateViaCache: "none"`
 
-Quando há worker `waiting`, a interface oferece atualização explícita.
-
-O botão:
-
-1. envia `SKIP_WAITING`;
-2. espera `controllerchange`;
-3. recarrega a página uma única vez.
+Quando há worker `waiting`, a aplicação ativa a nova release sem botão ou confirmação. Após `controllerchange`, a página recarrega uma única vez. Em uma rota de sala (`/room/*`, `/share/*` ou `/activity-room.html`), a atualização fica pendente até o usuário sair, evitando interromper uma conversa.
 
 ## VersionGuard
 
@@ -75,11 +70,12 @@ Ele verifica:
 Se frontend e backend divergirem:
 
 1. sinaliza `hl:version-mismatch`;
-2. mostra a versão local e remota;
-3. pede atualização;
-4. solicita `registration.update()`;
-5. ativa worker waiting quando disponível;
-6. se ainda não houver worker novo, remove apenas caches gerenciados do HL e faz fresh reload.
+2. solicita `registration.update()` e inicia a atualização automática;
+3. não mostra o aviso/botão “Atualizar agora”;
+4. ativa worker waiting quando disponível;
+5. se ainda não houver worker novo, remove apenas caches gerenciados do HL e faz fresh reload.
+
+Uma aba que já estava aberta antes da publicação continua executando os scripts que tinha carregado. Ela detecta a release pela consulta periódica de versão e atualiza automaticamente; se estiver em uma sala, aplica a atualização ao sair.
 
 A comparação é por igualdade, não por ordem semântica. Portanto funciona para:
 

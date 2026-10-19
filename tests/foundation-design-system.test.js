@@ -90,3 +90,9 @@ test("a primeira regra do stylesheet de voz e parseavel", () => {
   const voice = read("styles/voice.css");
   assert.match(voice, /^\/\*[\s\S]*?\*\/\s*body\.hl-social-ready \.hl-voice-view\s*\{[\s\S]*?flex-direction:\s*column;/);
 });
+
+test("a primeira regra do soundboard e parseavel e mantem o catalogo em coluna", () => {
+  const soundboard = read("styles/soundboard.css");
+  assert.match(soundboard, /^\/\*[\s\S]*?\*\/\s*body\.hl-social-ready \.hl-sound-view\s*\{[\s\S]*?flex-direction:\s*column;/);
+  assert.match(soundboard, /body\.hl-social-ready \.hl-sound-grid\s*\{[\s\S]*?overflow-y:\s*auto;/);
+});

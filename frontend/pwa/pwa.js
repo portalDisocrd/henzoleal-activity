@@ -9,7 +9,8 @@
   let registrationPromise = null;
   let installed = window.matchMedia?.("(display-mode: standalone)")?.matches || Boolean(window.navigator.standalone);
   let updateReloadArmed = false;
-  let updateNotice = null;
+  let deferredUpdateRegistration = null;
+  let deferredUpdateTimer = null;
   let pwaStatus = "idle";
 
   function dispatch(extra = {}) {
@@ -32,9 +33,34 @@
 
   function announceUpdate(reg) {
     if (!reg?.waiting) return false;
-    setStatus("update-available");
-    window.dispatchEvent(new CustomEvent("hl:pwa-update", { detail: { registration: reg } }));
+    activateUpdate(reg);
     return true;
+  }
+
+  function isActiveRoomPage() {
+    return /^\/(?:room|share)\/[^/]+\/?$/.test(location.pathname) ||
+      location.pathname === "/activity-room.html";
+  }
+
+  function reloadWhenSafe() {
+    if (isActiveRoomPage()) return false;
+    location.reload();
+    return true;
+  }
+
+  function deferUpdateUntilRoomEnds(reg) {
+    deferredUpdateRegistration = reg;
+    setStatus("update-deferred");
+    if (deferredUpdateTimer) return;
+    deferredUpdateTimer = setInterval(() => {
+      if (isActiveRoomPage()) return;
+      clearInterval(deferredUpdateTimer);
+      deferredUpdateTimer = null;
+      const pending = deferredUpdateRegistration;
+      deferredUpdateRegistration = null;
+      if (pending?.waiting) activateUpdate(pending);
+      else if (updateReloadArmed) reloadWhenSafe();
+    }, 1000);
   }
 
   function waitForWorkerState(worker, targetStates, timeoutMs = UPDATE_WAIT_MS) {
@@ -148,6 +174,12 @@
       return { success: false, reason: "no-waiting-worker" };
     }
 
+    if (isActiveRoomPage()) {
+      deferUpdateUntilRoomEnds(activeRegistration);
+      return { success: true, reloadScheduled: false, deferred: true };
+    }
+
+    deferredUpdateRegistration = null;
     updateReloadArmed = true;
     setStatus("activating");
     activeRegistration.waiting.postMessage({ type: "SKIP_WAITING" });
@@ -161,10 +193,25 @@
       return activateUpdate(result.registration);
     }
 
+    if (isActiveRoomPage()) {
+      setStatus("update-deferred");
+      return {
+        success: Boolean(result.success),
+        reloadScheduled: false,
+        deferred: true,
+        remoteVersion: String(remoteVersion || "")
+      };
+    }
+
     // Se o backend mudou mas o browser ainda nao encontrou um worker waiting,
     // remove somente caches gerenciados do HL. Isso quebra loops de cache antigo
     // inclusive durante upgrade, downgrade ou rollback.
-    const removedCaches = await clearManagedCaches().catch(() => 0);
+    let removedCaches = 0;
+    try {
+      removedCaches = await clearManagedCaches();
+    } catch (error) {
+      console.warn("[PWA] Limpeza do cache gerenciado:", error);
+    }
     return {
       success: Boolean(result.success),
       reloadScheduled: false,
@@ -174,39 +221,13 @@
     };
   }
 
-  function renderUpdateNotice(reg) {
-    if (!reg?.waiting) return;
-    if (updateNotice?.isConnected) return;
-
-    const toast = document.createElement("div");
-    toast.id = "hlPwaUpdate";
-    toast.className = "hl-pwa-update";
-    toast.setAttribute("role", "status");
-    toast.innerHTML = '<span>Nova versão do HL disponível.</span><button type="button">Atualizar agora</button>';
-    document.body.appendChild(toast);
-    updateNotice = toast;
-
-    const button = toast.querySelector("button");
-    button.addEventListener("click", async () => {
-      if (!reg.waiting) return;
-      button.disabled = true;
-      button.textContent = "Atualizando…";
-      const result = await activateUpdate(reg);
-      if (!result.success) {
-        button.disabled = false;
-        button.textContent = "Tentar novamente";
-      }
-    });
-  }
-
-  window.addEventListener("hl:pwa-update", event => {
-    renderUpdateNotice(event.detail?.registration);
-  });
-
   navigator.serviceWorker?.addEventListener?.("controllerchange", () => {
     if (!updateReloadArmed) return;
+    if (!reloadWhenSafe()) {
+      deferUpdateUntilRoomEnds(deferredUpdateRegistration || registration);
+      return;
+    }
     updateReloadArmed = false;
-    location.reload();
   });
 
   window.addEventListener("beforeinstallprompt", event => {
@@ -230,6 +251,7 @@
     isInstalled: () => installed,
     getStatus: () => pwaStatus,
     getRegistration: () => registration,
+    isActiveRoomPage,
     checkForUpdate,
     activateUpdate,
     reconcileVersion,

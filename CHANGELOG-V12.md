@@ -10,6 +10,12 @@
 - gate final combina segurança, performance, build, HTTP e smoke visual quando Chromium estiver disponível.
 # Changelog — HL Activity Foundation
 
+## 12.0.7-foundation.7 — Soundboard e atualização automática
+
+- corrige o cabeçalho CSS que impedia o layout vertical e os controles do Soundboard;
+- atualiza releases automaticamente e adia a aplicação enquanto uma sala está ativa;
+- remove o aviso e o botão manual “Atualizar agora”.
+
 ## 12.0.7-foundation.6 — PWA, cache e versionamento previsíveis
 
 - torna o cache de cada release imutável depois da instalação;
